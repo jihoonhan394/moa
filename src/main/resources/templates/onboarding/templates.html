@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 입사 온보딩</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('onboarding')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow">사람 · 조직</p><h1>입사 온보딩</h1>
+      <p class="subcopy">부서/직무 템플릿을 만들어 두면, 신입에게 솔루션·위키·할 일을 한 번에 배정합니다.
+        (물리 자산은 경영지원팀이 인벤토리에서 개체를 배정합니다.)</p></div>
+  </header>
+
+  <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start">
+    <!-- 템플릿 목록 + 생성 -->
+    <section class="panel">
+      <h2>템플릿</h2>
+      <div class="data-table">
+        <div class="table-row" th:each="tpl : ${templates}"
+             th:style="${selected != null and selected.id == tpl.id} ? 'font-weight:700' : ''">
+          <a th:href="@{/onboarding(template=${tpl.id})}" th:text="${tpl.name}">템플릿명</a>
+        </div>
+      </div>
+      <form method="post" th:action="@{/onboarding/templates}" class="inline-form" style="margin-top:12px">
+        <input type="text" name="name" maxlength="120" required placeholder="예: 영업팀">
+        <button class="button primary" type="submit">템플릿 추가</button>
+      </form>
+    </section>
+
+    <!-- 선택된 템플릿 상세 -->
+    <section class="panel" th:if="${selected != null}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 th:text="${selected.name} + ' 구성'">템플릿 구성</h2>
+        <form method="post" th:action="@{'/onboarding/templates/' + ${selected.id} + '/delete'}"
+              onsubmit="return confirm('이 템플릿을 삭제할까요?');">
+          <button class="button danger" type="submit">템플릿 삭제</button>
+        </form>
+      </div>
+
+      <!-- 구성 항목 목록 -->
+      <p th:if="${#lists.isEmpty(items)}" class="subcopy">아직 항목이 없습니다. 아래에서 추가하세요.</p>
+      <div th:unless="${#lists.isEmpty(items)}" class="data-table">
+        <div class="table-row" th:each="it : ${items}">
+          <span class="pill" th:text="${it.itemType.label}">유형</span>
+          <span th:text="${it.label} ?: ${it.refId}">내용</span>
+          <form method="post" th:action="@{'/onboarding/templates/' + ${selected.id} + '/items/' + ${it.id} + '/delete'}" style="display:inline">
+            <button class="button danger" type="submit">삭제</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 항목 추가(유형별) -->
+      <h3 style="margin-top:16px">항목 추가</h3>
+      <div style="display:grid;gap:8px">
+        <form method="post" th:action="@{'/onboarding/templates/' + ${selected.id} + '/items'}" class="inline-form">
+          <input type="hidden" name="type" value="ASSIGN_SOLUTION">
+          <label style="min-width:110px">솔루션 배정</label>
+          <select name="refId" required>
+            <option value="">— 솔루션 —</option>
+            <option th:each="s : ${solutions}" th:value="${s.id}" th:text="${s.name}">솔루션</option>
+          </select>
+          <button class="button" type="submit">추가</button>
+        </form>
+        <form method="post" th:action="@{'/onboarding/templates/' + ${selected.id} + '/items'}" class="inline-form">
+          <input type="hidden" name="type" value="GRANT_WIKI_SPACE">
+          <label style="min-width:110px">위키 공간 열람</label>
+          <select name="refId" required>
+            <option value="">— 공간 —</option>
+            <option th:each="w : ${spaces}" th:value="${w.id}" th:text="${w.name}">공간</option>
+          </select>
+          <button class="button" type="submit">추가</button>
+        </form>
+        <form method="post" th:action="@{'/onboarding/templates/' + ${selected.id} + '/items'}" class="inline-form">
+          <input type="hidden" name="type" value="TASK">
+          <label style="min-width:110px">할 일</label>
+          <input type="text" name="label" maxlength="300" required placeholder="예: VPN 설치, 비밀번호 변경">
+          <button class="button" type="submit">추가</button>
+        </form>
+        <form method="post" th:action="@{'/onboarding/templates/' + ${selected.id} + '/items'}" class="inline-form">
+          <input type="hidden" name="type" value="ACK_DOC">
+          <label style="min-width:110px">필독 문서</label>
+          <input type="text" name="label" maxlength="300" required placeholder="예: 보안 서약서 읽고 동의">
+          <button class="button" type="submit">추가</button>
+        </form>
+      </div>
+
+      <p class="subcopy" style="margin-top:16px">이 템플릿의 실제 <b>적용</b>은 부서장이 <b>팀 온보딩</b> 메뉴에서 자기 부서 신입에게 합니다(구성과 적용의 분리).</p>
+    </section>
+    <section class="panel" th:if="${selected == null}">
+      <p class="subcopy">왼쪽에서 템플릿을 선택하거나 새로 추가하세요.</p>
+    </section>
+  </div>
+</main></div>
+</body>
+</html>

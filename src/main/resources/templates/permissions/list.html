@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 권한 관리</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('permissions')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">보안 및 감사 / 권한</p>
+      <h1>권한 관리</h1>
+      <p class="subcopy">묶음 권한을 만들어 자산×액션을 담고, 그룹(주력)·사용자(일시 예외)에 부착합니다.</p>
+    </div>
+  </header>
+
+  <div class="content-grid">
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">새 권한</p><h2>권한 생성</h2></div></div>
+      <form method="post" th:action="@{/permissions}" th:object="${permissionForm}" class="asset-toolbar">
+        <input type="text" th:field="*{name}" maxlength="100" placeholder="권한 이름 (예: 개발서버 접근)" required>
+        <input type="text" th:field="*{description}" maxlength="255" placeholder="설명(선택)">
+        <select th:field="*{status}">
+          <option th:value="ACTIVE">ACTIVE</option>
+          <option th:value="DISABLED">DISABLED</option>
+        </select>
+        <button class="button primary" type="submit">생성</button>
+        <p class="error-message" th:errors="*{name}"></p>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">권한</p><h2>권한 목록</h2></div><span class="pill" th:text="${#lists.size(permissions)} + '개'">0개</span></div>
+      <p th:if="${#lists.isEmpty(permissions)}" class="subcopy">아직 권한이 없습니다. 왼쪽에서 권한을 만드세요.</p>
+      <div th:unless="${#lists.isEmpty(permissions)}" class="data-table">
+        <div class="table-row table-head"><span>이름</span><span>설명</span><span>상태</span><span>관리</span></div>
+        <div class="table-row" th:each="perm : ${permissions}">
+          <strong><a th:href="@{'/permissions/' + ${perm.id}}" th:text="${perm.name}">이름</a></strong>
+          <span th:text="${perm.description != null ? perm.description : '-'}">설명</span>
+          <span th:text="${perm.status}">ACTIVE</span>
+          <span class="table-actions"><a class="button primary" th:href="@{'/permissions/' + ${perm.id}}">부착 · 상세</a></span>
+        </div>
+      </div>
+    </section>
+  </div>
+</main></div>
+</body>
+</html>

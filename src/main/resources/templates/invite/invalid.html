@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 초대 오류</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<main class="workspace login-workspace">
+  <section class="panel login-panel">
+    <p class="eyebrow">초대 수락</p>
+    <h1>유효하지 않은 초대</h1>
+    <p class="subcopy">이 초대 링크는 만료되었거나 이미 사용되었거나 철회되었습니다. 기관 관리자에게 다시 초대를 요청하세요.</p>
+    <a class="button primary" th:href="@{/enter}">처음으로</a>
+  </section>
+</main>
+</body>
+</html>

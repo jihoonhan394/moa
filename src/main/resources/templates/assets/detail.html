@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="'MOA - ' + ${asset.name}">MOA - 서버 상세</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('servers')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">서버 관리 / 상세</p>
+      <h1 th:text="${asset.name}">서버명</h1>
+      <p class="subcopy" th:text="${asset.host} + ':' + ${asset.port} + ' · ' + ${asset.protocol}
+         + (${asset.category != null} ? ' · ' + ${asset.category} : '')">100.10.1.52:22 · SSH</p>
+    </div>
+    <div class="top-actions">
+      <a class="button primary" th:if="${asset.protocol != null and (asset.protocol.name() == 'SSH' or asset.protocol.name() == 'RDP')}"
+         th:href="@{/servers/{id}/connect(id=${asset.id})}">접속</a>
+      <a class="button" th:href="@{/assets/{id}/edit(id=${asset.id})}">수정</a>
+      <a class="button" th:href="@{/servers}">목록으로</a>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">기본</p><h2>서버 정보</h2></div>
+      <span class="pill" th:classappend="${asset.status.name() == 'ACTIVE'} ? 'good' : 'warn'"
+            th:text="${asset.status.name() == 'ACTIVE'} ? '활성' : '비활성'">활성</span></div>
+    <div class="data-table compact">
+      <div class="table-row"><span>카테고리</span><b th:text="${asset.category != null ? asset.category : '—'}">—</b></div>
+      <div class="table-row"><span>OS 계열</span><b th:text="${asset.osFamily != null ? asset.osFamily.label : '—'}">—</b></div>
+      <div class="table-row"><span>OS 상세</span><b th:text="${asset.osType != null and !asset.osType.isBlank() ? asset.osType : '—'}">—</b></div>
+      <div class="table-row"><span>프로토콜 / 접속</span><b th:text="${asset.protocol} + ' · ' + ${asset.host} + ':' + ${asset.port}">SSH</b></div>
+      <div class="table-row"><span>소유팀</span><b th:text="${asset.ownerGroupId != null ? groupNames.getOrDefault(asset.ownerGroupId, '(삭제된 그룹)') : '—'}">—</b></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">하드웨어 사양</p><h2>사양</h2></div></div>
+    <p th:unless="${asset.hasSpecs()}" class="subcopy">등록된 사양이 없습니다. <a th:href="@{/assets/{id}/edit(id=${asset.id})}">수정</a>에서 입력하세요.</p>
+    <div th:if="${asset.hasSpecs()}" class="data-table compact">
+      <div class="table-row"><span>CPU</span><b th:text="${asset.cpu != null ? asset.cpu : '—'}">—</b></div>
+      <div class="table-row"><span>RAM</span><b th:text="${asset.ram != null ? asset.ram : '—'}">—</b></div>
+      <div class="table-row"><span>디스크</span><b th:text="${asset.disk != null ? asset.disk : '—'}">—</b></div>
+      <div class="table-row"><span>모델</span><b th:text="${asset.hwModel != null ? asset.hwModel : '—'}">—</b></div>
+    </div>
+  </section>
+
+  <section class="panel" th:if="${asset.description != null and !asset.description.isBlank()}">
+    <div class="panel-head"><div><p class="eyebrow">비고</p><h2>운영 메모</h2></div></div>
+    <p class="subcopy" th:text="${asset.description}" style="white-space:pre-wrap">메모</p>
+  </section>
+</main></div>
+</body>
+</html>

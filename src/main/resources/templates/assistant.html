@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 사내 지식봇</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('assistant')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">AI · 사내 지식봇</p>
+      <h1>사내 지식봇</h1>
+      <p class="subcopy">위키 문서를 근거로 답합니다. 여러분이 <b>열람 권한을 가진 문서</b>만 근거로 삼습니다.</p>
+    </div>
+  </header>
+
+  <section class="panel">
+    <form method="post" th:action="@{/assistant}" class="inline-form" style="gap:.5rem">
+      <input type="text" name="question" th:value="${question}" required style="flex:1;min-width:280px"
+             placeholder="예: 신규 입사자 계정 발급 절차는? / 백업 정책이 뭐야?">
+      <button class="button primary" type="submit" th:disabled="${aiConfigured == false}">질문하기</button>
+    </form>
+    <p th:if="${aiConfigured == false}" class="subcopy" style="margin-top:.5rem">
+      AI 미설정 상태입니다. <a th:href="@{/ai-settings}">AI 설정</a>에서 제공자·키를 등록하세요.
+    </p>
+  </section>
+
+  <section class="panel" th:if="${error != null}">
+    <p class="subcopy" style="color:#c0392b" th:text="${error}">오류</p>
+  </section>
+
+  <section class="panel" th:if="${answer != null}">
+    <div class="panel-head"><div><p class="eyebrow">답변</p><h2 th:text="${question}">질문</h2></div></div>
+    <!-- 답변은 마크다운→새니타이즈한 안전 HTML로 렌더(표·목록·링크 표시). -->
+    <div class="wiki-content" th:utext="${answerHtml}"
+         style="word-break:break-word;line-height:1.7">답변</div>
+    <div th:if="${sources != null and !#lists.isEmpty(sources)}" style="margin-top:.75rem">
+      <p class="eyebrow">근거 문서</p>
+      <a th:each="s : ${sources}" class="pill" th:href="@{'/wiki/' + ${s.pageId}}"
+         style="margin-right:.35rem;text-decoration:none" th:text="${s.title}" title="문서 열기">문서</a>
+    </div>
+    <p th:if="${sources == null or #lists.isEmpty(sources)}" class="subcopy" style="margin-top:.5rem">
+      관련 문서를 찾지 못했습니다. 위키에 해당 내용을 문서로 남기면 다음부터 답할 수 있습니다.
+    </p>
+  </section>
+</main></div>
+</body>
+</html>

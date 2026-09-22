@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 우리 팀 서버 관리</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('team')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">팀 관리 / 우리 팀 서버</p>
+      <h1>우리 팀 서버 관리</h1>
+      <p class="subcopy">내가 이끄는 부서가 <b>소유한 서버</b>를 등록·수정·삭제합니다.
+        등록한 서버는 팀원이 자동으로 접근(연결)할 수 있습니다. (전체 서버는 인프라 관리자 소관)</p>
+    </div>
+    <a class="button" th:href="@{/team}">← 팀 콘솔</a>
+  </header>
+
+  <p th:if="${teamOk}" class="subcopy good" th:text="${teamOk}" style="margin:.2rem 0"></p>
+  <p th:if="${teamError}" class="error-message" th:text="${teamError}" style="margin:.2rem 0"></p>
+
+  <section class="panel" th:if="${#lists.isEmpty(ledGroups)}">
+    <p class="subcopy">이끄는 부서가 없습니다. 부서장으로 지정되면 여기서 팀 서버를 관리할 수 있습니다.</p>
+  </section>
+
+  <div th:unless="${#lists.isEmpty(ledGroups)}">
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">등록</p><h2>팀 서버 등록</h2></div></div>
+      <form method="post" th:action="@{/team/servers}" style="display:grid;gap:.5rem;max-width:760px">
+        <div class="asset-toolbar">
+          <input type="text" name="name" maxlength="100" placeholder="서버 이름 (예: 개발-빌드-01)" required>
+          <select name="protocol" required aria-label="프로토콜">
+            <option th:each="p : ${protocols}" th:value="${p}" th:text="${p}">SSH</option>
+          </select>
+          <input type="text" name="osType" maxlength="20" placeholder="OS (예: LINUX, 선택)">
+        </div>
+        <div class="asset-toolbar">
+          <input type="text" name="host" maxlength="255" placeholder="호스트/IP" required>
+          <input type="number" name="port" min="1" max="65535" placeholder="포트 (SSH 22 / RDP 3389)" required>
+          <select name="ownerGroupId" required aria-label="소유 부서">
+            <option value="" disabled selected>소유 부서 선택</option>
+            <option th:each="g : ${ledGroups}" th:value="${g.id}" th:text="${g.name}">부서</option>
+          </select>
+        </div>
+        <div><button class="button primary" type="submit">등록</button></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">보유</p><h2>우리 팀 서버</h2></div>
+        <span class="pill" th:text="${#lists.size(servers)} + '대'">0대</span></div>
+      <p th:if="${#lists.isEmpty(servers)}" class="subcopy">등록된 팀 서버가 없습니다.</p>
+      <div th:unless="${#lists.isEmpty(servers)}" class="data-table table-scroll">
+        <div class="table-row table-head"><span>이름</span><span>프로토콜</span><span>호스트:포트</span><span>소유부서</span><span>관리</span></div>
+        <div class="table-row" th:each="s : ${servers}">
+          <strong th:text="${s.name}">이름</strong>
+          <span th:text="${s.protocol}">SSH</span>
+          <span th:text="${s.host} + ':' + ${s.port}" style="color:#7a869a">host:port</span>
+          <span th:text="${groupNames.getOrDefault(s.ownerGroupId, '-')}" style="color:#7a869a">부서</span>
+          <span class="table-actions">
+            <details style="display:inline-block">
+              <summary class="button" style="list-style:none;cursor:pointer">수정</summary>
+              <div style="margin-top:.5rem;text-align:left;min-width:260px">
+                <form method="post" th:action="@{'/team/servers/' + ${s.id}}" style="display:grid;gap:.35rem">
+                  <input type="text" name="name" th:value="${s.name}" maxlength="100" required placeholder="이름">
+                  <select name="protocol" required>
+                    <option th:each="p : ${protocols}" th:value="${p}" th:text="${p}" th:selected="${p == s.protocol}">SSH</option>
+                  </select>
+                  <input type="text" name="host" th:value="${s.host}" maxlength="255" required placeholder="호스트/IP">
+                  <input type="number" name="port" th:value="${s.port}" min="1" max="65535" required placeholder="포트">
+                  <input type="text" name="osType" th:value="${s.osType}" maxlength="20" placeholder="OS">
+                  <button class="button primary" type="submit">저장</button>
+                </form>
+              </div>
+            </details>
+            <form method="post" th:action="@{'/team/servers/' + ${s.id} + '/delete'}" style="display:inline"
+                  onsubmit="return confirm('이 서버를 삭제할까요?')">
+              <button class="button" type="submit">삭제</button>
+            </form>
+          </span>
+        </div>
+      </div>
+    </section>
+  </div>
+</main></div>
+</body>
+</html>

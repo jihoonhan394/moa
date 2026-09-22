@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 위키 버전</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('wiki')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow"><a th:href="@{/wiki}">위키</a> / <a th:href="@{'/wiki/' + ${wikiPage.id}}" th:text="${wikiPage.title}">문서</a> /
+      <a th:href="@{'/wiki/' + ${wikiPage.id} + '/history'}">이력</a> / 버전</p>
+      <h1 th:text="${revision.title}">제목</h1>
+      <p class="subcopy" th:text="'이 버전 시각: ' + ${#temporals.format(revision.createdAt, 'yyyy-MM-dd HH:mm')}">시각</p></div>
+    <div class="top-actions">
+      <form th:if="${canEdit}" method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/history/' + ${revision.id} + '/restore'}"
+            onsubmit="return confirm('이 버전으로 되돌릴까요?')">
+        <button class="button primary" type="submit">이 버전으로 되돌리기</button>
+      </form>
+    </div>
+  </header>
+  <section class="panel">
+    <div class="wiki-content" th:utext="${renderedContent}"
+         style="word-break:break-word;line-height:1.7;font-size:0.95rem">내용</div>
+  </section>
+</main></div>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<aside class="sidebar" th:fragment="sidebar(currentMenu)" aria-label="주요 메뉴">
+  <div class="sidebar-top">
+    <a class="brand" th:href="@{/dashboard}">
+      <span class="brand-mark">M</span>
+      <span class="sidebar-text"><strong>MOA</strong><small>인프라 관리 콘솔</small></span>
+    </a>
+    <button class="sidebar-toggle" type="button" data-sidebar-toggle aria-label="메뉴 접기" aria-expanded="true" title="메뉴 접기">-</button>
+  </div>
+  <nav class="nav">
+
+    <!-- 알림 벨(드롭다운) -->
+    <details class="nav-notif" style="margin-bottom:.3rem">
+      <summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:.6rem;padding:.55rem .75rem;border-radius:8px">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+        <span class="sidebar-text" th:text="#{nav.notifications}">알림</span>
+        <span th:if="${unreadNotifications > 0}" class="pill" th:text="${unreadNotifications}" style="margin-left:auto">0</span>
+      </summary>
+      <div style="padding:.2rem .75rem .5rem">
+        <p th:if="${#lists.isEmpty(recentNotifications)}" class="sidebar-text subcopy" style="margin:.3rem 0">새 알림이 없습니다.</p>
+        <a th:each="n : ${recentNotifications}" th:href="${n.link != null ? n.link : '/notifications'}"
+           class="sidebar-text" style="display:block;padding:.25rem 0;text-decoration:none;color:inherit;font-size:.82rem"
+           th:classappend="${!n.read} ? '' : ''" th:text="${n.title}">알림</a>
+        <a th:href="@{/notifications}" class="sidebar-text small-link" style="font-size:.8rem">전체 보기</a>
+      </div>
+    </details>
+
+    <!-- 플랫폼 콘솔 (SYSTEM_ADMIN) -->
+    <th:block th:if="${isPlatformConsole}">
+      <p class="nav-label" th:text="#{nav.group.platform}">플랫폼</p>
+      <a th:href="@{/admin}" th:classappend="${currentMenu == 'platform-overview'} ? 'active'" title="플랫폼 개요"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span class="sidebar-text" th:text="#{nav.platformOverview}">플랫폼 개요</span></a>
+      <a th:href="@{/admin/tenants}" th:classappend="${currentMenu == 'tenants'} ? 'active'" title="기관(테넌시) 관리"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M9 11h.01M15 11h.01"/></svg></span><span class="sidebar-text" th:text="#{nav.tenants}">기관 관리</span></a>
+      <a th:href="@{/admin/operators}" th:classappend="${currentMenu == 'operators'} ? 'active'" title="운영자 계정"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c.7-4 3.4-6 8-6s7.3 2 8 6"/></svg></span><span class="sidebar-text" th:text="#{nav.operators}">운영자 계정</span></a>
+      <p class="nav-label" th:text="#{nav.group.securityOps}">보안 및 운영</p>
+      <a th:href="@{/admin/audit}" th:classappend="${currentMenu == 'platform-audit'} ? 'active'" title="플랫폼 감사 로그"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6M9 7h3"/></svg></span><span class="sidebar-text" th:text="#{nav.audit}">감사 로그</span></a>
+      <a th:href="@{/admin/system}" th:classappend="${currentMenu == 'platform-system'} ? 'active'" title="시스템 상태"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m6 15 4-4 3 2 5-6"/></svg></span><span class="sidebar-text" th:text="#{nav.system}">시스템 상태</span></a>
+      <p class="nav-label" th:text="#{nav.group.comm}">소통</p>
+      <a th:href="@{/admin/mail}" th:classappend="${currentMenu == 'platform-mail'} ? 'active'" title="메일 발송"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><span class="sidebar-text" th:text="#{nav.mail}">메일</span></a>
+    </th:block>
+
+    <!-- 기관 워크스페이스 (기관 운영자/사용자) — 기관 보유 기능·역할에 따라 노출. 순서: 현황→업무 도메인→조직→개인→접속→소통→보안→감사. -->
+    <th:block th:unless="${isPlatformConsole}" th:with="showPersonal=${(!inTenantContext and !isInfraManager and !isAssetManager) or isDepartmentLeader}">
+      <!-- 1) 현황 (관리자·매니저) -->
+      <p class="nav-label" th:if="${inTenantContext or isInfraManager or isAssetManager}" th:text="#{nav.group.status}">현황</p>
+      <a th:if="${inTenantContext or isInfraManager or isAssetManager}" th:href="@{/dashboard}" th:classappend="${currentMenu == 'dashboard'} ? 'active'" title="대시보드"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span class="sidebar-text" th:text="#{nav.dashboard}">대시보드</span></a>
+      <a th:if="${isAssetManager}" th:href="@{/expirations}" th:classappend="${currentMenu == 'expirations'} ? 'active'" title="만료/갱신 통합(라이선스·접근권한·구독)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="sidebar-text" th:text="#{nav.expirations}">만료 관리</span></a>
+
+      <!-- 2) 서버 관리 (인프라 관리자) -->
+      <p class="nav-label" th:if="${isInfraManager and tenantFeatures.contains('ASSETS')}" th:text="#{nav.group.assets}">서버 관리</p>
+      <a th:if="${isInfraManager and tenantFeatures.contains('ASSETS')}" th:href="@{/servers}" th:classappend="${currentMenu == 'servers' or currentMenu == 'assets'} ? 'active'" title="서버"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6"/></svg></span><span class="sidebar-text" th:text="#{nav.servers}">서버</span></a>
+      <a th:if="${isInfraManager and tenantFeatures.contains('ASSETS')}" th:href="@{/server-status}" th:classappend="${currentMenu == 'server-status'} ? 'active'" title="서버 현황"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m6 15 4-4 3 2 5-6"/></svg></span><span class="sidebar-text" th:text="#{nav.serverStatus}">서버 현황</span></a>
+
+      <!-- 3) 제어 (인프라 관리자) -->
+      <p class="nav-label" th:if="${isInfraManager and (tenantFeatures.contains('SOLUTIONS') or tenantFeatures.contains('CREDENTIALS'))}" th:text="#{nav.group.control}">제어</p>
+      <a th:if="${isInfraManager and tenantFeatures.contains('SOLUTIONS')}" th:href="@{/solutions}" th:classappend="${currentMenu == 'solutions'} ? 'active'" title="솔루션 제어"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4a7 7 0 1 0 6 6"/><path d="M14 4v6h6"/><path d="M12 12 8 16"/></svg></span><span class="sidebar-text" th:text="#{nav.solutions}">솔루션 제어</span></a>
+      <a th:if="${isInfraManager and tenantFeatures.contains('SOLUTIONS')}" th:href="@{/solutions} + '#seq'" th:classappend="${currentMenu == 'solution-sequences'} ? 'active'" title="기동 순서(솔루션 제어 화면의 탭)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><path d="M6 8v8M8 6h6a4 4 0 0 1 4 4v0M8 18h6a4 4 0 0 0 4-4"/></svg></span><span class="sidebar-text" th:text="#{nav.sequences}">기동 순서</span></a>
+      <a th:if="${isInfraManager}" th:href="@{/maintenance}" th:classappend="${currentMenu == 'maintenance'} ? 'active'" title="점검/작업 일정 · 유지보수 담당자(관련자에게 알림·메일)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 1 5.4-5.4l-2.6 2.6-2-2 2.6-2.6z"/></svg></span><span class="sidebar-text" th:text="#{nav.maintenance}">점검 일정</span></a>
+      <a th:if="${isInfraManager and tenantFeatures.contains('CREDENTIALS')}" th:href="@{/credentials}" th:classappend="${currentMenu == 'credentials'} ? 'active'" title="자격증명(볼트)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M17 12v4M21 12v3"/></svg></span><span class="sidebar-text" th:text="#{nav.credentials}">자격증명</span></a>
+
+      <!-- 4) 접근 권한 (인프라 관리자) -->
+      <p class="nav-label" th:if="${isInfraManager}" th:text="#{nav.group.permissions}">접근 권한</p>
+      <a th:if="${isInfraManager}" th:href="@{/permissions}" th:classappend="${currentMenu == 'permissions'} ? 'active'" title="접근 권한 부여(그룹/사용자 × 자산)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><circle cx="12" cy="16" r="1.3"/></svg></span><span class="sidebar-text" th:text="#{nav.permissions}">접근 권한</span></a>
+
+      <!-- 5) 자산 관리 (자산 관리자) -->
+      <p class="nav-label" th:if="${isAssetManager and tenantFeatures.contains('INVENTORY')}" th:text="#{nav.group.inventory}">자산 관리</p>
+      <a th:if="${isAssetManager and tenantFeatures.contains('INVENTORY')}" th:href="@{/inventory}" th:classappend="${currentMenu == 'inventory'} ? 'active'" title="실물·SW·렌탈·보증 자산(배정·추적·회수)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg></span><span class="sidebar-text" th:text="#{nav.inventory}">자산</span></a>
+      <a th:if="${isAssetManager and tenantFeatures.contains('RESERVATION')}" th:href="@{/shared-resources}" th:classappend="${currentMenu == 'shared-resources'} ? 'active'" title="공유자산 등록(차량·회의실·좌석)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 4v4M16 4v4"/></svg></span><span class="sidebar-text" th:text="#{nav.sharedResources}">공유자산</span></a>
+
+      <!-- 6) 사용자·조직 (기관 관리자 + 부서장 팀관리 + 온보딩 구성 매니저) -->
+      <p class="nav-label" th:if="${inTenantContext or isDepartmentLeader}" th:text="#{nav.group.users}">사용자 관리</p>
+      <a th:if="${inTenantContext}" th:href="@{/users}" th:classappend="${currentMenu == 'users'} ? 'active'" title="사용자 관리"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c.7-4 3.4-6 8-6s7.3 2 8 6"/></svg></span><span class="sidebar-text" th:text="#{nav.users}">사용자 관리</span></a>
+      <a th:if="${inTenantContext}" th:href="@{/invitations}" th:classappend="${currentMenu == 'invitations'} ? 'active'" title="이메일 초대(부서·역할·온보딩 지정, 다중 초대)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/><path d="M17 3v4M19 5h-4"/></svg></span><span class="sidebar-text" th:text="#{nav.invitations}">사용자 초대</span></a>
+      <a th:if="${inTenantContext}" th:href="@{/groups}" th:classappend="${currentMenu == 'groups'} ? 'active'" title="그룹 관리"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c.6-3.2 2.8-5 6-5s5.4 1.8 6 5"/></svg></span><span class="sidebar-text" th:text="#{nav.groups}">그룹</span></a>
+      <a th:if="${isDepartmentLeader or inTenantContext}" th:href="@{/team}" th:classappend="${currentMenu == 'team'} ? 'active'" title="팀 관리(부서장) — 팀원 접근 현황·온보딩 적용·역할 위임"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="3"/><path d="M4 21c.6-3.5 2.6-5 5-5s4.4 1.5 5 5"/><path d="M15 11l2 2 4-4"/></svg></span><span class="sidebar-text" th:text="#{nav.team}">팀 관리</span></a>
+      <!-- 6-1) 온보딩 (자원 담당 관리자: 인프라·자산) — '사용자 관리' 그룹과 분리해 단독 라벨로. -->
+      <p class="nav-label" th:if="${isInfraManager or isAssetManager}" th:text="#{nav.group.onboarding}">온보딩</p>
+      <a th:if="${isInfraManager or isAssetManager}" th:href="@{/onboarding}" th:classappend="${currentMenu == 'onboarding'} ? 'active'" title="입사 온보딩 템플릿 구성(자원을 아는 관리자)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M15 8h6M18 5v6M3 21c.7-4 3-6 6-6s5.3 2 6 6"/></svg></span><span class="sidebar-text" th:text="#{nav.onboarding}">입사 온보딩</span></a>
+
+      <!-- 7) 개인(소비자 메뉴). 순수 기관 관리자에겐 숨김. 겸직·일반 사용자는 노출 → USER는 워크스페이스가 최상단. -->
+      <th:block>
+      <p class="nav-label" th:if="${showPersonal}" th:text="#{nav.group.personal}">개인</p>
+      <a th:if="${showPersonal}" th:href="@{/my/workspace}" th:classappend="${currentMenu == 'my-workspace'} ? 'active'" title="내게 배정된 자산·솔루션·온보딩 할 일"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 21h8M12 18v3"/></svg></span><span class="sidebar-text" th:text="#{nav.myWorkspace}">내 워크스페이스</span></a>
+      <a th:if="${showPersonal and tenantFeatures.contains('WIKI')}" th:href="@{/assistant}" th:classappend="${currentMenu == 'assistant'} ? 'active'" title="사내 지식봇(위키 문서 근거 Q&amp;A)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a7 7 0 0 1 7 7c0 3-2 4.5-3 6H8c-1-1.5-3-3-3-6a7 7 0 0 1 7-7z"/><path d="M9 20h6M10 22h4"/></svg></span><span class="sidebar-text" th:text="#{nav.assistant}">지식봇</span></a>
+      <a th:if="${showPersonal and tenantFeatures.contains('RESERVATION')}" th:href="@{/reservations}" th:classappend="${currentMenu == 'reservations'} ? 'active'" title="공유자산 예약(차량·회의실·좌석)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M8 14h3M8 17h6"/></svg></span><span class="sidebar-text" th:text="#{nav.reservations}">예약</span></a>
+      <a th:if="${showPersonal and tenantFeatures.contains('CREDENTIALS')}" th:href="@{/my/credentials}" th:classappend="${currentMenu == 'my-credentials'} ? 'active'" title="나에게 공유된 자격증명(공용 와이파이·프린터·공유기 id/pw)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M17 12v4M21 12v3"/></svg></span><span class="sidebar-text" th:text="#{nav.myCredentials}">공유받은 계정/비밀번호</span></a>
+      </th:block>
+
+      <!-- 8) 접속 (일반 사용자) -->
+      <p class="nav-label" th:if="${showPersonal and tenantFeatures.contains('SERVER_ACCESS')}" th:text="#{nav.group.access}">접속</p>
+      <a th:if="${showPersonal and tenantFeatures.contains('SERVER_ACCESS')}" th:href="@{/portal}" th:classappend="${currentMenu == 'portal'} ? 'active'" title="내가 접속 가능한 서버"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span><span class="sidebar-text" th:text="#{nav.portal}">서버 접속</span></a>
+      <a th:if="${showPersonal and tenantFeatures.contains('SERVER_ACCESS')}" th:href="@{/access-requests}" th:classappend="${currentMenu == 'access-requests'} ? 'active'" title="임시 접근 요청(JIT)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg></span><span class="sidebar-text">접근 요청</span></a>
+      <a th:if="${isInfraManager or inTenantContext or isDepartmentLeader}" th:href="@{/access-approvals}" th:classappend="${currentMenu == 'access-approvals'} ? 'active'" title="임시 접근 요청 승인(JIT)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span class="sidebar-text">접근 승인</span></a>
+      <a th:if="${showPersonal and tenantFeatures.contains('SOLUTIONS')}" th:href="@{/my-solutions}" th:classappend="${currentMenu == 'my-solutions'} ? 'active'" title="배정받은 솔루션 제어"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4a7 7 0 1 0 6 6"/><path d="M14 4v6h6"/><path d="M12 12 8 16"/></svg></span><span class="sidebar-text" th:text="#{nav.mySolutions}">내 솔루션</span></a>
+
+      <!-- 9) 소통 (전원) -->
+      <p class="nav-label" th:text="#{nav.group.comm}">소통</p>
+      <a th:href="@{/notices}" th:classappend="${currentMenu == 'notices'} ? 'active'" title="공지사항"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a3 3 0 0 1 0 6"/></svg></span><span class="sidebar-text" th:text="#{nav.notices}">공지사항</span></a>
+      <a th:if="${tenantFeatures.contains('WIKI')}" th:href="@{/wiki}" th:classappend="${currentMenu == 'wiki'} ? 'active'" title="위키(기관 내부 문서)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M14 4v5h5M8 13h8M8 17h5"/></svg></span><span class="sidebar-text" th:text="#{nav.wiki}">위키</span></a>
+      <a th:if="${inTenantContext}" th:href="@{/mail}" th:classappend="${currentMenu == 'mail'} ? 'active'" title="메일 발송"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><span class="sidebar-text" th:text="#{nav.mailSend}">메일 발송</span></a>
+      <a th:if="${inTenantContext}" th:href="@{/ai-settings}" th:classappend="${currentMenu == 'ai-settings'} ? 'active'" title="AI 설정"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.5"/></svg></span><span class="sidebar-text" th:text="#{nav.aiSettings}">AI 설정</span></a>
+
+      <!-- 10) 보안 (전원) -->
+      <p class="nav-label">보안</p>
+      <a th:href="@{/security/2fa}" th:classappend="${currentMenu == 'two-factor'} ? 'active'" title="2단계 인증(Google Authenticator)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><path d="M12 15v2"/></svg></span><span class="sidebar-text" th:text="#{nav.twoFactor}">2단계 인증</span></a>
+
+      <!-- 11) 보안 및 감사 (기관 관리자) -->
+      <p class="nav-label" th:if="${inTenantContext}" th:text="#{nav.group.securityAudit}">보안 및 감사</p>
+      <a th:if="${inTenantContext}" th:href="@{/audit}" th:classappend="${currentMenu == 'audit'} ? 'active'" title="감사 로그"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6M9 7h3"/></svg></span><span class="sidebar-text" th:text="#{nav.audit}">감사 로그</span></a>
+      <a th:if="${inTenantContext}" th:href="@{/access-history}" th:classappend="${currentMenu == 'access-history'} ? 'active'" title="접속 이력"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="sidebar-text" th:text="#{nav.accessHistory}">접속 이력</span></a>
+      <a th:if="${inTenantContext}" th:href="@{/access-review}" th:classappend="${currentMenu == 'access-review'} ? 'active'" title="접근 현황(누가 어느 자원에 접근)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="sidebar-text" th:text="#{nav.accessReview}">접근 현황</span></a>
+    </th:block>
+
+  </nav>
+  <div class="operator"><span class="sidebar-text">로그인 사용자</span><strong class="sidebar-text">관리자</strong><span class="nav-icon operator-icon">●</span></div>
+  <form th:action="@{/logout}" method="post" class="logout-form" style="margin:0.5rem 0.75rem;">
+    <button type="submit" class="logout-btn danger-action" title="로그아웃"
+            style="width:100%;display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.75rem;border-radius:8px;font:inherit;font-weight:800;cursor:pointer;">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></span>
+      <span class="sidebar-text" th:text="#{nav.logout}">로그아웃</span>
+    </button>
+  </form>
+  <script th:src="@{/js/sidebar-toggle.js}" defer></script>
+</aside>

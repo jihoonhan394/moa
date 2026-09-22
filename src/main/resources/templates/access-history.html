@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 접속 이력</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('access-history')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">기관 / 접속 이력</p>
+      <h1>접속 이력</h1>
+      <p class="subcopy">기관 사용자의 <b>로그인 이력</b>과, 서버 자산 <b>접속 세션</b>을 봅니다. (조회 전용)</p>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">로그인</p><h2>로그인 이력</h2></div>
+      <span class="pill" th:text="${#lists.size(logins)} + '건'">0건</span></div>
+    <p th:if="${#lists.isEmpty(logins)}" class="subcopy">기록된 로그인 이력이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(logins)}" class="data-table table-scroll">
+      <div class="table-row table-head" style="grid-template-columns:200px 1.4fr 130px 160px">
+        <span>시각</span><span>사용자</span><span>역할</span><span>IP</span>
+      </div>
+      <div class="table-row" style="grid-template-columns:200px 1.4fr 130px 160px" th:each="l : ${logins}">
+        <span th:text="${#temporals.format(l.at, 'yyyy-MM-dd HH:mm')}">시각</span>
+        <strong th:text="${l.user}">사용자</strong>
+        <span th:text="${l.role}"
+              th:style="${l.role != '일반 사용자' and l.role != '-'} ? 'color:#1559d6;font-weight:800' : 'color:#7a869a'">역할</span>
+        <span th:text="${l.ip}" style="color:#7a869a;font-family:monospace">IP</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">서버 접속</p><h2>자산 접속 세션(SSH/RDP)</h2></div>
+      <span class="pill" th:text="${total} + '건'">0건</span></div>
+    <p th:if="${capped}" class="subcopy">최근 200건만 표시합니다.</p>
+    <p th:if="${#lists.isEmpty(sessions)}" class="subcopy">기록된 접속 이력이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(sessions)}" class="data-table table-scroll">
+      <div class="table-row table-head">
+        <span>시각</span><span>사용자</span><span>자산</span><span>프로토콜</span>
+        <span>상태</span><span>클라이언트 IP</span><span>실패코드</span>
+      </div>
+      <div class="table-row" th:each="s : ${sessions}">
+        <span th:text="${s.createdAt}">시각</span>
+        <span th:text="${userNames.getOrDefault(s.userId, '(알 수 없음)')}">사용자</span>
+        <span th:text="${assetNames.getOrDefault(s.assetId, '(삭제된 자산)')}">자산</span>
+        <span th:text="${s.protocol}">SSH</span>
+        <b th:classappend="${s.status.name() == 'CONNECTED' or s.status.name() == 'CLOSED'} ? 'good' : (${s.status.name() == 'FAILED'} ? 'warn' : '')"
+           th:text="${s.status}">상태</b>
+        <span th:text="${s.clientIp != null ? s.clientIp : '-'}" style="color:#7a869a">IP</span>
+        <span th:text="${s.failureCode != null ? s.failureCode : '-'}" style="color:#7a869a">실패</span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

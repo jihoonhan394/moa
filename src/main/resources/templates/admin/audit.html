@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 플랫폼 감사 로그</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('platform-audit')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">플랫폼 / 감사 로그</p>
+      <h1>플랫폼 감사 로그</h1>
+      <p class="subcopy">기관 생성·정지·전환, 운영자 계정 등 플랫폼(전역) 행위 이력입니다. (조회 전용)</p>
+    </div>
+  </header>
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">이력</p><h2>전역 행위 기록</h2></div><span class="pill" th:text="${#lists.size(logs)} + '건'">0건</span></div>
+    <p th:if="${#lists.isEmpty(logs)}" class="subcopy">기록된 플랫폼 감사 로그가 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(logs)}" class="data-table table-scroll">
+      <div class="table-row table-head"><span>시각</span><span>행위</span><span>대상</span><span>결과</span><span>상세</span></div>
+      <div class="table-row" th:each="log : ${logs}">
+        <span th:text="${log.createdAt}">시각</span>
+        <strong th:text="${log.action}">ACTION</strong>
+        <span th:text="${log.targetType != null ? log.targetType : '-'}">대상</span>
+        <b th:classappend="${log.result.name() == 'SUCCESS'} ? 'good' : 'warn'" th:text="${log.result}">SUCCESS</b>
+        <span th:text="${log.message}" style="color:#7a869a">상세</span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

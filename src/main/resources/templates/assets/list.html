@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 자산 관리</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('assets')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">서버 관리</p>
+      <h1>서버</h1>
+      <p class="subcopy">서버·웹 서비스 등 <b>접속 대상</b>을 등록·관리합니다. 소유팀을 지정하면 그 팀원이 접근합니다.
+        (실물·SW·렌탈·보증 자산은 '자산' 메뉴)</p>
+    </div>
+    <a class="button primary" th:href="@{/servers/new}">서버 등록</a>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">자산 목록</p><h2>등록 자산</h2></div>
+      <span class="pill" th:text="${#lists.size(assets)} + '개'">0개</span></div>
+
+    <!-- 데이터 없을 때 -->
+    <p th:if="${#lists.isEmpty(assets)}" class="subcopy" style="margin:.6rem 0">
+      등록된 자산이 없습니다. 오른쪽 위 <b>자산 등록</b>으로 서버·웹사이트를 추가하세요.</p>
+
+    <!-- 실제 등록 자산 -->
+    <div th:unless="${#lists.isEmpty(assets)}" class="data-table table-scroll">
+      <div class="table-row table-head" style="grid-template-columns:1.4fr .7fr 1.5fr 1fr .6fr .9fr">
+        <span>자산명</span><span>종류</span><span>연결</span><span>소유팀</span><span>상태</span><span>관리</span>
+      </div>
+      <div class="table-row" th:each="a : ${assets}" style="grid-template-columns:1.4fr .7fr 1.5fr 1fr .6fr .9fr">
+        <strong><a th:href="@{/assets/{id}/edit(id=${a.id})}" th:text="${a.name}">이름</a></strong>
+        <span th:text="${a.assetType.name() == 'SERVER'} ? '서버' : '웹사이트'">종류</span>
+        <span style="color:#7a869a" th:text="${a.assetType.name() == 'SERVER'}
+              ? (${a.host} + ':' + ${a.port} + ' · ' + ${a.protocol})
+              : (${a.url} ?: '-')">연결</span>
+        <span style="color:#7a869a" th:text="${a.ownerGroupId != null ? groupNames.getOrDefault(a.ownerGroupId, '(삭제된 그룹)') : '—'}">소유팀</span>
+        <b th:classappend="${a.status.name() == 'ACTIVE'} ? 'good' : 'bad'"
+           th:text="${a.status.name() == 'ACTIVE'} ? '활성' : '비활성'">상태</b>
+        <span class="table-actions">
+          <a class="button" th:href="@{/assets/{id}/edit(id=${a.id})}">수정</a>
+          <form method="post" th:action="@{/assets/{id}/delete(id=${a.id})}" style="display:inline"
+                onsubmit="return confirm('이 자산을 삭제할까요?')">
+            <button class="button" type="submit">삭제</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

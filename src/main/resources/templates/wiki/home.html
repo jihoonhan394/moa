@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 위키</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('wiki')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow">소통 / 위키</p><h1>위키</h1>
+      <p class="subcopy">부서·프로젝트별 공간(폴더)으로 문서를 관리합니다. 공간마다 열람·편집 권한이 다릅니다.</p></div>
+  </header>
+
+  <p th:if="${wikiError}" class="modal-note" style="color:#c0392b" th:text="${wikiError}">오류</p>
+
+  <section class="panel">
+    <form method="get" th:action="@{/wiki/search}" style="display:flex;gap:0.5rem;max-width:640px">
+      <input type="text" name="q" maxlength="100" placeholder="위키 검색 (제목·본문)" required style="flex:1">
+      <button class="button" type="submit">검색</button>
+    </form>
+  </section>
+
+  <section class="panel" th:if="${canCreateTop}">
+    <div class="panel-head"><div><p class="eyebrow">최상위 폴더</p><h2>새 공간 만들기</h2></div></div>
+    <form method="post" th:action="@{/wiki/spaces}" th:object="${spaceForm}" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;max-width:900px">
+      <input type="text" th:field="*{name}" maxlength="100" placeholder="공간 이름 (예: 영업위키)" required style="flex:1;min-width:180px">
+      <input type="text" th:field="*{description}" maxlength="500" placeholder="설명 (선택)" style="flex:2;min-width:200px">
+      <select name="ownerUserId" aria-label="부서장(오너)">
+        <option value="">부서장(오너) 지정 안 함</option>
+        <option th:each="u : ${tenantUsers}" th:value="${u.id}" th:text="${u.name + ' 부서장'}">사용자</option>
+      </select>
+      <button class="button primary" type="submit">만들기</button>
+    </form>
+    <p class="subcopy" style="margin-top:.5rem">최상위 폴더는 기관 관리자만 만들 수 있고, 오너(부서장)를 지정하면 그 사람이 하위 폴더·권한을 관리합니다.</p>
+  </section>
+
+  <section class="panel" th:if="${!#lists.isEmpty(favorites)}">
+    <div class="panel-head"><div><p class="eyebrow">★ 즐겨찾기</p><h2>내 즐겨찾기</h2></div>
+      <span class="pill" th:text="${#lists.size(favorites)} + '개'">0개</span></div>
+    <div class="data-table">
+      <div class="table-row" th:each="f : ${favorites}">
+        <a th:href="@{'/wiki/' + ${f.pageId}}" style="font-weight:600" th:text="${f.title}">제목</a>
+        <span class="pill" th:text="${f.spaceName}">공간</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">내 공간</p><h2>접근 가능한 위키 공간</h2></div>
+      <span class="pill" th:text="${#lists.size(spaces)} + '개'">0개</span></div>
+    <p th:if="${#lists.isEmpty(spaces)}" class="subcopy">접근 가능한 위키 공간이 없습니다. 관리자에게 문의하세요.</p>
+    <div th:unless="${#lists.isEmpty(spaces)}" class="data-table">
+      <div class="table-row" th:each="s : ${spaces}">
+        <div><a th:href="@{'/wiki/spaces/' + ${s.id}}" style="font-weight:600" th:text="${s.name}">공간</a>
+          <small th:if="${s.description != null}" th:text="${s.description}" style="display:block;color:#7a869a">설명</small></div>
+        <a class="button" th:href="@{'/wiki/spaces/' + ${s.id}}">열기</a>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

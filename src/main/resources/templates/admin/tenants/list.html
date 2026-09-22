@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 기관 관리</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('tenants')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">플랫폼 / 기관 관리</p>
+      <h1>기관(테넌시) 관리</h1>
+      <p class="subcopy">기관을 등록하고, 상세에서 구독 기간·사용 기능·대표 관리자를 설정합니다.</p>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">새 기관</p><h2>기관 등록</h2></div></div>
+    <form method="post" th:action="@{/admin/tenants}" th:object="${tenantForm}" class="asset-toolbar">
+      <input type="text" th:field="*{name}" placeholder="기관명 (예: 카카오)" required>
+      <input type="text" th:field="*{code}" placeholder="기관 코드 (예: KAKAO)" required style="text-transform:uppercase">
+      <button class="button primary" type="submit">기관 등록</button>
+      <p class="subcopy" th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="color:#c0392b">이름 오류</p>
+      <p class="subcopy" th:if="${#fields.hasErrors('code')}" th:errors="*{code}" style="color:#c0392b">코드 오류</p>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">기관 목록</p><h2>등록된 기관</h2></div><span class="pill" th:text="${#lists.size(tenants)} + '개'">0개</span></div>
+    <p th:if="${#lists.isEmpty(tenants)}" class="subcopy">등록된 기관이 없습니다. 위에서 새 기관을 등록하세요.</p>
+    <div th:unless="${#lists.isEmpty(tenants)}" class="data-table compact">
+      <div class="table-row table-head"><span>기관</span><span>상태</span><span>관리</span></div>
+      <div class="table-row" th:each="tenant : ${tenants}">
+        <div>
+          <strong><a th:href="@{'/admin/tenants/' + ${tenant.id}}" th:text="${tenant.code}">MTCM</a></strong>
+          <small th:text="${tenant.name}" style="display:block;color:#7a869a">기관명</small>
+        </div>
+        <span>
+          <span class="state" th:classappend="${tenant.status.name() == 'ACTIVE'} ? 'online' : 'offline'"></span>
+          <span th:text="${tenant.status}">ACTIVE</span>
+          <span th:if="${tenant.isExpired(today)}" style="color:#c0392b;font-weight:600"> · 만료</span>
+          <span th:if="${tenant.isExpiringSoon(today)}" style="color:#e67e22;font-weight:600"
+                th:text="' · 만기임박(' + ${tenant.subscriptionEnd} + ')'"> · 만기임박</span>
+        </span>
+        <span class="table-actions">
+          <a class="button" th:href="@{'/admin/tenants/' + ${tenant.id}}">상세 · 설정</a>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

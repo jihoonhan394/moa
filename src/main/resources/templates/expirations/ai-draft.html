@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 만료 AI 초안</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('expirations')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">만료 관리 / AI 영향분석</p>
+      <h1 th:text="${label}">대상</h1>
+      <p class="subcopy">
+        <span th:text="${category}">분류</span> ·
+        만료일 <span th:text="${expiresOn}">-</span>
+        (<span th:text="${daysLeft < 0} ? ('만료 ' + (${daysLeft} * -1) + '일 지남') : ('D-' + ${daysLeft})">D-3</span>)
+      </p>
+    </div>
+    <div class="top-actions"><a class="button" th:href="@{/expirations}">만료 목록으로</a></div>
+  </header>
+
+  <section class="panel" th:if="${error != null}">
+    <p class="subcopy" style="color:#c0392b" th:text="${error}">오류</p>
+    <a class="button" th:href="@{/ai-settings}">AI 설정으로</a>
+  </section>
+
+  <section class="panel" th:if="${draft != null}">
+    <div class="panel-head"><div><p class="eyebrow">AI 생성</p><h2>영향분석 · 후속조치 초안</h2></div></div>
+    <p class="subcopy">AI가 확인된 사실만 근거로 작성한 <b>초안</b>입니다. 실행 전 담당자가 검토·수정하세요.</p>
+    <pre style="white-space:pre-wrap;line-height:1.6;font-family:inherit;background:#f7f8fa;padding:1rem;border-radius:8px" th:text="${draft}">초안</pre>
+  </section>
+</main></div>
+</body>
+</html>

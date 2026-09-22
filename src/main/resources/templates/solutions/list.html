@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 솔루션 제어</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('solutions')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">서버 관리 / 솔루션</p>
+      <h1>솔루션 · 기동 순서</h1>
+      <p class="subcopy">서버의 서비스·데몬·컨테이너·명령을 등록해 원격 start/stop/status 하고, 여러 솔루션을 정해진 순서로 실행(기동 순서)합니다.</p>
+    </div>
+    <div class="top-actions"><a class="button" th:href="@{/solutions/categories}">카테고리 관리</a></div>
+  </header>
+
+  <div class="seg-tabs" style="display:flex;gap:.4rem;margin:.2rem 0 1rem">
+    <button type="button" class="button seg-tab active" data-tab="control">솔루션 제어</button>
+    <button type="button" class="button seg-tab" data-tab="seq">기동 순서</button>
+  </div>
+
+  <div id="tab-control" class="tab-panel">
+
+  <p th:if="${controlMessage}" class="modal-note" th:text="${controlMessage}">결과</p>
+  <p th:if="${controlError}" class="modal-note" th:text="${controlError}">오류</p>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">등록</p><h2>솔루션 등록</h2></div></div>
+    <form method="post" th:action="@{/solutions}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:720px;">
+      <div class="asset-toolbar">
+        <select name="assetId" required aria-label="서버 자산">
+          <option value="" disabled selected>서버 자산</option>
+          <option th:each="a : ${assets}" th:value="${a.id}" th:text="${a.name + ' (' + (a.host != null ? a.host : '-') + ')'}">서버</option>
+        </select>
+        <input type="text" name="name" maxlength="100" placeholder="솔루션 이름" required>
+        <select name="type" required aria-label="유형">
+          <option th:each="t : ${types}" th:value="${t}" th:text="${t}">LINUX_DAEMON</option>
+        </select>
+      </div>
+      <div class="asset-toolbar">
+        <input type="text" name="identifier" maxlength="500" placeholder="식별자 (서비스명 / 유닛명 / 컨테이너명 / 앱이름)" required>
+        <select name="category" aria-label="카테고리">
+          <option value="">카테고리 (선택)</option>
+          <option th:each="n : ${solutionCategories}" th:value="${n.path}"
+                  th:text="${#strings.repeat('— ', n.depth) + n.name}">그룹웨어 / WAS</option>
+        </select>
+      </div>
+      <p class="subcopy" style="margin:0">서버·이름·유형·식별자만 넣으면 등록됩니다. 나머지는 기본값으로 충분해요.</p>
+      <details style="border:1px solid var(--line);border-radius:8px;padding:.45rem .75rem">
+        <summary style="cursor:pointer;font-weight:700;color:#5a6b8c">고급 설정 (자격증명 · 상태 · health · 사용자 지정 명령 · 제어 채널 · 소유팀)</summary>
+        <div style="display:grid;gap:.5rem;margin-top:.6rem">
+          <div class="asset-toolbar">
+            <select name="credentialId" aria-label="자격증명">
+              <option value="">자격증명(선택)</option>
+              <option th:each="c : ${credentials}" th:value="${c.id}" th:text="${c.name + ' (' + c.username + ')'}">cred</option>
+            </select>
+            <select name="status" aria-label="상태">
+              <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}">ACTIVE</option>
+            </select>
+          </div>
+          <div class="asset-toolbar">
+            <select name="healthCheckType" aria-label="health 유형">
+              <option th:each="h : ${healthTypes}" th:value="${h}" th:text="${h}">NONE</option>
+            </select>
+            <input type="text" name="healthCheckTarget" maxlength="500" placeholder="health 대상(포트/명령, 선택)">
+          </div>
+          <div class="asset-toolbar">
+            <input type="text" name="startCommand" maxlength="1000" placeholder="사용자 지정(CUSTOM) start 명령">
+            <input type="text" name="stopCommand" maxlength="1000" placeholder="CUSTOM stop 명령">
+            <input type="text" name="statusCommand" maxlength="1000" placeholder="CUSTOM status 명령">
+          </div>
+          <div class="asset-toolbar">
+            <select name="controlProtocol" aria-label="제어 채널">
+              <option th:each="p : ${protocols}" th:value="${p}" th:text="${p}">SSH</option>
+            </select>
+            <input type="number" name="controlPort" min="1" max="65535" placeholder="제어 포트(선택, WinRM 기본 5985)">
+          </div>
+          <div class="asset-toolbar">
+            <select name="ownerGroupId" aria-label="소유팀(그룹)">
+              <option value="">소유팀 없음 (인프라 전용)</option>
+              <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}">부서</option>
+            </select>
+            <span class="subcopy" style="align-self:center">소유팀 지정 시 그 팀원이 개인 배정 없이도 운영(인프라는 전체 조회).</span>
+          </div>
+        </div>
+      </details>
+      <div><button class="button primary" type="submit">등록</button></div>
+    </form>
+    <p class="subcopy">유형별 식별자: LINUX_DAEMON=systemd 유닛, WINDOWS_SERVICE=서비스명, WINDOWS_EXE=프로세스명(경로는 start 명령), DOCKER_CONTAINER=컨테이너명, CUSTOM_COMMAND=아래 명령 사용.</p>
+    <p class="subcopy">제어 채널: 리눅스=SSH, 윈도우=SSH(OpenSSH) 또는 WINRM. WinRM은 대상에 WS-Man이 켜져 있어야 하며 기본 포트 5985(HTTP)/5986(HTTPS).</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">등록된 솔루션</p><h2>제어</h2></div><span class="pill" th:text="${#lists.size(solutions)} + '개'">0개</span></div>
+    <p th:if="${#lists.isEmpty(solutions)}" class="subcopy">등록된 솔루션이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(solutions)}" class="data-table">
+      <div class="table-row table-head"><span>이름</span><span>유형</span><span>카테고리</span><span>소유팀</span><span>제어</span></div>
+      <div class="table-row" th:each="sol : ${solutions}">
+        <strong><a th:href="@{'/solutions/' + ${sol.id}}" th:text="${sol.name}">이름</a></strong>
+        <span th:text="${sol.type}">유형</span>
+        <span th:text="${sol.category != null ? sol.category : '—'}" style="color:#7a869a">카테고리</span>
+        <span th:text="${sol.ownerGroupId != null ? groupNames.getOrDefault(sol.ownerGroupId, '(삭제된 그룹)') : '—'}" style="color:#7a869a">소유팀</span>
+        <span class="table-actions">
+          <a class="button" th:href="@{'/solutions/' + ${sol.id}}" title="운영 콘솔(매뉴얼·업체·이력)">콘솔</a>
+          <a class="button" th:href="@{'/solutions/' + ${sol.id} + '/edit'}" title="등록값 수정(자격증명·명령 등)">수정</a>
+          <form th:each="act : ${actions}" method="post" th:action="@{'/solutions/' + ${sol.id} + '/control'}" style="display:inline">
+            <input type="hidden" name="action" th:value="${act}">
+            <button class="button" type="submit" th:text="${act}">START</button>
+          </form>
+          <details style="display:inline-block;margin-left:.4rem">
+            <summary class="button" style="list-style:none;cursor:pointer">소유팀</summary>
+            <div style="margin-top:.5rem;text-align:left;min-width:240px">
+              <form method="post" th:action="@{'/solutions/' + ${sol.id} + '/owner'}" style="display:flex;gap:.4rem">
+                <select name="ownerGroupId" style="flex:1">
+                  <option value="" th:selected="${sol.ownerGroupId == null}">소유팀 없음 (인프라 전용)</option>
+                  <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}"
+                          th:selected="${g.id == sol.ownerGroupId}">부서</option>
+                </select>
+                <button class="button primary" type="submit">적용</button>
+              </form>
+              <p class="subcopy" style="margin:.3rem 0 0">소유팀 지정 시 그 팀원 전원이 운영 가능(인프라는 전체 조회).</p>
+            </div>
+          </details>
+          <details style="display:inline-block;margin-left:.4rem">
+            <summary class="button" style="list-style:none;cursor:pointer">사용자 배정</summary>
+            <div style="margin-top:.5rem;text-align:left;min-width:240px">
+              <p class="subcopy" th:if="${#lists.isEmpty(solutionUsers.get(sol.id))}">배정된 사용자가 없습니다.</p>
+              <div th:each="u : ${solutionUsers.get(sol.id)}" style="display:flex;gap:.4rem;align-items:center;margin-bottom:.3rem">
+                <span th:text="${u.name + ' (' + u.username + ')'}" style="flex:1">사용자</span>
+                <form method="post" th:action="@{'/solutions/' + ${sol.id} + '/users/delete'}" style="margin:0">
+                  <input type="hidden" name="userId" th:value="${u.id}">
+                  <button class="button" type="submit">해제</button>
+                </form>
+              </div>
+              <form method="post" th:action="@{'/solutions/' + ${sol.id} + '/users'}" style="display:flex;gap:.4rem;margin-top:.4rem">
+                <select name="userId" required style="flex:1">
+                  <option value="" disabled selected>사용자 선택</option>
+                  <option th:each="tu : ${tenantUsers}" th:value="${tu.id}" th:text="${tu.name + ' (' + tu.username + ')'}">사용자</option>
+                </select>
+                <button class="button primary" type="submit">배정</button>
+              </form>
+            </div>
+          </details>
+          <form method="post" th:action="@{'/solutions/' + ${sol.id} + '/delete'}" style="display:inline">
+            <button class="button" type="submit">삭제</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+  </div><!-- /tab-control -->
+
+  <div id="tab-seq" class="tab-panel" style="display:none">
+    <div th:insert="~{fragments/sequences :: section}"></div>
+  </div>
+
+  <script>
+    (function () {
+      var tabs = document.querySelectorAll('.seg-tab');
+      var panels = { control: document.getElementById('tab-control'), seq: document.getElementById('tab-seq') };
+      function show(name) {
+        tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
+        Object.keys(panels).forEach(function (k) { if (panels[k]) panels[k].style.display = (k === name) ? '' : 'none'; });
+      }
+      tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.getAttribute('data-tab')); }); });
+      if (location.hash === '#seq') { show('seq'); }
+    })();
+  </script>
+</main></div>
+</body>
+</html>

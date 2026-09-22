@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 위키 검색</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('wiki')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow"><a th:href="@{/wiki}">위키</a> / 검색</p><h1>검색</h1>
+      <p class="subcopy">제목·본문을 검색합니다. 접근 가능한 공간의 문서만 나옵니다.</p></div>
+  </header>
+
+  <section class="panel">
+    <form method="get" th:action="@{/wiki/search}" style="display:flex;gap:0.5rem;max-width:640px">
+      <input type="text" name="q" th:value="${q}" maxlength="100" placeholder="검색어" required style="flex:1">
+      <button class="button primary" type="submit">검색</button>
+    </form>
+  </section>
+
+  <section class="panel" th:if="${q != null and !#strings.isEmpty(q)}">
+    <div class="panel-head"><div><p class="eyebrow">결과</p><h2 th:text="${q} + ' 검색 결과'">결과</h2></div>
+      <span class="pill" th:text="${#lists.size(results)} + '건'">0건</span></div>
+    <p th:if="${#lists.isEmpty(results)}" class="subcopy">일치하는 문서가 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(results)}" class="data-table">
+      <div class="table-row" th:each="r : ${results}">
+        <div>
+          <a th:href="@{'/wiki/' + ${r.pageId}}" style="font-weight:600" th:text="${r.title}">제목</a>
+          <small th:text="${r.snippet}" style="display:block;color:#7a869a">발췌</small>
+        </div>
+        <span class="pill" th:text="${r.spaceName}">공간</span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

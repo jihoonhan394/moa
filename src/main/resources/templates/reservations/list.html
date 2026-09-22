@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 공유자산 예약</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('reservations')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">공유자산 / 예약</p>
+      <h1>공유자산 예약</h1>
+      <p class="subcopy">차량·회의실·좌석을 시간대로 예약합니다. 같은 자산의 겹치는 시간은 예약할 수 없습니다.</p>
+    </div>
+  </header>
+
+  <p th:if="${reservationMessage}" class="modal-note" th:text="${reservationMessage}">결과</p>
+  <p th:if="${reservationError}" class="modal-note" style="color:#c0392b" th:text="${reservationError}">오류</p>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">예약하기</p><h2>새 예약</h2></div></div>
+    <p th:if="${#lists.isEmpty(resources)}" class="subcopy">예약 가능한 공유자산이 없습니다. 관리자에게 문의하세요.</p>
+    <form th:unless="${#lists.isEmpty(resources)}" method="post" th:action="@{/reservations}" th:object="${reservationForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:760px;">
+      <div class="asset-toolbar">
+        <select th:field="*{resourceId}" required aria-label="자산">
+          <option value="" disabled selected>자산 선택</option>
+          <option th:each="r : ${resources}" th:value="${r.id}" th:text="${r.name + ' (' + r.category + (r.location != null ? ', ' + r.location : '') + ')'}">자산</option>
+        </select>
+        <input type="text" th:field="*{purpose}" maxlength="300" placeholder="용도 (선택)">
+      </div>
+      <div class="asset-toolbar">
+        <label style="display:flex;flex-direction:column;font-size:.85rem">시작<input type="datetime-local" th:field="*{startsAt}" required></label>
+        <label style="display:flex;flex-direction:column;font-size:.85rem">종료<input type="datetime-local" th:field="*{endsAt}" required></label>
+      </div>
+      <div><button class="button primary" type="submit">예약</button></div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">내 예약</p><h2>예약 내역</h2></div>
+      <span class="pill" th:text="${#lists.size(myReservations)} + '건'">0건</span></div>
+    <p th:if="${#lists.isEmpty(myReservations)}" class="subcopy">예약 내역이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(myReservations)}" class="data-table table-scroll">
+      <div class="table-row table-head"><span>자산</span><span>시작</span><span>종료</span><span>용도</span><span>상태</span><span>관리</span></div>
+      <div class="table-row" th:each="rv : ${myReservations}">
+        <strong th:text="${resourceNames.get(rv.resourceId)}">자산</strong>
+        <span th:text="${#temporals.format(rv.startsAt, 'yyyy-MM-dd HH:mm')}">시작</span>
+        <span th:text="${#temporals.format(rv.endsAt, 'yyyy-MM-dd HH:mm')}">종료</span>
+        <span th:text="${rv.purpose != null ? rv.purpose : '—'}">용도</span>
+        <b th:classappend="${rv.status.name() == 'BOOKED'} ? 'good' : 'warn'" th:text="${rv.status.label}">예약됨</b>
+        <span class="table-actions">
+          <form th:if="${rv.status.name() == 'BOOKED'}" method="post" th:action="@{'/reservations/' + ${rv.id} + '/cancel'}" style="display:inline">
+            <button class="button" type="submit">취소</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

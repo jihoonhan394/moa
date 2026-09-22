@@ -1,0 +1,113 @@
+# MOA
+
+MOA는 Spring Boot, Thymeleaf, PostgreSQL 기반의 인프라 접근관리 솔루션 개발 프로젝트입니다.
+
+현재 저장소에는 두 가지 성격의 코드가 함께 있습니다.
+
+- Spring MVC/Thymeleaf: DB 연결 확인과 초기 CRUD 샘플
+- `admin-dashboard`: 실제 제품 구상을 담은 퍼블리싱/데모 UI
+
+실제 제품 설계 기준은 데모 UI와 `doc/1차-진행/` 문서를 우선합니다.
+
+## 버전
+
+- **0.7.4-SNAPSHOT** — 표 정렬 수정: 그리드 표에서 셀 `min-width:0`+긴 문자열 줄바꿈 + 모든 열 템플릿의 `auto`→`fr`/고정폭으로, 행마다 내용 길이가 달라도 열이 정확히 정렬(감사·사용자·자산·접근요청 등 전 표).
+- 0.7.3-SNAPSHOT — `/fonts/**`를 permitAll에 추가(로그인 등 미인증 화면에서도 폰트 로드 + 정적 폰트가 보안필터를 타지 않음).
+- 0.7.2-SNAPSHOT — 폰트 스왑 깜빡임 수정: `font-display: optional` + `/fonts/**` 장기 캐시(WebConfig)로 페이지 이동 시 글자 크기 점프(FOUT) 제거.
+- 0.7.1-SNAPSHOT — 디자인 리뉴얼("프리미엄 오퍼레이터"): Pretendard 폰트 self-host + Radix 기반 토큰(Slate 뉴트럴 + **딥 네이비 액센트**) + 라이트 사이드바 + 하드코딩 파랑 토큰 통일 + 그라디언트 워시 제거. (다크 테마 토큰 구조 준비, 후속)
+- 0.7.0-SNAPSHOT — **접근요청/승인(JIT) 워크플로우**: 권한 없는 서버에 사유·기간을 적어 요청 → 소유팀 리더/관리자 승인 → 기간제 임시 접속(만료 자동 반납, 관리자 강제 회수 시 세션 종료). 승인 시 볼트 자격증명을 함께 내주면 비밀번호 입력 없이 서버측 주입 접속. maker-checker(본인 승인 금지)·감사·알림 포함.
+- 0.6.3-SNAPSHOT — 자격증명 볼트 KEK 래핑에 **테넌트 AAD 바인딩**(암호문을 다른 기관 행으로 옮겨도 복호화 불가, 테넌트 격리 강화). 과거 데이터는 AAD 없이 폴백해 하위호환.
+- 0.6.2-SNAPSHOT — SSL 인증서 자동감지 강화: 발급자·유효기간·SAN·시리얼 판독 + 만기 3단계 상태(임박≤7/경고≤30) + **매일 자동 재점검**(저장된 host/port 재프로브).
+- 0.6.1-SNAPSHOT — 원격 접속(웹 SSH/RDP)을 별도 팝업 창으로 열기(MOA 화면 유지, 팝업 차단 시 현재 창 폴백).
+- 0.6.0-SNAPSHOT — 기관 구독(사용기간·만기, 만기 시 로그인 차단) + 기관별 기능(모듈) 엔타이틀먼트(메뉴+라우트 2중 강제) + 기관 상세 페이지(구독·기능·대표 관리자 프로비저닝). "이 기관으로 전환" 제거.
+- 0.5.0-SNAPSHOT — 플랫폼 콘솔 분리(역할·컨텍스트별 메뉴 교체, 동일 UI 뼈대) + 플랫폼 은닉 진입 경로 + 역할별 로그인 착지 + 플랫폼 개요/운영자 계정/전역 감사/시스템 상태.
+- 0.4.0-SNAPSHOT — 두레이식 2단계 진입(기관코드→로그인) + 기관별 아이디 유일성 + 기관(테넌시) 관리 콘솔/전환.
+- 0.3.1-SNAPSHOT — 데모 샘플 데이터 확장(자격증명/솔루션 시더) + 초기화 러너(`moa.sample-data.reset`).
+- 0.3.0-SNAPSHOT — 자작 WinRM(WS-Man) 채널 + SSH/WinRM 디스패처(솔루션별 제어 채널 선택).
+- 0.2.0-SNAPSHOT — 윈도우 원격 제어(서비스/실행파일) + 명령 인젝션 방지 검증 추가.
+- 0.1.0-SNAPSHOT — 솔루션 원격 제어 기반(자격증명 볼트 + SSH 제어) 추가.
+
+## 현재 범위
+
+- **두레이식 2단계 진입**: `/enter`에서 기관 코드 입력 → 그 기관 계정으로 로그인. 아이디 유일성은 기관별(`(tenant_id, username)`)
+- **플랫폼 콘솔**(`/admin`, SYSTEM_ADMIN 전용): 동일 UI 뼈대에서 역할·컨텍스트로 메뉴만 교체. 플랫폼 개요/기관 관리/운영자 계정/전역 감사/시스템 상태. 공개 진입엔 노출되지 않는 **은닉 경로**(`MOA_PLATFORM_ENTRY_PATH`)로만 진입
+- **기관(테넌시) 관리**(`/admin/tenants`): 기관 생성/활성·비활성 + **기관 상세**(구독 사용기간·만기, 기능 모듈 토글, 대표 관리자 프로비저닝)
+- **기관 구독·기능 엔타이틀먼트**: 만기/정지 기관은 로그인 차단. 기관별로 자산관리·서버접속·솔루션제어·자격증명 기능을 켜고 끄며, 메뉴 노출과 라우트 접근을 함께 강제(예: MTCM=자산+서버접속, KAKAO=자산만, NAVER=솔루션만)
+- 멀티테넌트 사용자/그룹/자산 관리, RBAC
+- **묶음 권한(Permission Set)**: 자산×액션을 묶어 그룹(주력)·사용자(만료)에 부착, default-deny
+- **역할 기반 메뉴/접근 제어**(관리자 메뉴는 일반 사용자에게 숨김 + 라우트 차단)
+- **웹 SSH/RDP 접속**: Apache Guacamole(guacamole-auth-json) 연동, 자격증명 접속 시 입력·비저장. 접속 콘솔은 **별도 팝업 창**으로 열림(팝업 차단 시 현재 창 폴백)
+- **자격증명 볼트**: AES-256-GCM 봉투암호화(KEK는 DB 밖), 쓰기전용
+- **솔루션 원격 제어**: SSH/WinRM 실행기 + systemd/docker/custom/windows 명령 매핑, start/stop/restart/status
+  - 제어 채널을 솔루션별로 선택(SSH=OpenSSH, WinRM=WS-Management). WinRM은 외부 SOAP 스택 없이 JDK HttpClient로 자체 구현
+  - 윈도우는 PowerShell(서비스 `*-Service`, 실행파일 `Win32_Process.Create`/`Stop-Process`)
+  - 원격 명령 식별자 화이트리스트 검증으로 명령 인젝션 차단
+- 감사 로그(관리·접속·제어 행위)
+- PostgreSQL, Flyway migration(V1~V16)
+
+## 요구 사항
+
+- JDK 17
+- Gradle Wrapper
+- Tailscale 접속
+- 개인별 PostgreSQL 개발 DB 계정
+
+## 개발 DB 설정
+
+개발 DB는 Tailscale 접속 후 접근 가능한 PostgreSQL 서버를 사용합니다.
+
+개인별 DB명, 사용자명, WAS 포트는 별도 `DB접속 가이드.pdf`의 매핑을 따릅니다. 비밀번호는 코드, 문서, Git에 기록하지 않습니다.
+
+로컬 실행 시 환경변수 예시는 다음과 같습니다.
+
+```powershell
+$env:JAVA_HOME = "C:\java\jdk-17.0.19+10"
+$env:SPRING_DATASOURCE_URL = "jdbc:postgresql://100.119.51.84:5432/db_본인계정명"
+$env:SPRING_DATASOURCE_USERNAME = "본인계정명"
+$env:SPRING_DATASOURCE_PASSWORD = "<DB password>"
+$env:SPRING_FLYWAY_ENABLED = "false"
+$env:MOA_BOOTSTRAP_ADMIN_PASSWORD = "<local admin login password>"
+.\gradlew.bat bootRun
+```
+
+주의:
+
+- 실제 비밀번호를 `.env.example`, README, 소스코드, 테스트 픽스처에 기록하지 않습니다.
+- `.env`, `.vscode/`, `application-local.*`은 Git에 올리지 않습니다.
+- 개인별 개발 DB에서는 가이드에 따라 Flyway를 비활성화할 수 있습니다.
+- 공통 배포 DB 또는 스키마 변경 작업에서는 Flyway migration 정책을 별도로 확인합니다.
+
+## `.env` 기반 실행
+
+`.env.example`을 참고해 로컬 `.env`를 만든 뒤 다음 스크립트를 사용할 수 있습니다.
+
+```powershell
+.\scripts\bootrun-local.ps1
+```
+
+## 테스트
+
+테스트는 외부 개발 DB를 건드리지 않는 H2 메모리 DB 프로필을 사용합니다.
+
+```powershell
+$env:JAVA_HOME = "C:\java\jdk-17.0.19+10"
+.\gradlew.bat test
+```
+
+## DB migration
+
+스키마 변경은 `src/main/resources/db/migration/` 아래 Flyway SQL migration으로 관리합니다.
+
+단, 개인별 개발 DB 실행 시에는 DB 접속 가이드에 따라 `SPRING_FLYWAY_ENABLED=false`를 사용할 수 있습니다. 공유/공통 DB 스키마 변경은 반드시 별도 tasklist와 migration 검토 후 진행합니다.
+
+## 보안 규칙
+
+- 비밀번호, SSH/RDP 키, 토큰, DB 비밀번호를 코드·문서·로그·테스트 픽스처·Git에 기록하지 않습니다.
+- 모든 입력은 서버에서 Bean Validation으로 검증합니다.
+- URL 보안과 Service 레벨 권한 검사를 함께 구현합니다.
+- 오류 화면과 로그에서 stack trace, DB 연결 정보, 내부 경로, 민감정보를 노출하지 않습니다.
+
+## 작업 문서
+
+1차 설계와 개발 진입 문서는 `doc/1차-진행/` 아래에 있습니다.
+

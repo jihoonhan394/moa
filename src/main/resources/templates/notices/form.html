@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${mode == 'create'} ? 'MOA - 공지 등록' : 'MOA - 공지 수정'">MOA - 공지</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell">
+  <aside th:replace="~{fragments/sidebar :: sidebar('notices')}"></aside>
+  <main class="workspace">
+    <header class="topbar">
+      <div><p class="eyebrow">기관 / 공지사항</p>
+        <h1 th:text="${mode == 'create'} ? '공지 등록' : '공지 수정'">공지 등록</h1></div>
+      <a class="button" th:href="@{/notices}">목록</a>
+    </header>
+    <section class="panel form-panel">
+      <form th:object="${noticeForm}" method="post"
+            th:action="${mode == 'create'} ? @{/notices} : @{/notices/{id}(id=${noticeId})}">
+        <p class="error-message" th:errors="*{global}"></p>
+        <label for="title">제목</label>
+        <input id="title" th:field="*{title}" maxlength="200" required>
+        <p class="error-message" th:errors="*{title}"></p>
+        <label for="body">내용</label>
+        <textarea id="body" th:field="*{body}" rows="12" maxlength="4000" required></textarea>
+        <p class="error-message" th:errors="*{body}"></p>
+        <label class="checkbox-row"><input type="checkbox" th:field="*{pinned}"> 상단 고정</label>
+        <label th:if="${mode == 'create'}" class="checkbox-row">
+          <input type="checkbox" th:field="*{emailToUsers}"> 등록 시 기관 사용자에게 이메일로도 발송(기관 SMTP 설정 필요)</label>
+        <button class="button primary" type="submit" th:text="${mode == 'create'} ? '등록' : '저장'">등록</button>
+      </form>
+    </section>
+  </main>
+</div>
+</body>
+</html>

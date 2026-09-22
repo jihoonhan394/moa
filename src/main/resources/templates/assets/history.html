@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 변경 이력</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('assets')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">자산 / 변경 이력</p>
+      <h1 th:text="${asset.name}">자산</h1>
+      <p class="subcopy">이 자산의 생성·수정·삭제 기록입니다. 감사 로그는 추가만 되며 수정·삭제되지 않습니다.</p>
+    </div>
+    <a class="button" th:href="@{/assets/{id}/edit(id=${asset.id})}">← 수정 화면</a>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">최신순</p><h2>변경 기록</h2></div></div>
+    <p th:if="${#lists.isEmpty(logs)}" class="subcopy">기록된 변경 이력이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(logs)}" class="data-table table-scroll">
+      <div class="table-row table-head" style="grid-template-columns:170px 130px 1fr 150px">
+        <span>시각</span><span>작업</span><span>내용</span><span>수행자</span>
+      </div>
+      <div class="table-row" style="grid-template-columns:170px 130px 1fr 150px" th:each="log : ${logs}">
+        <span th:text="${#temporals.format(log.createdAt, 'yyyy-MM-dd HH:mm')}">2026-01-01 12:00</span>
+        <span>
+          <b th:switch="${log.action}">
+            <span th:case="'ASSET_CREATE'" class="good">생성</span>
+            <span th:case="'ASSET_UPDATE'">수정</span>
+            <span th:case="'ASSET_DELETE'" class="bad">삭제</span>
+            <span th:case="*" th:text="${log.action}">기타</span>
+          </b>
+        </span>
+        <span th:text="${log.message}" style="color:#43516a">내용</span>
+        <span th:text="${actorNames.getOrDefault(log.actorUserId, '(알 수 없음)')}" style="color:#7a869a">수행자</span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

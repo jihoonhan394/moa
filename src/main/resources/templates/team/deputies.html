@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 팀 내 대직</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('team')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">팀 관리 / 대직(임시 부재)</p>
+      <h1>팀 내 대직</h1>
+      <p class="subcopy">팀원이 부재할 때 <b>대직자</b>가 그 기간 동안 부재자의 <b>서버 접근·솔루션 제어</b>를 이어받습니다.
+        종료일이 지나면 자동으로 원복됩니다(권한 복사 아님).</p>
+    </div>
+    <a class="button" th:href="@{/team}">← 팀 콘솔</a>
+  </header>
+
+  <p th:if="${teamOk}" class="subcopy good" th:text="${teamOk}" style="margin:.2rem 0"></p>
+  <p th:if="${teamError}" class="error-message" th:text="${teamError}" style="margin:.2rem 0"></p>
+
+  <section class="panel" th:if="${#lists.isEmpty(teamUsers)}">
+    <p class="subcopy">이끄는 팀원이 없습니다. 부서장으로 지정되면 여기서 대직을 관리할 수 있습니다.</p>
+  </section>
+
+  <div th:unless="${#lists.isEmpty(teamUsers)}">
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">지정</p><h2>대직 지정</h2></div></div>
+      <form method="post" th:action="@{/team/deputies}" style="display:flex;gap:.5rem;align-items:end;flex-wrap:wrap">
+        <div style="display:grid;gap:.2rem"><label>부재자</label>
+          <select name="absentUserId" required style="min-width:200px">
+            <option value="" disabled selected>부재 팀원</option>
+            <option th:each="u : ${teamUsers}" th:value="${u.id}" th:text="${u.name}">팀원</option>
+          </select></div>
+        <div style="display:grid;gap:.2rem"><label>대직자</label>
+          <select name="deputyUserId" required style="min-width:200px">
+            <option value="" disabled selected>대신할 팀원</option>
+            <option th:each="u : ${teamUsers}" th:value="${u.id}" th:text="${u.name}">팀원</option>
+          </select></div>
+        <div style="display:grid;gap:.2rem"><label>시작일</label><input type="date" name="startsOn" required></div>
+        <div style="display:grid;gap:.2rem"><label>종료일</label><input type="date" name="endsOn" required></div>
+        <button class="button primary" type="submit">대직 지정</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">현황</p><h2>대직 목록</h2></div></div>
+      <p th:if="${#lists.isEmpty(delegations)}" class="subcopy">지정된 대직이 없습니다.</p>
+      <div th:unless="${#lists.isEmpty(delegations)}" class="data-table table-scroll">
+        <div class="table-row table-head"><span>부재자</span><span>대직자</span><span>기간</span><span>상태</span><span></span></div>
+        <div class="table-row" th:each="d : ${delegations}">
+          <span th:text="${userNames.getOrDefault(d.absentUserId, '?')}">부재자</span>
+          <strong th:text="${userNames.getOrDefault(d.deputyUserId, '?')}">대직자</strong>
+          <span th:text="${d.startsOn} + ' ~ ' + ${d.endsOn}" style="color:#7a869a">기간</span>
+          <span>
+            <b th:if="${d.isActiveOn(today)}" class="good">진행 중</b>
+            <b th:if="${d.startsOn.isAfter(today)}" class="warn">예정</b>
+            <b th:if="${d.endsOn.isBefore(today)}" style="color:#7a869a">종료</b>
+          </span>
+          <form method="post" th:action="@{'/team/deputies/' + ${d.id} + '/end'}" style="display:inline"
+                onsubmit="return confirm('이 대직을 종료할까요?')">
+            <button class="button" type="submit">종료</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </div>
+</main></div>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="section">
+  <p th:if="${scheduleError}" class="modal-note" style="color:#c0392b" th:text="${scheduleError}">오류</p>
+
+  <!-- 실행 결과 -->
+  <section class="panel" th:if="${runResult != null}">
+    <div class="panel-head"><div><p class="eyebrow" th:text="${runResult.reverse} ? '역방향 실행' : '정방향 실행'">실행</p>
+      <h2 th:text="${runResult.overallSuccess} ? '전체 성공' : '중간에 멈춤(오류)'">결과</h2></div>
+      <span class="pill" th:classappend="${runResult.overallSuccess} ? 'good' : 'warn'" th:text="${runResult.overallSuccess} ? 'OK' : '확인'">OK</span></div>
+    <div class="data-table">
+      <div class="table-row table-head"><span>순서</span><span>솔루션</span><span>동작</span><span>결과</span><span>출력</span></div>
+      <div class="table-row" th:each="o : ${runResult.steps}">
+        <span th:text="${o.order}">1</span>
+        <strong th:text="${o.solutionName}">솔루션</strong>
+        <span th:text="${o.action}">START</span>
+        <b th:classappend="${o.skipped} ? 'warn' : (${o.success} ? 'good' : 'bad')"
+           th:text="${o.skipped} ? '건너뜀' : (${o.success} ? '성공' : '실패')">성공</b>
+        <span th:text="${o.output}" style="white-space:pre-wrap;color:#7a869a;font-size:.85rem">출력</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">등록</p><h2>기동 순서 만들기</h2></div></div>
+    <form method="post" th:action="@{/solution-sequences}" th:object="${sequenceForm}" class="stacked-form" style="display:flex;gap:0.5rem;max-width:760px;">
+      <input type="text" th:field="*{name}" maxlength="100" placeholder="순서 이름 (예: 모바일 그룹웨어 중단 / 페일오버)" required style="flex:1">
+      <input type="text" th:field="*{description}" maxlength="500" placeholder="설명 (선택)" style="flex:2">
+      <button class="button primary" type="submit">추가</button>
+      <p th:each="err : ${#fields.globalErrors()}" class="error-message" th:text="${err}" style="flex-basis:100%">오류</p>
+    </form>
+    <div class="subcopy" style="margin-top:.6rem;line-height:1.7">
+      <b>사용 예</b><br>
+      · <b>그룹웨어 중단</b>: 단계를 전부 "중지"로 — 아파치→(대기)→톰캣→(대기)→결재 exe→문서변환. <b>정방향</b>=차례로 중단, <b>역방향</b>=역순으로 시작.<br>
+      · <b>페일오버</b>: 한 순서에 섞어서 — A서버 솔루션들 "중지" → B서버 솔루션들 "시작". <b>정방향</b>=장애조치, <b>역방향</b>=복구.<br>
+      · 중간에 실패하면 그 단계에서 <b>멈추고 오류를 표시</b>합니다. "시작 후 상태확인"을 켜면 STATUS가 성공해야 다음으로 넘어갑니다.
+    </div>
+  </section>
+
+  <p th:if="${#lists.isEmpty(sequences)}" class="subcopy">등록된 기동 순서가 없습니다. 위에서 만드세요.</p>
+
+  <section class="panel" th:each="seq : ${sequences}">
+    <div class="panel-head">
+      <div><p class="eyebrow" th:text="${seq.description != null ? seq.description : '기동 순서'}">설명</p><h2 th:text="${seq.name}">순서</h2></div>
+      <div style="display:flex;gap:0.4rem">
+        <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/run'}" style="display:inline"
+              onsubmit="return confirm('정방향으로 각 단계 동작을 순서대로 실행합니다. 진행할까요?')">
+          <button class="button primary" type="submit">▶ 정방향 실행</button>
+        </form>
+        <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/reverse'}" style="display:inline"
+              onsubmit="return confirm('역방향으로(반대 동작을 역순으로) 실행합니다. 진행할까요?')">
+          <button class="button" type="submit">◀ 역방향 실행</button>
+        </form>
+        <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/delete'}" style="display:inline"
+              onsubmit="return confirm('이 기동 순서를 삭제할까요?')">
+          <button class="button" type="submit">삭제</button>
+        </form>
+      </div>
+    </div>
+
+    <p th:if="${#lists.isEmpty(stepsBySequence.get(seq.id))}" class="subcopy">단계가 없습니다. 아래에서 솔루션과 동작을 추가하세요.</p>
+    <div th:unless="${#lists.isEmpty(stepsBySequence.get(seq.id))}" class="data-table">
+      <div class="table-row table-head"><span>순서</span><span>솔루션</span><span>동작</span><span>대기·확인</span><span>조정</span></div>
+      <div class="table-row" th:each="st : ${stepsBySequence.get(seq.id)}">
+        <span th:text="${st.order}">1</span>
+        <div><strong th:text="${st.solutionName}">솔루션</strong>
+          <small th:text="${st.solutionType}" style="display:block;color:#7a869a">유형</small></div>
+        <b th:classappend="${st.action.name() == 'STOP'} ? 'warn' : (${st.action.name() == 'START'} ? 'good' : '')" th:text="${st.action}">START</b>
+        <span th:text="${st.waitSeconds} + '초' + (${st.verifyAfterStart} ? ' · 상태확인' : '')">0초</span>
+        <span class="table-actions">
+          <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps/' + ${st.stepId} + '/move'}" style="display:inline">
+            <input type="hidden" name="up" value="true"><button class="button" type="submit" title="위로">▲</button>
+          </form>
+          <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps/' + ${st.stepId} + '/move'}" style="display:inline">
+            <input type="hidden" name="up" value="false"><button class="button" type="submit" title="아래로">▼</button>
+          </form>
+          <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps/' + ${st.stepId} + '/delete'}" style="display:inline">
+            <button class="button" type="submit">제거</button>
+          </form>
+        </span>
+      </div>
+    </div>
+
+    <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps'}" style="display:flex;gap:0.4rem;margin-top:0.6rem;flex-wrap:wrap;align-items:center">
+      <select name="solutionId" required aria-label="솔루션" style="flex:1;min-width:200px">
+        <option value="" disabled selected>솔루션 선택</option>
+        <option th:each="sol : ${solutions}" th:value="${sol.id}" th:text="${sol.name + ' (' + sol.type + ')'}">솔루션</option>
+      </select>
+      <select name="action" aria-label="동작">
+        <option th:each="a : ${actions}" th:value="${a}" th:text="${a}">START</option>
+      </select>
+      <input type="number" name="waitSeconds" min="0" max="120" value="0" title="완료 후 대기(초, 최대 120)" style="width:110px" placeholder="대기초">
+      <label class="subcopy" style="display:flex;align-items:center;gap:.3rem"><input type="checkbox" name="verifyAfterStart" value="true"> 시작 후 상태확인</label>
+      <button class="button" type="submit">단계 추가</button>
+    </form>
+
+    <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/schedule'}" style="display:flex;gap:0.4rem;margin-top:0.5rem;flex-wrap:wrap;align-items:center">
+      <span class="subcopy" style="margin:0">자동 스케줄(cron 초 분 시 일 월 요일):</span>
+      <input type="text" name="forwardCron" th:value="${seq.forwardCron}" placeholder="정방향 예: 0 0 19 * * *" style="width:200px">
+      <input type="text" name="reverseCron" th:value="${seq.reverseCron}" placeholder="역방향 예: 0 0 8 * * *" style="width:200px">
+      <button class="button" type="submit">스케줄 저장</button>
+    </form>
+  </section>
+</div>
+</body>
+</html>

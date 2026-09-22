@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 권한 상세</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('permissions')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">권한 관리 / 상세</p>
+      <h1 th:text="${permission.name}">권한명</h1>
+      <p class="subcopy" th:text="${permission.description != null ? permission.description : '설명 없음'}">설명</p>
+    </div>
+    <div class="top-actions"><a class="button" th:href="@{/permissions}">목록으로</a></div>
+  </header>
+
+  <!-- 기본 정보 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">기본 정보</p><h2>권한 설정</h2></div><span class="pill" th:text="${permission.status}">ACTIVE</span></div>
+    <form method="post" th:action="@{'/permissions/' + ${permission.id}}" class="asset-toolbar">
+      <input type="text" name="name" th:value="${permission.name}" maxlength="100" required>
+      <input type="text" name="description" th:value="${permission.description}" maxlength="255" placeholder="설명(선택)">
+      <select name="status">
+        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}" th:selected="${s == permission.status}">ACTIVE</option>
+      </select>
+      <button class="button primary" type="submit">저장</button>
+    </form>
+  </section>
+
+  <div class="content-grid">
+    <!-- 엔트리: 자산 × 액션 -->
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">엔트리</p><h2>자산 × 액션</h2></div><span class="pill" th:text="${#lists.size(entries)} + '개'">0개</span></div>
+      <form method="post" th:action="@{'/permissions/' + ${permission.id} + '/entries'}" class="asset-toolbar">
+        <select name="assetId" required aria-label="자산">
+          <option value="" disabled selected>자산 선택</option>
+          <option th:each="asset : ${assets}" th:value="${asset.id}" th:text="${asset.name + ' (' + asset.assetType + ')'}">자산</option>
+        </select>
+        <select name="action" required aria-label="액션">
+          <option th:each="a : ${actions}" th:value="${a}" th:text="${a}">SSH</option>
+        </select>
+        <button class="button primary" type="submit" th:disabled="${#lists.isEmpty(assets)}">추가</button>
+      </form>
+      <p th:if="${#lists.isEmpty(entries)}" class="subcopy">엔트리가 없습니다. 이 권한이 허용할 자산과 액션을 추가하세요.</p>
+      <div th:unless="${#lists.isEmpty(entries)}" class="data-table compact">
+        <div class="table-row table-head"><span>자산</span><span>액션</span><span>관리</span></div>
+        <div class="table-row" th:each="entry : ${entries}">
+          <strong th:text="${entry.assetName}">자산</strong>
+          <span th:text="${entry.action}">SSH</span>
+          <span class="table-actions">
+            <form method="post" th:action="@{'/permissions/' + ${permission.id} + '/entries/delete'}" style="display:inline">
+              <input type="hidden" name="assetId" th:value="${entry.assetId}">
+              <input type="hidden" name="action" th:value="${entry.action}">
+              <button class="button" type="submit">삭제</button>
+            </form>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 그룹 부착 -->
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">부착 · 그룹(주력)</p><h2>그룹</h2></div><span class="pill" th:text="${#lists.size(groupAssignments)} + '개'">0개</span></div>
+      <form method="post" th:action="@{'/permissions/' + ${permission.id} + '/groups'}" class="asset-toolbar">
+        <select name="groupId" required aria-label="그룹">
+          <option value="" disabled selected>그룹 선택</option>
+          <option th:each="group : ${assignableGroups}" th:value="${group.id}" th:text="${group.name}">그룹</option>
+        </select>
+        <button class="button primary" type="submit" th:disabled="${#lists.isEmpty(assignableGroups)}">부착</button>
+      </form>
+      <p th:if="${#lists.isEmpty(groupAssignments)}" class="subcopy">부착된 그룹이 없습니다.</p>
+      <div th:unless="${#lists.isEmpty(groupAssignments)}" class="data-table compact">
+        <div class="table-row table-head"><span>그룹</span><span>관리</span></div>
+        <div class="table-row" th:each="ga : ${groupAssignments}">
+          <strong th:text="${ga.groupName}">그룹</strong>
+          <span class="table-actions">
+            <form method="post" th:action="@{'/permissions/' + ${permission.id} + '/groups/delete'}" style="display:inline">
+              <input type="hidden" name="groupId" th:value="${ga.groupId}">
+              <button class="button" type="submit">해제</button>
+            </form>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 사용자 부착 (일시 예외) -->
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">부착 · 사용자(일시 예외)</p><h2>사용자</h2></div><span class="pill" th:text="${#lists.size(userAssignments)} + '명'">0명</span></div>
+      <form method="post" th:action="@{'/permissions/' + ${permission.id} + '/users'}" class="asset-toolbar">
+        <select name="userId" required aria-label="사용자">
+          <option value="" disabled selected>사용자 선택</option>
+          <option th:each="user : ${assignableUsers}" th:value="${user.id}" th:text="${user.name + ' (' + user.username + ')'}">사용자</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:0.4rem;white-space:nowrap">만료일(기간제)
+          <input type="datetime-local" name="expiresAt" title="비우면 무기한, 지정하면 그 시각에 접근 자동 만료">
+        </label>
+        <button class="button primary" type="submit" th:disabled="${#lists.isEmpty(assignableUsers)}">부착</button>
+      </form>
+      <p class="subcopy">만료일을 지정하면 그 시각에 접근이 자동으로 끝납니다(기간제 접근). 비우면 무기한.</p>
+      <p th:if="${#lists.isEmpty(userAssignments)}" class="subcopy">직접 부착된 사용자가 없습니다.</p>
+      <div th:unless="${#lists.isEmpty(userAssignments)}" class="data-table compact">
+        <div class="table-row table-head"><span>사용자</span><span>만료</span><span>관리</span></div>
+        <div class="table-row" th:each="ua : ${userAssignments}">
+          <strong th:text="${ua.name + ' (' + ua.username + ')'}">사용자</strong>
+          <span th:text="${ua.expiresAt != null ? ua.expiresAt : '무기한'}">만료</span>
+          <span class="table-actions">
+            <form method="post" th:action="@{'/permissions/' + ${permission.id} + '/users/delete'}" style="display:inline">
+              <input type="hidden" name="userId" th:value="${ua.userId}">
+              <button class="button" type="submit">해제</button>
+            </form>
+          </span>
+        </div>
+      </div>
+    </section>
+  </div>
+</main></div>
+</body>
+</html>

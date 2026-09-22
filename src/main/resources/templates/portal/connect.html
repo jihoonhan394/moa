@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 서버 접속</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">접속 / 웹 SSH·RDP</p>
+      <h1 th:text="${asset.name}">서버</h1>
+      <p class="subcopy">
+        <span th:text="${asset.protocol}">SSH</span> ·
+        <span th:text="${asset.host}">host</span>:<span th:text="${asset.port}">22</span>
+      </p>
+    </div>
+    <div class="top-actions"><a class="button" th:href="@{${backLink}}" th:text="${backLabel} + '(으)로'">돌아가기</a></div>
+  </header>
+
+  <!-- 서버 정보(사양·OS) — 접속 권한이 있는 사용자에게 표시 -->
+  <section class="panel" th:if="${asset.category != null or asset.osFamily != null or asset.hasSpecs()}">
+    <div class="panel-head"><div><p class="eyebrow">서버 정보</p><h2>사양 · OS</h2></div></div>
+    <div class="data-table compact">
+      <div class="table-row" th:if="${asset.category != null}"><span>카테고리</span><b th:text="${asset.category}">—</b></div>
+      <div class="table-row" th:if="${asset.osFamily != null or (asset.osType != null and !asset.osType.isBlank())}"><span>OS</span>
+        <b th:text="${(asset.osFamily != null ? asset.osFamily.label : '') + (asset.osType != null and !asset.osType.isBlank() ? ' ' + asset.osType : '')}">—</b></div>
+      <div class="table-row" th:if="${asset.cpu != null}"><span>CPU</span><b th:text="${asset.cpu}">—</b></div>
+      <div class="table-row" th:if="${asset.ram != null}"><span>RAM</span><b th:text="${asset.ram}">—</b></div>
+      <div class="table-row" th:if="${asset.disk != null}"><span>디스크</span><b th:text="${asset.disk}">—</b></div>
+      <div class="table-row" th:if="${asset.hwModel != null}"><span>모델</span><b th:text="${asset.hwModel}">—</b></div>
+    </div>
+  </section>
+
+  <p th:if="${error == 'gateway'}" class="modal-note">접속 게이트웨이(Guacamole) 오류로 접속하지 못했습니다. 잠시 후 다시 시도하세요.</p>
+  <p th:unless="${guacEnabled}" class="modal-note">접속 게이트웨이가 아직 설정되지 않았습니다(관리자: MOA_GUACAMOLE_* 환경변수).</p>
+
+  <section class="panel form-panel">
+    <div class="panel-head"><div><p class="eyebrow">자격증명</p><h2>접속 정보 입력</h2></div></div>
+    <p class="subcopy">대상 서버 계정으로 로그인합니다. 입력한 자격증명은 이 접속에만 1회 사용되며 저장되지 않습니다.</p>
+    <p class="subcopy">접속을 누르면 원격 콘솔이 <b>별도 팝업 창</b>으로 열립니다. 팝업이 차단되면 현재 창에서 열립니다.</p>
+
+    <!-- 승인 자격증명 주입 접속(JIT): 관리자가 함께 내준 볼트 계정으로 비밀번호 입력 없이 접속 -->
+    <div th:if="${grantedConnectAction}" class="modal-note" style="margin-bottom:.8rem">
+      <p class="subcopy" style="margin:.2rem 0 .5rem">승인 시 부여된 <b>저장된 계정</b>으로 접속할 수 있습니다(비밀번호 입력 불필요, 서버로 안전하게 주입).</p>
+      <form class="console-connect" method="post" th:action="@{${grantedConnectAction}}" target="moaConsole" style="display:inline">
+        <button class="button primary" type="submit" th:disabled="${!guacEnabled}">승인된 계정으로 접속</button>
+      </form>
+    </div>
+
+    <form id="connectForm" class="console-connect" method="post" th:action="@{${connectAction}}" target="moaConsole">
+      <label for="username">계정</label>
+      <input id="username" name="username" autocomplete="off" required>
+      <label for="password">비밀번호</label>
+      <input id="password" name="password" type="password" autocomplete="off" required>
+      <button class="button primary" type="submit" th:disabled="${!guacEnabled}">접속</button>
+    </form>
+  </section>
+</main></div>
+<script th:inline="none">
+  // 접속 시 원격 콘솔을 이름있는 팝업 창으로 연다(폼 target=moaConsole 로 응답이 팝업에 실림).
+  // 팝업 차단 시 target 을 제거해 현재 창에서 열리도록 폴백한다(기존 동작). 수동/승인계정 폼 모두 적용.
+  (function () {
+    var forms = document.querySelectorAll('form.console-connect');
+    for (var i = 0; i < forms.length; i++) {
+      forms[i].addEventListener('submit', function () {
+        var width = 1280, height = 860;
+        var left = Math.max(0, Math.round((window.screen.width - width) / 2));
+        var top = Math.max(0, Math.round((window.screen.height - height) / 2));
+        var features = 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top
+          + ',resizable=yes,scrollbars=yes,status=no,menubar=no,toolbar=no,location=no';
+        var popup = window.open('', 'moaConsole', features);
+        if (popup) {
+          popup.focus();
+        } else {
+          this.removeAttribute('target');
+        }
+      });
+    }
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 인벤토리 수정</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('inventory')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow">자산 관리 / 인벤토리</p><h1>항목 수정</h1><p class="subcopy">메타 정보를 수정합니다(배정·상태는 목록에서 관리).</p></div>
+  </header>
+  <section class="panel">
+    <form method="post" th:action="@{'/inventory/' + ${itemId}}" th:object="${inventoryForm}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:560px;">
+      <div th:if="${#fields.hasGlobalErrors()}" class="error-message"><p th:each="e : ${#fields.globalErrors()}" th:text="${e}" style="margin:.1rem 0"></p></div>
+      <label>이름</label><input type="text" th:field="*{name}" maxlength="100" required>
+      <p th:if="${#fields.hasErrors('name')}" class="error-message" th:errors="*{name}"></p>
+      <label>카테고리 <small class="subcopy">(실물/SW 아래 경로 — 유형은 최상위에서 자동 결정)</small></label>
+      <select th:field="*{category}" required>
+        <option value="">카테고리 선택</option>
+        <option th:each="n : ${assetCategories}" th:value="${n.path}"
+                th:text="${#strings.repeat('— ', n.depth) + n.name}"
+                th:selected="${n.path == inventoryForm.category}">실물 / 사무기기 / 컴퓨터</option>
+      </select>
+      <p th:if="${#fields.hasErrors('category')}" class="error-message" th:errors="*{category}"></p>
+      <p class="subcopy" style="margin:0"><a th:href="@{/inventory/categories}">카테고리 관리 →</a></p>
+      <label>시리얼/자산번호</label><input type="text" th:field="*{serialNo}" maxlength="100">
+      <label>만료일 (SW 라이선스, 선택)</label><input type="date" th:field="*{expiresAt}">
+      <label>구매일 (선택)</label><input type="date" th:field="*{purchaseDate}">
+      <label>보증 만료일 (선택)</label><input type="date" th:field="*{warrantyEnds}">
+      <label>리스/계약 만료일 (선택)</label><input type="date" th:field="*{leaseEnds}">
+      <p class="subcopy" style="margin:0">보증·리스 만기는 <b>만료 관리 대시보드</b>에 자동 표시되고 임박 시 알림이 갑니다.</p>
+      <label>비고</label><input type="text" th:field="*{note}" maxlength="500">
+      <div style="display:flex;gap:0.5rem">
+        <button class="button primary" type="submit">저장</button>
+        <a class="button" th:href="@{/inventory}">취소</a>
+        <a class="button" th:href="@{'/inventory/' + ${itemId} + '/trackers'}">만기·점검 관리 →</a>
+      </div>
+    </form>
+  </section>
+</main></div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 2단계 인증</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('two-factor')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">개인 / 보안</p>
+      <h1>2단계 인증 (Google Authenticator)</h1>
+      <p class="subcopy">인증기 앱의 6자리 코드로 계정을 한 겹 더 보호합니다. (현재는 등록만 — 이후 민감 작업에 적용 예정)</p>
+    </div>
+  </header>
+
+  <!-- 사용 중 -->
+  <section class="panel" th:if="${enabled}">
+    <p class="subcopy" style="color:#2e7d32"><b>2단계 인증 사용 중</b>입니다.</p>
+    <form method="post" th:action="@{/security/2fa/disable}">
+      <button class="button danger" type="submit">해제</button>
+    </form>
+  </section>
+
+  <!-- 미사용: 시작 -->
+  <section class="panel" th:if="${!enabled and enrollment == null}">
+    <p class="subcopy">아직 설정되지 않았습니다. 아래에서 등록을 시작하세요.</p>
+    <form method="post" th:action="@{/security/2fa/start}">
+      <button class="button primary" type="submit">2단계 인증 설정 시작</button>
+    </form>
+  </section>
+
+  <!-- 등록 진행: 시크릿·URI + 코드 확인 -->
+  <section class="panel" th:if="${enrollment != null}">
+    <div class="panel-head"><div><p class="eyebrow">1단계</p><h2>인증기 앱에 등록</h2></div></div>
+    <p class="subcopy">Google Authenticator(또는 호환 앱)에서 <b>수동 입력</b>으로 아래 키를 등록하세요.</p>
+    <p>계정: <b th:text="'MOA'">MOA</b> · 키(수동 입력):
+      <code th:text="${enrollment.secret}" style="background:#f7f8fa;padding:.2rem .5rem;border-radius:4px;letter-spacing:.1em">SECRET</code>
+    </p>
+    <p class="subcopy">otpauth 링크(QR 생성기에 붙여넣기 가능):</p>
+    <code th:text="${enrollment.provisioningUri}" style="display:block;word-break:break-all;background:#f7f8fa;padding:.5rem;border-radius:6px;font-size:.82em">otpauth://…</code>
+
+    <div class="panel-head" style="margin-top:1rem"><div><p class="eyebrow">2단계</p><h2>코드 확인</h2></div></div>
+    <p th:if="${confirmError != null}" class="subcopy" style="color:#c0392b" th:text="${confirmError}">오류</p>
+    <form method="post" th:action="@{/security/2fa/confirm}" class="inline-form">
+      <input type="text" name="code" inputmode="numeric" pattern="\d{6}" maxlength="6" required placeholder="앱의 6자리 코드">
+      <button class="button primary" type="submit">확인 및 활성화</button>
+    </form>
+  </section>
+</main></div>
+</body>
+</html>

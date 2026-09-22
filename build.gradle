@@ -1,0 +1,54 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.1.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.moara'
+version = '0.7.4-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-flyway'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-database-postgresql'
+	// 원격 제어(SSH) — 유지보수 포크 JSch
+	implementation 'com.github.mwiede:jsch:0.2.21'
+	// 위키 마크다운 렌더 + HTML 새니타이즈(XSS 방지). jsoup는 새니타이저 CVE 패치 포함 최신 사용.
+	implementation 'org.commonmark:commonmark:0.22.0'
+	// GFM 확장: 표·취소선·자동링크(폼이 안내하는 표가 실제로 렌더되도록). 렌더 결과는 jsoup가 재정제.
+	implementation 'org.commonmark:commonmark-ext-gfm-tables:0.22.0'
+	implementation 'org.commonmark:commonmark-ext-gfm-strikethrough:0.22.0'
+	implementation 'org.commonmark:commonmark-ext-autolink:0.22.0'
+	implementation 'org.jsoup:jsoup:1.18.1'
+	// AI 제공자 REST 호출 JSON 조립/파싱(버전은 Spring Boot BOM 관리)
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	runtimeOnly 'org.postgresql:postgresql'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	// 로컬 실행(--spring.profiles.active=local)용 격리 H2. developmentOnly라 운영 bootJar엔 포함되지 않음.
+	developmentOnly 'com.h2database:h2'
+	testRuntimeOnly 'com.h2database:h2'
+	testImplementation 'org.springframework.boot:spring-boot-starter-thymeleaf-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

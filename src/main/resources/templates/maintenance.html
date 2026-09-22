@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 점검 일정</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('maintenance')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow">유지보수</p><h1>점검 일정 · 담당자</h1>
+      <p class="subcopy">점검/작업 일정을 등록하면 관련자(담당자·솔루션 배정자)에게 알림과 메일이 나갑니다.</p></div>
+  </header>
+
+  <!-- 점검 일정 등록 -->
+  <section class="panel">
+    <h2>점검 일정 등록</h2>
+    <form method="post" th:action="@{/maintenance/windows}" th:object="${windowForm}" class="stack-form">
+      <div th:if="${#fields.hasGlobalErrors()}" class="field-error"><p th:each="e : ${#fields.globalErrors()}" th:text="${e}" style="margin:.1rem 0"></p></div>
+      <label>대상
+        <select name="target" required>
+          <option value="">— 대상 선택 —</option>
+          <optgroup label="서버/자산">
+            <option th:each="a : ${assets}" th:value="'ASSET:' + ${a.id}" th:text="${a.name}">자산</option>
+          </optgroup>
+          <optgroup label="솔루션">
+            <option th:each="s : ${solutions}" th:value="'SOLUTION:' + ${s.id}" th:text="${s.name}">솔루션</option>
+          </optgroup>
+        </select>
+      </label>
+      <label>제목
+        <input type="text" th:field="*{title}" maxlength="200" required placeholder="예: 스토리지 펌웨어 업그레이드">
+      </label>
+      <label>시작
+        <input type="datetime-local" th:field="*{startsAt}">
+      </label>
+      <label>종료
+        <input type="datetime-local" th:field="*{endsAt}">
+      </label>
+      <label>사유
+        <textarea th:field="*{reason}" maxlength="1000" rows="2" placeholder="점검 내용·영향 범위"></textarea>
+      </label>
+      <p th:if="${#fields.hasErrors('title')}" th:errors="*{title}" class="field-error">제목 오류</p>
+      <div><button class="button primary" type="submit">등록 및 관련자 통지</button></div>
+    </form>
+  </section>
+
+  <!-- 등록된 점검 일정 -->
+  <section class="panel">
+    <h2>등록된 점검 일정</h2>
+    <p th:if="${#lists.isEmpty(windows)}" class="subcopy">등록된 점검 일정이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(windows)}" class="data-table">
+      <div class="table-head">
+        <span>대상</span><span>제목</span><span>시작</span><span>종료</span><span>사유</span>
+      </div>
+      <div class="table-row" th:each="w : ${windows}">
+        <span th:text="${targetNames.get(w.targetType.name() + ':' + w.targetId)} ?: '(삭제됨)'">대상</span>
+        <span th:text="${w.title}">제목</span>
+        <span th:text="${w.startsAt != null} ? ${#temporals.format(w.startsAt, 'yyyy-MM-dd HH:mm')} : '-'">시작</span>
+        <span th:text="${w.endsAt != null} ? ${#temporals.format(w.endsAt, 'yyyy-MM-dd HH:mm')} : '-'">종료</span>
+        <span th:text="${w.reason} ?: '-'">사유</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 유지보수 담당자 -->
+  <section class="panel">
+    <h2>유지보수 담당자</h2>
+    <form method="post" th:action="@{/maintenance/owners}" class="inline-form">
+      <select name="target" required>
+        <option value="">— 대상 선택 —</option>
+        <optgroup label="서버/자산">
+          <option th:each="a : ${assets}" th:value="'ASSET:' + ${a.id}" th:text="${a.name}">자산</option>
+        </optgroup>
+        <optgroup label="솔루션">
+          <option th:each="s : ${solutions}" th:value="'SOLUTION:' + ${s.id}" th:text="${s.name}">솔루션</option>
+        </optgroup>
+      </select>
+      <select name="userId" required>
+        <option value="">— 담당자 선택 —</option>
+        <option th:each="u : ${assignableUsers}" th:value="${u.id}" th:text="${u.name}">사용자</option>
+      </select>
+      <button class="button" type="submit">담당자 지정</button>
+    </form>
+
+    <p th:if="${#lists.isEmpty(owners)}" class="subcopy">지정된 담당자가 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(owners)}" class="data-table">
+      <div class="table-head"><span>대상</span><span>담당자</span><span></span></div>
+      <div class="table-row" th:each="o : ${owners}">
+        <span th:text="${targetNames.get(o.targetType.name() + ':' + o.targetId)} ?: '(삭제됨)'">대상</span>
+        <span th:text="${userNames.get(o.userId)} ?: '(삭제됨)'">담당자</span>
+        <span>
+          <form method="post" th:action="@{/maintenance/owners/{id}/delete(id=${o.id})}">
+            <button class="button danger" type="submit">해제</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

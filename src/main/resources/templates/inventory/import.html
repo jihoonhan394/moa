@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 인벤토리 대량 등록</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('inventory')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">자산 관리 / 인벤토리</p>
+      <h1>CSV 대량 등록</h1>
+      <p class="subcopy">엑셀·시트에서 CSV로 내려받아 붙여넣거나 파일로 올리면 한 번에 등록합니다.
+        행 단위로 처리하며 일부 행이 실패해도 나머지는 등록됩니다.</p>
+    </div>
+    <a class="button" th:href="@{/inventory}">← 목록</a>
+  </header>
+
+  <!-- 결과 -->
+  <section class="panel" th:if="${result != null}">
+    <div class="panel-head"><div><p class="eyebrow">결과</p><h2>등록 결과</h2></div></div>
+    <p class="subcopy">
+      <b class="good" th:text="${result.created} + '건 등록'">0건 등록</b> ·
+      <span th:classappend="${result.errors.size() > 0} ? 'bad' : ''" th:text="${result.errors.size} + '건 실패'">0건 실패</span>
+      (총 <span th:text="${result.total}">0</span>건)
+    </p>
+    <div th:if="${result.hasErrors()}" class="data-table table-scroll" style="margin-top:.6rem">
+      <div class="table-row table-head" style="grid-template-columns:70px 1fr 2fr"><span>행</span><span>사유</span><span>원본</span></div>
+      <div class="table-row" style="grid-template-columns:70px 1fr 2fr" th:each="e : ${result.errors}">
+        <span th:text="${e.line}">1</span>
+        <span class="bad" th:text="${e.message}">사유</span>
+        <span style="color:#7a869a;font-family:monospace;font-size:.8rem" th:text="${e.raw}">원본</span>
+      </div>
+    </div>
+    <div style="margin-top:.8rem;display:flex;gap:.5rem">
+      <a class="button primary" th:href="@{/inventory}">목록에서 확인</a>
+      <a class="button" th:href="@{/inventory/import}">계속 등록</a>
+    </div>
+  </section>
+
+  <!-- 형식 안내 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">형식</p><h2>열 순서</h2></div></div>
+    <p class="subcopy" style="margin:.2rem 0">
+      <code>이름, 유형, 카테고리, 시리얼, 만료일, 구매일, 보증만료, 리스만료, 비고</code>
+    </p>
+    <ul class="subcopy" style="margin:.2rem 0 .4rem 1rem;line-height:1.7">
+      <li><b>이름</b>은 필수, 기관 내 중복 불가.</li>
+      <li><b>유형</b>은 <code>PHYSICAL</code>/<code>실물</code> 또는 <code>SOFTWARE</code>/<code>SW</code> (비우면 실물).</li>
+      <li>날짜는 모두 <code>yyyy-MM-dd</code> 형식, 비워도 됩니다.</li>
+      <li>첫 줄이 헤더(<code>이름</code> 또는 <code>name</code>으로 시작)면 자동으로 건너뜁니다.</li>
+      <li>쉼표가 든 값은 큰따옴표로 감싸세요: <code>"모니터, 27인치"</code></li>
+    </ul>
+    <pre style="white-space:pre-wrap;background:#f7f8fa;padding:.8rem;border-radius:8px;font-size:.82rem;line-height:1.6">이름,유형,카테고리,시리얼,만료일,구매일,보증만료,리스만료,비고
+영업 노트북,실물,노트북,SN-1001,,2026-01-15,2028-01-15,,영업1팀
+오피스 라이선스,SW,라이선스,,2027-03-31,2025-03-31,,,연간구독
+탕비실 정수기,실물,가전,,,,,2027-06-30,렌탈</pre>
+  </section>
+
+  <!-- 업로드 폼 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">등록</p><h2>붙여넣기 또는 파일</h2></div></div>
+    <p th:if="${error}" class="error-message" th:text="${error}" style="margin-bottom:.6rem"></p>
+    <form method="post" th:action="@{/inventory/import}" enctype="multipart/form-data"
+          style="display:grid;gap:.6rem;max-width:760px">
+      <label>CSV 붙여넣기</label>
+      <textarea name="csvText" rows="8" style="font-family:monospace;font-size:.85rem"
+                placeholder="이름,유형,카테고리,...&#10;영업 노트북,실물,노트북,..."></textarea>
+      <label>또는 CSV 파일 (.csv, UTF-8)</label>
+      <input type="file" name="csvFile" accept=".csv,text/csv">
+      <p class="subcopy" style="margin:0">붙여넣기와 파일을 모두 주면 붙여넣기 내용을 사용합니다.</p>
+      <div><button class="button primary" type="submit">등록 실행</button></div>
+    </form>
+  </section>
+</main></div>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 그룹 상세</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('groups')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">그룹 관리 / 상세</p>
+      <h1 th:text="${group.name}">그룹명</h1>
+      <p class="subcopy" th:text="${group.description != null ? group.description : '설명 없음'}">설명</p>
+    </div>
+    <div class="top-actions">
+      <a class="button primary" th:href="@{/invitations(group=${group.id})}" title="이 부서로 사용자 초대">사용자 초대</a>
+      <a class="button" th:href="@{/groups}">목록으로</a>
+    </div>
+  </header>
+
+  <p th:if="${groupError != null}" class="subcopy" style="color:#c0392b" th:text="${groupError}">오류</p>
+
+  <!-- 그룹 이름·설명 수정 / 삭제 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">설정</p><h2>이름·설명 수정</h2></div></div>
+    <form method="post" th:action="@{'/groups/' + ${group.id} + '/edit'}" class="inline-form">
+      <input type="hidden" name="status" th:value="${group.status}">
+      <input type="text" name="name" th:value="${group.name}" maxlength="100" required style="flex:1;min-width:200px">
+      <input type="text" name="description" th:value="${group.description}" maxlength="1000" placeholder="설명(선택)" style="flex:2">
+      <button class="button primary" type="submit">수정</button>
+    </form>
+    <div style="margin-top:.6rem;display:flex;gap:.5rem">
+      <form method="post" th:action="@{'/groups/' + ${group.id} + '/disable'}" th:if="${group.status.name() == 'ACTIVE'}">
+        <button class="button" type="submit" title="비활성(이력 유지)">비활성</button>
+      </form>
+      <form method="post" th:action="@{'/groups/' + ${group.id} + '/delete'}"
+            onsubmit="return confirm('이 그룹을 삭제할까요? 하위 그룹은 상위로 올라가고 멤버 배정은 해제됩니다.');">
+        <button class="button danger" type="submit">삭제</button>
+      </form>
+    </div>
+  </section>
+
+  <div class="content-grid">
+    <!-- 멤버 -->
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">멤버</p><h2>그룹 사용자</h2></div><span class="pill" th:text="${#lists.size(members)} + '명'">0명</span></div>
+
+      <form method="post" th:action="@{'/groups/' + ${group.id} + '/members'}" class="asset-toolbar">
+        <select name="userId" required aria-label="추가할 사용자">
+          <option value="" disabled selected>사용자 선택</option>
+          <option th:each="user : ${assignableUsers}" th:value="${user.id}"
+                  th:text="${user.name + ' (' + user.username + ')'}">사용자</option>
+        </select>
+        <button class="button primary" type="submit" th:disabled="${#lists.isEmpty(assignableUsers)}">멤버 추가</button>
+      </form>
+
+      <p th:if="${#lists.isEmpty(members)}" class="subcopy">아직 멤버가 없습니다.</p>
+      <div th:unless="${#lists.isEmpty(members)}" class="data-table compact">
+        <div class="table-row table-head"><span>이름</span><span>아이디</span><span>부서장</span><span>관리</span></div>
+        <div class="table-row" th:each="member : ${members}">
+          <strong th:text="${member.name}">이름</strong>
+          <span th:text="${member.username}">아이디</span>
+          <span>
+            <span th:if="${member.leader}" class="pill" style="background:#e7f0ff;color:#1c4fb3">부서장</span>
+            <span th:unless="${member.leader}" class="subcopy">—</span>
+          </span>
+          <span class="table-actions">
+            <form th:unless="${member.leader}" method="post" th:action="@{'/groups/' + ${group.id} + '/members/' + ${member.userId} + '/leader'}" style="display:inline">
+              <input type="hidden" name="leader" value="true">
+              <button class="button" type="submit" title="이 사용자를 부서장으로 지정">부서장 지정</button>
+            </form>
+            <form th:if="${member.leader}" method="post" th:action="@{'/groups/' + ${group.id} + '/members/' + ${member.userId} + '/leader'}" style="display:inline">
+              <input type="hidden" name="leader" value="false">
+              <button class="button" type="submit" title="부서장 해제">부서장 해제</button>
+            </form>
+            <form method="post" th:action="@{'/groups/' + ${group.id} + '/members/' + ${member.userId} + '/delete'}" style="display:inline">
+              <button class="button" type="submit">제거</button>
+            </form>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">조직</p><h2>하위 그룹(부서) 추가</h2></div></div>
+      <p class="subcopy" th:if="${#lists.isEmpty(children)}">이 부서 아래에 하위 조직이 없습니다.</p>
+      <div th:unless="${#lists.isEmpty(children)}" class="data-table compact">
+        <div class="table-row" th:each="c : ${children}">
+          <a th:href="@{'/groups/' + ${c.id}}" th:text="${c.name}">하위 그룹</a>
+          <span class="subcopy" th:text="${c.description}">설명</span>
+        </div>
+      </div>
+      <form method="post" th:action="@{/groups}" class="inline-form" style="margin-top:.6rem">
+        <input type="hidden" name="parentId" th:value="${group.id}">
+        <input type="text" name="name" maxlength="100" required placeholder="하위 부서명 (예: 영업1팀)">
+        <button class="button primary" type="submit">하위 그룹 추가</button>
+      </form>
+    </section>
+  </div>
+</main></div>
+</body>
+</html>

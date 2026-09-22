@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${serverOnly ? 'MOA - 서버' : 'MOA - 서버'}">MOA</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${serverOnly ? 'servers' : 'assets'})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow" th:text="${serverOnly ? '서버 관리' : '서버'}">서버</p>
+      <h1 th:text="${assetId != null ? '자산 수정' : (serverOnly ? '서버 등록' : '서버 등록')}">등록</h1>
+      <p class="subcopy">서버(SSH·RDP) 또는 웹사이트 등 <b>접속 대상</b>을 등록합니다. 실물·SW·렌탈 자산은 '자산' 메뉴(인벤토리)에서 관리합니다.</p>
+    </div>
+    <a class="button" th:href="${serverOnly} ? @{/servers} : @{/assets}">목록으로</a>
+  </header>
+  <section class="panel form-panel">
+    <form th:object="${assetForm}" method="post"
+          th:action="${assetId == null} ? (${serverOnly} ? @{/servers} : @{/assets}) : @{/assets/{id}(id=${assetId})}">
+      <p class="error-message" th:errors="*{connectionTargetValid}"></p>
+      <p class="error-message" th:errors="*{protocolValid}"></p>
+      <p class="error-message" th:if="${#fields.hasErrors('host')}" th:errors="*{host}"></p>
+      <p class="error-message" th:if="${#fields.hasErrors('port')}" th:errors="*{port}"></p>
+      <p class="error-message" th:if="${#fields.hasErrors('protocol')}" th:errors="*{protocol}"></p>
+      <div class="form-section">
+        <div><p class="eyebrow">기본 정보</p><h2>기본 정보</h2></div>
+        <div class="form-grid">
+          <label for="name">이름<input id="name" th:field="*{name}" maxlength="100" required placeholder="예: 운영-웹-01"></label>
+          <label for="status">상태<select id="status" th:field="*{status}">
+            <option th:each="status : ${statuses}" th:value="${status}"
+                    th:text="${status.name() == 'ACTIVE'} ? '활성' : '비활성'">활성</option>
+          </select></label>
+          <label th:unless="${serverOnly}" for="assetType">자산 종류<select id="assetType" th:field="*{assetType}">
+            <option th:each="type : ${assetTypes}" th:value="${type}"
+                    th:text="${type.name() == 'SERVER'} ? '서버' : '웹사이트'">서버</option>
+          </select></label>
+          <label th:if="${serverOnly}">자산 종류<input value="서버" readonly><input type="hidden" th:field="*{assetType}"></label>
+          <label for="osType">OS 상세<input id="osType" th:field="*{osType}" maxlength="20" placeholder="예: Ubuntu 22.04"></label>
+          <label for="osFamily">OS 계열<select id="osFamily" th:field="*{osFamily}">
+            <option value="">선택</option>
+            <option th:each="f : ${osFamilies}" th:value="${f}" th:text="${f.label}"
+                    th:selected="${f == assetForm.osFamily}">윈도우</option>
+          </select></label>
+          <label for="category">카테고리<select id="category" th:field="*{category}">
+            <option value="">선택 (내부망 서버 › 웹서버 …)</option>
+            <option th:each="n : ${serverCategories}" th:value="${n.path}"
+                    th:text="${#strings.repeat('— ', n.depth) + n.name}"
+                    th:selected="${n.path == assetForm.category}">내부망 서버 / 웹서버</option>
+          </select></label>
+        </div>
+        <p class="error-message" th:errors="*{name}"></p>
+      </div>
+      <div class="form-section">
+        <div><p class="eyebrow">연결</p><h2>연결 설정</h2></div>
+        <div class="form-grid">
+          <label for="protocol">프로토콜<select id="protocol" th:field="*{protocol}">
+            <option th:each="protocol : ${serverOnly ? serverProtocols : protocols}" th:value="${protocol}" th:text="${protocol}"></option>
+          </select></label>
+          <label for="host">호스트 / IP<input id="host" th:field="*{host}" maxlength="255" placeholder="예: 10.10.0.12"></label>
+          <label for="port">포트<input id="port" th:field="*{port}" type="number" min="1" max="65535" placeholder="SSH 22 / RDP 3389"></label>
+          <label for="url">URL<input id="url" th:field="*{url}" maxlength="2048" type="url" placeholder="웹사이트 주소(웹 자산만)"></label>
+        </div>
+      </div>
+      <div class="form-section">
+        <div><p class="eyebrow">하드웨어 사양</p><h2>사양 (수동 입력)</h2></div>
+        <p class="subcopy">서버 상세·접속 화면에 표시됩니다. 접속 권한이 있는 사용자도 볼 수 있습니다.</p>
+        <div class="form-grid">
+          <label for="cpu">CPU<input id="cpu" th:field="*{cpu}" maxlength="100" placeholder="예: Xeon Silver 4210 · 10코어"></label>
+          <label for="ram">RAM<input id="ram" th:field="*{ram}" maxlength="50" placeholder="예: 64GB"></label>
+          <label for="disk">디스크<input id="disk" th:field="*{disk}" maxlength="100" placeholder="예: 1TB NVMe SSD"></label>
+          <label for="hwModel">모델<input id="hwModel" th:field="*{hwModel}" maxlength="100" placeholder="예: Dell PowerEdge R740"></label>
+        </div>
+      </div>
+      <div class="form-section">
+        <div><p class="eyebrow">비고</p><h2>운영 메모</h2></div>
+        <label for="description">설명<textarea id="description" th:field="*{description}" maxlength="1000"></textarea></label>
+      </div>
+      <div class="form-footer">
+        <a class="button" th:href="${serverOnly} ? @{/servers} : @{/assets}">취소</a>
+        <a th:if="${assetId != null}" class="button" th:href="@{/assets/{id}/trackers(id=${assetId})}">만기·점검 / SSL →</a>
+        <a th:if="${assetId != null}" class="button" th:href="@{/assets/{id}/history(id=${assetId})}">변경 이력 →</a>
+        <button class="button primary" type="submit"
+                th:text="${assetId != null ? '변경 저장' : (serverOnly ? '서버 등록' : '서버 등록')}">저장</button>
+      </div>
+    </form>
+    <div th:if="${assetId != null}" class="form-section" style="margin-top:1rem">
+      <div><p class="eyebrow">소유팀</p><h2>팀 소유 (접근 위임)</h2></div>
+      <p class="subcopy">소유팀을 지정하면 그 팀원이 이 서버에 <b>접근(연결)</b>할 수 있습니다(개인·그룹 권한과 별개). 인프라 관리자는 계속 전체를 관리합니다.</p>
+      <form method="post" th:action="@{/assets/{id}/owner(id=${assetId})}" style="display:flex;gap:.5rem;align-items:end;flex-wrap:wrap">
+        <label style="flex:1;min-width:220px">소유팀(그룹)<select name="ownerGroupId">
+          <option value="" th:selected="${ownerGroupId == null}">소유팀 없음</option>
+          <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}" th:selected="${g.id == ownerGroupId}">부서</option>
+        </select></label>
+        <button class="button primary" type="submit">소유팀 적용</button>
+      </form>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

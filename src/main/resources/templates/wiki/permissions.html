@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 위키 권한</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('wiki')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow"><a th:href="@{/wiki}">위키</a> / <a th:href="@{'/wiki/spaces/' + ${space.id}}" th:text="${space.name}">공간</a> / 권한</p>
+      <h1>권한 관리</h1>
+      <p class="subcopy">이 공간을 누가 열람·편집·관리할지 정합니다. 상위 폴더 권한은 자동 상속됩니다.</p></div>
+  </header>
+
+  <p th:if="${wikiError}" class="modal-note" style="color:#c0392b" th:text="${wikiError}">오류</p>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">현재 권한</p><h2>이 공간 직접 권한</h2></div></div>
+    <p th:if="${#lists.isEmpty(viewers)}" class="subcopy">직접 부여된 권한이 없습니다(상위 상속만). 아래에서 부서/사용자를 추가하세요.</p>
+    <div th:unless="${#lists.isEmpty(viewers)}" class="data-table">
+      <div class="table-row table-head"><span>대상</span><span>수준</span><span>관리</span></div>
+      <div class="table-row" th:each="v : ${viewers}">
+        <strong th:text="${v.subject}">대상</strong>
+        <span th:text="${v.level}">열람</span>
+        <span class="table-actions">
+          <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions/' + ${v.permId} + '/delete'}" style="display:inline">
+            <button class="button" type="submit">제거</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">부여</p><h2>권한 추가</h2></div></div>
+    <div style="display:grid;gap:0.8rem;max-width:640px">
+      <!-- 부서 -->
+      <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;gap:.4rem;align-items:center">
+        <input type="hidden" name="subjectType" value="GROUP">
+        <span style="width:70px">부서</span>
+        <select name="subjectId" required style="flex:1">
+          <option value="" disabled selected>부서 선택</option>
+          <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}">부서</option>
+        </select>
+        <select name="level"><option th:each="l : ${levels}" th:value="${l}" th:text="${l.label}">열람</option></select>
+        <button class="button primary" type="submit">추가</button>
+      </form>
+      <!-- 사용자 -->
+      <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;gap:.4rem;align-items:center">
+        <input type="hidden" name="subjectType" value="USER">
+        <span style="width:70px">사용자</span>
+        <select name="subjectId" required style="flex:1">
+          <option value="" disabled selected>사용자 선택</option>
+          <option th:each="u : ${tenantUsers}" th:value="${u.id}" th:text="${u.name + ' (' + u.username + ')'}">사용자</option>
+        </select>
+        <select name="level"><option th:each="l : ${levels}" th:value="${l}" th:text="${l.label}">열람</option></select>
+        <button class="button primary" type="submit">추가</button>
+      </form>
+      <!-- 전체 공개 -->
+      <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;gap:.4rem;align-items:center">
+        <input type="hidden" name="subjectType" value="ALL">
+        <span style="width:70px">전 직원</span>
+        <select name="level" style="flex:1"><option th:each="l : ${levels}" th:value="${l}" th:text="${l.label}">열람</option></select>
+        <button class="button" type="submit">전체 공개</button>
+      </form>
+    </div>
+    <p class="subcopy" style="margin-top:.6rem">관리(부서장) 수준을 주면 그 사람이 하위 폴더·권한을 관리할 수 있습니다. 부서 단위 부여를 권장합니다(입·퇴사 자동 반영).</p>
+  </section>
+</main></div>
+</body>
+</html>

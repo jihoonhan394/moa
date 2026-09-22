@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 내 솔루션</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('my-solutions')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">내 솔루션</p>
+      <h1>내 솔루션</h1>
+      <p class="subcopy">배정받은 솔루션을 켜고 끕니다(start/stop/상태 확인).</p>
+    </div>
+  </header>
+
+  <p th:if="${controlMessage}" class="modal-note" th:text="${controlMessage}">결과</p>
+  <p th:if="${controlError}" class="modal-note" style="color:#c0392b" th:text="${controlError}">오류</p>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">배정된 솔루션</p><h2>제어</h2></div>
+      <span class="pill" th:text="${#lists.size(solutions)} + '개'">0개</span></div>
+    <p th:if="${#lists.isEmpty(solutions)}" class="subcopy">배정된 솔루션이 없습니다. 관리자에게 문의하세요.</p>
+    <div th:unless="${#lists.isEmpty(solutions)}" class="data-table">
+      <div class="table-row table-head"><span>이름</span><span>유형</span><span>제어</span></div>
+      <div class="table-row" th:each="sol : ${solutions}">
+        <strong th:text="${sol.name}">이름</strong>
+        <span th:text="${sol.type}">유형</span>
+        <span class="table-actions">
+          <form th:each="act : ${actions}" method="post" th:action="@{'/my-solutions/' + ${sol.id} + '/control'}" style="display:inline">
+            <input type="hidden" name="action" th:value="${act}">
+            <button class="button" type="submit" th:text="${act}">START</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 사용자 관리</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell">
+  <aside th:replace="~{fragments/sidebar :: sidebar('users')}"></aside>
+  <main class="workspace">
+    <header class="topbar">
+      <div><p class="eyebrow">관리자 / 사용자 관리</p><h1>사용자 관리</h1><p class="subcopy">테넌트 사용자 계정을 관리합니다.</p></div>
+      <a class="button primary" th:href="@{/users/new}">사용자 등록</a>
+    </header>
+    <p th:if="${userMessage}" class="modal-note" th:text="${userMessage}">결과</p>
+    <p th:if="${userError}" class="modal-note" style="color:#c0392b" th:text="${userError}">오류</p>
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">사용자 목록</p><h2>등록된 사용자</h2></div><span class="pill" th:text="${#lists.size(users)} + '명'">0명</span></div>
+      <p th:if="${#lists.isEmpty(users)}" class="subcopy">등록된 사용자가 없습니다. 우측 상단에서 사용자를 등록하세요.</p>
+      <div th:unless="${#lists.isEmpty(users)}" class="data-table user-table table-scroll">
+        <div class="table-row table-head"><span>이름</span><span>아이디</span><span>이메일</span><span>상태</span><span>관리</span></div>
+        <div class="table-row" th:each="user : ${users}">
+          <div>
+            <strong th:text="${user.name}">이름</strong>
+            <small th:text="${user.roleSummary}" style="display:block;color:#7a869a">일반 사용자</small>
+          </div>
+          <span th:text="${user.username}">아이디</span>
+          <span th:text="${user.email != null ? user.email : '-'}">이메일</span>
+          <b th:classappend="${user.status.name() == 'ACTIVE'} ? 'good' : (${user.status.name() == 'OFFBOARDED'} ? 'bad' : 'warn')"
+             th:text="${user.status.label}">활성</b>
+          <span class="table-actions">
+            <!-- 퇴사(종료)는 되돌릴 수 없으므로 관리 액션을 노출하지 않는다. -->
+            <span th:if="${user.status.name() == 'OFFBOARDED'}" class="subcopy" style="margin:0">퇴사 처리됨</span>
+            <th:block th:unless="${user.status.name() == 'OFFBOARDED'}">
+              <form th:if="${user.status.name() == 'PENDING'}" method="post" th:action="@{'/users/' + ${user.id} + '/approve'}" style="display:inline">
+                <button class="button primary" type="submit">승인</button>
+              </form>
+              <a class="button" th:href="@{'/users/' + ${user.id} + '/edit'}">수정</a>
+              <form th:if="${user.status.name() == 'ACTIVE'}" method="post" th:action="@{'/users/' + ${user.id} + '/disable'}" style="display:inline">
+                <button class="button" type="submit">비활성</button>
+              </form>
+              <form th:if="${user.status.name() == 'DISABLED'}" method="post" th:action="@{'/users/' + ${user.id} + '/activate'}" style="display:inline">
+                <button class="button" type="submit">활성</button>
+              </form>
+              <form th:if="${user.status.name() == 'ACTIVE' or user.status.name() == 'DISABLED'}" method="post" th:action="@{'/users/' + ${user.id} + '/offboard'}" style="display:inline"
+                    onsubmit="return confirm('퇴사 처리하면 이 사용자의 모든 접근(그룹·권한·솔루션)이 회수되고 되돌릴 수 없습니다. 진행할까요?')">
+                <button class="button" type="submit" style="color:#c0392b">퇴사</button>
+              </form>
+            </th:block>
+          </span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

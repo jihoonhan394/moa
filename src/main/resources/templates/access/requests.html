@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 접근 요청</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">접속 / 접근 요청(JIT)</p>
+      <h1>임시 접근 요청</h1>
+      <p class="subcopy">평소 권한이 없는 서버에 <b>사유·기간</b>을 적어 임시 접근을 요청합니다.
+        승인되면 그 기간 동안만 접속할 수 있고, 기간이 지나면 자동으로 반납됩니다.</p>
+    </div>
+  </header>
+
+  <p th:if="${message}" class="subcopy" style="color:#2d7a3a" th:text="${message}"></p>
+  <p th:if="${error}" class="subcopy" style="color:#c0392b" th:text="${error}"></p>
+
+  <!-- 새 요청 -->
+  <section class="panel form-panel">
+    <div class="panel-head"><div><p class="eyebrow">새 요청</p><h2>서버 접근 요청</h2></div></div>
+    <p class="subcopy" th:if="${#lists.isEmpty(requestable)}" style="margin:.4rem 0">요청 가능한 서버가 없습니다(이미 접근 가능하거나 대기 중인 요청이 있습니다).</p>
+    <form th:unless="${#lists.isEmpty(requestable)}" method="post" th:action="@{/access-requests}"
+          style="display:grid;gap:.6rem;max-width:620px">
+      <label for="assetId">서버</label>
+      <select id="assetId" name="assetId" required>
+        <option value="" disabled selected>서버를 선택하세요</option>
+        <option th:each="a : ${requestable}" th:value="${a.id}"
+                th:text="${a.name} + ' · ' + ${a.protocol} + (${a.category} != '' ? ' · ' + ${a.category} : '')">서버</option>
+      </select>
+      <label for="reason">사유</label>
+      <textarea id="reason" name="reason" rows="2" maxlength="1000" required placeholder="예: 야간 배포 장애 대응(5자 이상)"></textarea>
+      <label for="durationHours">사용 기간(시간)</label>
+      <input id="durationHours" name="durationHours" type="number" min="1" max="720" value="4" required style="width:140px">
+      <div><button class="button primary" type="submit">요청 보내기</button></div>
+    </form>
+  </section>
+
+  <!-- 내 요청 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">현황</p><h2>내 요청</h2></div></div>
+    <p class="subcopy" th:if="${#lists.isEmpty(requests)}" style="margin:.4rem 0">보낸 요청이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(requests)}" class="data-table table-scroll">
+      <div class="table-row table-head" style="grid-template-columns:1.2fr 1.6fr 1.8fr .8fr 1fr 0.8fr">
+        <span>서버</span><span>사유</span><span>기간</span><span>상태</span><span>승인/코멘트</span><span></span>
+      </div>
+      <div class="table-row" th:each="r : ${requests}" style="grid-template-columns:1.2fr 1.6fr 1.8fr .8fr 1fr 0.8fr">
+        <strong th:text="${r.assetName}">서버</strong>
+        <span th:text="${r.reason}">사유</span>
+        <span th:text="${r.period}" style="color:#7a869a">기간</span>
+        <b th:text="${r.statusLabel}">상태</b>
+        <span style="color:#7a869a">
+          <span th:if="${r.approverName}" th:text="${r.approverName}">승인자</span>
+          <span th:if="${r.reviewComment}" th:text="' · ' + ${r.reviewComment}"></span>
+        </span>
+        <form th:if="${r.canCancel}" method="post" th:action="@{'/access-requests/' + ${r.id} + '/cancel'}"
+              style="display:inline" onsubmit="return confirm('요청을 취소할까요?');">
+          <button class="button" type="submit">취소</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

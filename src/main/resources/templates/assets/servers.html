@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 서버</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell">
+  <aside th:replace="~{fragments/sidebar :: sidebar('servers')}"></aside>
+  <main class="workspace">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">서버 관리</p>
+        <h1>서버</h1>
+        <p class="subcopy">SSH·RDP 접속 대상 서버를 등록·관리합니다. 카테고리(내부망 서버 › 웹서버 등)로 묶고 OS 계열로 필터·집계합니다.</p>
+      </div>
+      <div class="top-actions"><a class="button" th:href="@{/servers/categories}">카테고리 관리</a></div>
+    </header>
+
+    <!-- 등록(인라인) -->
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">등록</p><h2>서버 등록</h2></div></div>
+      <form method="post" th:action="@{/servers}" th:object="${assetForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:820px;">
+        <p th:each="err : ${#fields.globalErrors()}" class="error-message" th:text="${err}">오류</p>
+        <input type="hidden" th:field="*{assetType}">
+        <input type="hidden" th:field="*{status}">
+        <div class="asset-toolbar">
+          <input type="text" th:field="*{name}" maxlength="100" placeholder="서버 이름 (예: 웹서버 1호)" required>
+          <select th:field="*{protocol}" required aria-label="프로토콜">
+            <option th:each="p : ${serverProtocols}" th:value="${p}" th:text="${p}">SSH</option>
+          </select>
+          <input type="text" th:field="*{host}" maxlength="255" placeholder="호스트/IP (예: 100.10.1.52)" required>
+          <input type="number" th:field="*{port}" min="1" max="65535" placeholder="포트" required style="max-width:110px">
+        </div>
+        <div class="asset-toolbar">
+          <select th:field="*{category}" aria-label="카테고리">
+            <option value="">카테고리 (내부망 서버 › 웹서버 …)</option>
+            <option th:each="n : ${serverCategories}" th:value="${n.path}"
+                    th:text="${#strings.repeat('— ', n.depth) + n.name}">내부망 서버 / 웹서버</option>
+          </select>
+          <select th:field="*{osFamily}" aria-label="OS 계열">
+            <option value="">OS 계열</option>
+            <option th:each="f : ${osFamilies}" th:value="${f}" th:text="${f.label}">윈도우</option>
+          </select>
+          <input type="text" th:field="*{osType}" maxlength="20" placeholder="OS 상세 (예: Ubuntu 22.04, 선택)">
+        </div>
+        <div class="asset-toolbar">
+          <input type="text" th:field="*{cpu}" maxlength="100" placeholder="CPU (예: Xeon 4210 · 10코어, 선택)">
+          <input type="text" th:field="*{ram}" maxlength="50" placeholder="RAM (예: 64GB, 선택)">
+          <input type="text" th:field="*{disk}" maxlength="100" placeholder="디스크 (예: 1TB SSD, 선택)">
+          <input type="text" th:field="*{hwModel}" maxlength="100" placeholder="모델 (예: Dell R740, 선택)">
+        </div>
+        <div><button class="button primary" type="submit">서버 등록</button></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><p class="eyebrow">서버 목록</p><h2>관리 서버</h2></div>
+        <span class="pill" th:text="${#lists.size(assets)} + '대'">0대</span>
+      </div>
+
+      <!-- OS 계열 필터/통계 -->
+      <div th:unless="${#lists.isEmpty(assets)}" class="os-filter" style="display:flex;gap:.4rem;flex-wrap:wrap;margin:.2rem 0 .8rem">
+        <button type="button" class="button os-chip active" data-os="all"
+                th:text="'전체 ' + ${#lists.size(assets)}">전체 0</button>
+        <button type="button" class="button os-chip" th:each="f : ${osFamilies}" th:attr="data-os=${f.name()}"
+                th:text="${f.label} + ' ' + ${osCounts.get(f.name())}">윈도우 0</button>
+      </div>
+
+      <p th:if="${#lists.isEmpty(assets)}" class="subcopy" style="margin:.6rem 0">
+        등록된 서버가 없습니다. 위 <b>서버 등록</b>으로 SSH·RDP 서버를 추가하세요.</p>
+
+      <div th:unless="${#lists.isEmpty(assets)}" class="inventory-list" id="serverList">
+        <div class="inventory-item" th:each="s : ${assets}"
+             th:attr="data-os=${s.osFamily != null ? s.osFamily.name() : 'NONE'}">
+          <span class="state" th:classappend="${s.status.name() == 'ACTIVE'} ? 'online' : 'idle'"></span>
+          <div>
+            <strong><a th:href="@{/servers/{id}(id=${s.id})}" th:text="${s.name}" style="color:inherit">서버명</a></strong>
+            <small th:text="${s.host} + ':' + ${s.port} + ' · ' + ${s.protocol}
+                   + (${s.osFamily != null} ? ' · ' + ${s.osFamily.label} : '')
+                   + (${s.osType != null and !s.osType.isBlank()} ? '(' + ${s.osType} + ')' : '')
+                   + (${s.category != null} ? ' · ' + ${s.category} : '')
+                   + (${s.ownerGroupId != null} ? ' · 소유팀 ' + ${groupNames.getOrDefault(s.ownerGroupId, '(삭제된 그룹)')} : '')">100.10.1.52:22 · SSH · 리눅스 · 내부망 서버 / 웹서버</small>
+          </div>
+          <span class="pill" th:text="${s.status.name() == 'ACTIVE'} ? '활성' : '비활성'">상태</span>
+          <span class="table-actions">
+            <a class="button primary" th:if="${s.protocol != null and (s.protocol.name() == 'SSH' or s.protocol.name() == 'RDP')}"
+               th:href="@{/servers/{id}/connect(id=${s.id})}" title="웹 SSH/RDP 접속">접속</a>
+            <a class="button" th:href="@{/assets/{id}/edit(id=${s.id})}">수정</a>
+            <form method="post" th:action="@{/assets/{id}/delete(id=${s.id})}" style="display:inline"
+                  onsubmit="return confirm('이 서버를 삭제할까요?')">
+              <button class="button" type="submit">삭제</button>
+            </form>
+          </span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+  (function () {
+    var chips = document.querySelectorAll('.os-chip');
+    var rows = document.querySelectorAll('#serverList .inventory-item');
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        chips.forEach(function (c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        var os = chip.getAttribute('data-os');
+        rows.forEach(function (row) {
+          row.style.display = (os === 'all' || row.getAttribute('data-os') === os) ? '' : 'none';
+        });
+      });
+    });
+  })();
+</script>
+</body>
+</html>

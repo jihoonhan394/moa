@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 서버 현황</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell">
+  <aside th:replace="~{fragments/sidebar :: sidebar('server-status')}"></aside>
+  <main class="workspace">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">서버 관리 / 현황</p>
+        <h1>서버 현황</h1>
+        <p class="subcopy">등록된 서버와 운영 상태입니다. 실시간 자원 모니터링(CPU·메모리·네트워크)은 모니터링 연동 시 제공됩니다.</p>
+      </div>
+      <a class="button" th:href="@{/servers}">서버 관리</a>
+    </header>
+
+    <section class="stat-strip" style="display:flex;gap:1rem;margin-bottom:1rem">
+      <div class="panel" style="flex:1;text-align:center"><p class="eyebrow">전체 서버</p>
+        <strong style="font-size:1.6rem" th:text="${serverTotal}">0</strong></div>
+      <div class="panel" style="flex:1;text-align:center"><p class="eyebrow">활성</p>
+        <strong style="font-size:1.6rem" class="good" th:text="${serverActive}">0</strong></div>
+      <div class="panel" style="flex:1;text-align:center"><p class="eyebrow">비활성</p>
+        <strong style="font-size:1.6rem" th:classappend="${serverInactive > 0} ? 'bad' : ''" th:text="${serverInactive}">0</strong></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">서버 목록</p><h2>운영 상태</h2></div>
+        <span class="pill" th:text="${serverTotal} + '대'">0대</span></div>
+
+      <p th:if="${#lists.isEmpty(servers)}" class="subcopy" style="margin:.6rem 0">
+        등록된 서버가 없습니다. <a th:href="@{/servers}">서버 관리</a>에서 등록하세요.</p>
+
+      <div th:unless="${#lists.isEmpty(servers)}" class="inventory-list">
+        <div class="inventory-item" th:each="s : ${servers}">
+          <span class="state" th:classappend="${s.status.name() == 'ACTIVE'} ? 'online' : 'idle'"></span>
+          <div>
+            <strong th:text="${s.name}">서버명</strong>
+            <small th:text="${s.host} + ':' + ${s.port} + ' · ' + ${s.protocol}
+                   + (${s.osType != null and !s.osType.isBlank()} ? ' · ' + ${s.osType} : '')">10.0.0.1:22 · SSH</small>
+          </div>
+          <span class="live-badge" th:classappend="${s.status.name() == 'ACTIVE'} ? '' : 'warning'"
+                th:text="${s.status.name() == 'ACTIVE'} ? '활성' : '비활성'">활성</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

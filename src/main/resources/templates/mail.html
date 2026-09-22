@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 메일 발송</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell">
+  <aside th:replace="~{fragments/sidebar :: sidebar('mail')}"></aside>
+  <main class="workspace">
+    <header class="topbar">
+      <div><p class="eyebrow">기관 / 메일</p><h1>메일(SMTP) 발송</h1>
+        <p class="subcopy">우리 기관이 소속 사용자에게 메일을 보내기 위한 발송 설정입니다.</p></div>
+    </header>
+
+    <p th:if="${message}" class="subcopy" style="color:#2d7a3a" th:text="${message}"></p>
+    <p th:if="${error}" class="subcopy" style="color:#c0392b" th:text="${error}"></p>
+
+    <section class="panel form-panel">
+      <div class="panel-head"><div><p class="eyebrow">SMTP</p><h2>발송 설정</h2></div>
+        <span class="pill" th:text="${mailForm.enabled} ? '활성' : '비활성'">상태</span></div>
+      <form th:object="${mailForm}" method="post" th:action="@{/mail}">
+        <p class="error-message" th:errors="*{global}"></p>
+        <label for="host">SMTP 호스트</label>
+        <input id="host" th:field="*{host}" maxlength="255" placeholder="예: smtp.gmail.com" required>
+        <p class="error-message" th:errors="*{host}"></p>
+        <label for="port">포트</label>
+        <input id="port" th:field="*{port}" type="number" min="1" max="65535" required>
+        <p class="error-message" th:errors="*{port}"></p>
+        <label for="username">사용자(계정)</label>
+        <input id="username" th:field="*{username}" maxlength="255" autocomplete="off"
+               placeholder="인증이 필요 없으면 비워두세요">
+        <label for="password">비밀번호</label>
+        <input id="password" th:field="*{password}" type="password" maxlength="255" autocomplete="new-password"
+               th:placeholder="${hasSecret} ? '저장됨 — 변경할 때만 입력' : '비밀번호 입력'">
+        <p class="subcopy" th:if="${hasSecret}">현재 비밀번호가 안전하게 저장되어 있습니다(봉투암호화).</p>
+        <label for="fromAddress">발신 주소</label>
+        <input id="fromAddress" th:field="*{fromAddress}" type="email" maxlength="255"
+               placeholder="예: no-reply@ourcompany.com" required>
+        <p class="error-message" th:errors="*{fromAddress}"></p>
+        <label for="fromName">발신자 이름</label>
+        <input id="fromName" th:field="*{fromName}" maxlength="100" placeholder="예: 우리회사 관리자">
+        <label class="checkbox-row"><input type="checkbox" th:field="*{starttls}"> STARTTLS 사용</label>
+        <label class="checkbox-row"><input type="checkbox" th:field="*{enabled}"> 발송 활성화</label>
+        <button class="button primary" type="submit">설정 저장</button>
+      </form>
+    </section>
+
+    <section class="panel form-panel">
+      <div class="panel-head"><div><p class="eyebrow">점검</p><h2>테스트 발송</h2></div></div>
+      <form method="post" th:action="@{/mail/test}">
+        <label for="testTo">받는 주소</label>
+        <input id="testTo" name="testTo" type="email" required placeholder="본인 메일로 테스트">
+        <button class="button" type="submit">테스트 메일 보내기</button>
+      </form>
+    </section>
+
+    <section class="panel form-panel">
+      <div class="panel-head"><div><p class="eyebrow">발송</p><h2>기관 사용자에게 보내기</h2></div>
+        <span class="pill" th:text="'사용자 ' + ${recipientCount} + '명(이메일 보유)'">대상</span></div>
+      <form method="post" th:action="@{/mail/send}">
+        <label class="checkbox-row"><input type="radio" name="recipientMode" value="ALL" checked> 기관 사용자 전체</label>
+        <label class="checkbox-row"><input type="radio" name="recipientMode" value="MANUAL"> 직접 입력</label>
+        <label for="manualRecipients">받는 사람(직접 입력 시, 쉼표/공백 구분)</label>
+        <textarea id="manualRecipients" name="manualRecipients" rows="2"></textarea>
+        <label for="subject">제목</label>
+        <input id="subject" name="subject" maxlength="200" required>
+        <label for="body">내용</label>
+        <textarea id="body" name="body" rows="8" maxlength="4000" required></textarea>
+        <button class="button primary" type="submit">발송</button>
+      </form>
+    </section>
+  </main>
+</div>
+</body>
+</html>

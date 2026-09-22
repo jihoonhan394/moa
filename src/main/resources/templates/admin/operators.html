@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 운영자 계정</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('operators')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">플랫폼 / 운영자 계정</p>
+      <h1>플랫폼 운영자(SYSTEM_ADMIN)</h1>
+      <p class="subcopy">플랫폼 전체를 관리하는 운영자 계정입니다. 특정 기관에 속하지 않습니다.</p>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">새 운영자</p><h2>운영자 계정 생성</h2></div></div>
+    <p th:if="${selfDisableError}" th:text="${selfDisableError}" class="subcopy" style="color:#c0392b">오류</p>
+    <form method="post" th:action="@{/admin/operators}" th:object="${operatorForm}" class="asset-toolbar">
+      <input type="text" th:field="*{username}" placeholder="아이디" required autocomplete="off">
+      <input type="text" th:field="*{name}" placeholder="이름" required>
+      <input type="email" th:field="*{email}" placeholder="이메일" required autocomplete="off">
+      <input type="text" th:field="*{phone}" placeholder="전화번호" required>
+      <input type="password" th:field="*{password}" placeholder="비밀번호 (8자 이상)" required autocomplete="new-password">
+      <input type="password" name="passwordConfirm" placeholder="비밀번호 확인" required autocomplete="new-password">
+      <button class="button primary" type="submit">운영자 생성</button>
+      <p class="subcopy" th:if="${#fields.hasErrors('username')}" th:errors="*{username}" style="color:#c0392b">아이디 오류</p>
+      <p class="subcopy" th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="color:#c0392b">이름 오류</p>
+      <p class="subcopy" th:if="${#fields.hasErrors('email')}" th:errors="*{email}" style="color:#c0392b">이메일 오류</p>
+      <p class="subcopy" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}" style="color:#c0392b">전화번호 오류</p>
+      <p class="subcopy" th:if="${#fields.hasErrors('password')}" th:errors="*{password}" style="color:#c0392b">비밀번호 오류</p>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">운영자 목록</p><h2>등록된 운영자</h2></div><span class="pill" th:text="${#lists.size(operators)} + '명'">0명</span></div>
+    <p th:if="${#lists.isEmpty(operators)}" class="subcopy">등록된 운영자가 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(operators)}" class="data-table compact">
+      <div class="table-row table-head"><span>운영자</span><span>상태</span><span>관리</span></div>
+      <div class="table-row" th:each="op : ${operators}">
+        <div>
+          <strong th:text="${op.username}">아이디</strong>
+          <small th:text="${op.name}" style="display:block;color:#7a869a">이름</small>
+        </div>
+        <span>
+          <span class="state" th:classappend="${op.status.name() == 'ACTIVE'} ? 'online' : 'offline'"></span>
+          <span th:text="${op.status}">ACTIVE</span>
+        </span>
+        <span class="table-actions">
+          <form th:if="${op.status.name() == 'ACTIVE'}" method="post" th:action="@{'/admin/operators/' + ${op.id} + '/disable'}" style="display:inline">
+            <button class="button" type="submit">비활성</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

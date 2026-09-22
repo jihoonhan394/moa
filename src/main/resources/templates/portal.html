@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 내 접속 가능 자산</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('portal')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">접속 / 포털</p>
+      <h1>내 접속 가능 자산</h1>
+      <p class="subcopy">내가 속한 그룹에 부여된 접근 권한을 기준으로 접속 가능한 자산입니다.</p>
+    </div>
+  </header>
+
+  <p th:if="${error == 'denied'}" class="modal-note">접근 권한이 없어 해당 자산을 열 수 없습니다.</p>
+  <p th:if="${error == 'invalid'}" class="modal-note">열 수 없는 자산입니다(웹 자산 또는 유효한 http/https URL이 아님).</p>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><p class="eyebrow">접근 권한</p><h2>접속 가능 목록</h2></div>
+      <span class="pill" th:text="${#lists.size(assets)} + '개'">0개</span>
+    </div>
+    <p th:if="${#lists.isEmpty(assets)}" class="subcopy">
+      접속 가능한 자산이 없습니다. 관리자에게 그룹 배정과 자산 접근 권한 부여를 요청하세요.
+    </p>
+    <div th:unless="${#lists.isEmpty(assets)}" class="data-table">
+      <div class="table-row table-head">
+        <span>자산명</span><span>유형</span><span>호스트 / URL</span><span>프로토콜</span><span>작업</span>
+      </div>
+      <div class="table-row" th:each="asset : ${assets}">
+        <strong th:text="${asset.name}">자산명</strong>
+        <span th:text="${asset.assetType}">SERVER</span>
+        <span th:text="${asset.host != null ? asset.host : asset.url}">호스트</span>
+        <span th:text="${asset.protocol}">SSH</span>
+        <span class="table-actions">
+          <a th:if="${asset.assetType.name() == 'WEBSITE'}" class="button primary"
+             th:href="@{'/portal/assets/' + ${asset.id} + '/open'}" target="_blank" rel="noopener">열기</a>
+          <a th:if="${asset.assetType.name() == 'SERVER'}" class="button primary"
+             th:href="@{'/portal/assets/' + ${asset.id} + '/connect'}">접속</a>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">세션</p><h2>내 접속 세션</h2></div></div>
+    <p th:if="${#lists.isEmpty(sessions)}" class="subcopy">접속 세션 이력이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(sessions)}" class="data-table">
+      <div class="table-row table-head"><span>자산</span><span>프로토콜</span><span>상태</span><span>시작</span><span>작업</span></div>
+      <div class="table-row" th:each="sess : ${sessions}">
+        <span th:text="${sess.assetId}">자산</span>
+        <span th:text="${sess.protocol}">SSH</span>
+        <span>
+          <span class="state" th:classappend="${sess.status.name() == 'CONNECTED'} ? 'online' : (${sess.status.name() == 'FAILED'} ? 'offline' : 'idle')"></span>
+          <span th:text="${sess.status}">상태</span>
+        </span>
+        <span th:text="${sess.startedAt != null ? sess.startedAt : sess.createdAt}">시각</span>
+        <span class="table-actions">
+          <form th:if="${sess.status.name() == 'CONNECTED'}" method="post" th:action="@{'/portal/sessions/' + ${sess.id} + '/close'}" style="display:inline">
+            <button class="button" type="submit">종료</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">이력</p><h2>최근 웹 자산 열람</h2></div></div>
+    <p th:if="${#lists.isEmpty(webHistory)}" class="subcopy">아직 열람 이력이 없습니다.</p>
+    <ul th:unless="${#lists.isEmpty(webHistory)}" class="audit-list">
+      <li th:each="entry : ${webHistory}">
+        <span class="state" th:classappend="${entry.result.name() == 'SUCCESS'} ? 'online' : 'offline'"></span>
+        <span th:text="${entry.message != null ? entry.message : entry.targetId}">자산</span>
+        · <span th:text="${entry.createdAt}">시각</span>
+      </li>
+    </ul>
+  </section>
+</main></div>
+</body>
+</html>

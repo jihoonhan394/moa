@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 기관 선택</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<main class="workspace login-workspace">
+  <section class="panel login-panel">
+    <p class="eyebrow">MOA 인프라 관리 콘솔</p>
+    <h1>기관 선택</h1>
+    <p class="subcopy">소속 기관 코드를 입력하고, 다음 단계에서 해당 기관 계정으로 로그인하세요.</p>
+    <p th:if="${error}" th:text="${error}" class="subcopy" style="color:#c0392b">오류</p>
+    <form method="post" th:action="@{/enter}">
+      <label for="code">기관 코드</label>
+      <input id="code" name="code" th:value="${code}" placeholder="예: MTCM" required autofocus
+             style="text-transform:uppercase" autocomplete="organization">
+      <button class="button primary" type="submit">다음</button>
+    </form>
+    <p class="subcopy login-help">기관 코드를 모르면 소속 기관의 관리자에게 문의하세요.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 알림</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('notifications')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow">알림</p><h1>알림</h1><p class="subcopy">점검 일정·시스템 알림을 확인합니다.</p></div>
+    <div class="top-actions">
+      <form method="post" th:action="@{/notifications/read-all}">
+        <button class="button" type="submit">모두 읽음</button>
+      </form>
+    </div>
+  </header>
+  <section class="panel">
+    <p th:if="${#lists.isEmpty(notifications)}" class="subcopy">알림이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(notifications)}" class="data-table">
+      <div class="table-row" th:each="n : ${notifications}" th:style="${n.read} ? '' : 'font-weight:600'">
+        <div>
+          <a th:if="${n.link != null}" th:href="${n.link}" th:text="${n.title}">제목</a>
+          <span th:if="${n.link == null}" th:text="${n.title}">제목</span>
+          <small th:if="${n.body != null}" th:text="${n.body}" style="display:block;color:#7a869a;font-weight:400">내용</small>
+        </div>
+        <span th:text="${#temporals.format(n.createdAt, 'yyyy-MM-dd HH:mm')}">시각</span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

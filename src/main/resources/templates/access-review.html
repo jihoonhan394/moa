@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 접근 현황</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('access-review')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">기관 / 접근 현황</p>
+      <h1>접근 현황</h1>
+      <p class="subcopy">누가 인프라를 관리하고, 누가 어느 자원에 접근권을 보유하는지 한눈에 봅니다. (조회 전용 — 변경은 인프라 관리자)</p>
+    </div>
+  </header>
+
+  <!-- 인프라 관리자 명단 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">역할</p><h2>인프라 관리자</h2></div>
+      <span class="pill" th:text="${#lists.size(infraManagers)} + '명'">0명</span></div>
+    <p th:if="${#lists.isEmpty(infraManagers)}" class="subcopy">지정된 인프라 관리자가 없습니다. 사용자 관리에서 역할을 부여하세요.</p>
+    <div th:unless="${#lists.isEmpty(infraManagers)}" class="data-table compact">
+      <div class="table-row table-head"><span>이름</span><span>아이디</span><span>상태</span></div>
+      <div class="table-row" th:each="m : ${infraManagers}">
+        <strong th:text="${m.name}">이름</strong>
+        <span th:text="${m.username}">아이디</span>
+        <span><span class="state" th:classappend="${m.status.name() == 'ACTIVE'} ? 'online' : 'offline'"></span><span th:text="${m.status}">ACTIVE</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 접근 부여 현황 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">접근 부여</p><h2>권한별 부여 현황</h2></div>
+      <span class="pill" th:text="${#lists.size(permissionRows)} + '건'">0건</span></div>
+    <p th:if="${#lists.isEmpty(permissionRows)}" class="subcopy">등록된 권한(접근 부여)이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(permissionRows)}" class="data-table table-scroll">
+      <div class="table-row table-head"><span>권한</span><span>상태</span><span>부서(그룹)</span><span>사용자(기간제)</span></div>
+      <div class="table-row" th:each="row : ${permissionRows}">
+        <strong th:text="${row.name}">권한</strong>
+        <b th:classappend="${row.status == 'ACTIVE'} ? 'good' : 'warn'" th:text="${row.status}">ACTIVE</b>
+        <span th:text="${#lists.isEmpty(row.groups)} ? '—' : ${#strings.listJoin(row.groups, ', ')}">그룹</span>
+        <span>
+          <span th:if="${#lists.isEmpty(row.users)}">—</span>
+          <span th:each="u,it : ${row.users}">
+            <span th:text="${u.label}">사용자</span><span th:if="${u.expiresAt != null}" style="color:#8a530f"
+              th:text="' (~' + ${#temporals.format(u.expiresAt, 'yyyy-MM-dd HH:mm')} + ')'"> (만료)</span><span th:unless="${it.last}">, </span>
+          </span>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 자산 인벤토리 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">인벤토리</p><h2>자산</h2></div>
+      <span class="pill" th:text="${#lists.size(assets)} + '개'">0개</span></div>
+    <p th:if="${#lists.isEmpty(assets)}" class="subcopy">등록된 자산이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(assets)}" class="data-table table-scroll">
+      <div class="table-row table-head"><span>이름</span><span>유형</span><span>호스트/URL</span><span>상태</span></div>
+      <div class="table-row" th:each="a : ${assets}">
+        <strong th:text="${a.name}">이름</strong>
+        <span th:text="${a.assetType}">유형</span>
+        <span th:text="${a.host != null ? a.host : (a.url != null ? a.url : '—')}" style="color:#7a869a">호스트</span>
+        <span><span class="state" th:classappend="${a.status.name() == 'ACTIVE'} ? 'online' : 'offline'"></span><span th:text="${a.status}">ACTIVE</span></span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

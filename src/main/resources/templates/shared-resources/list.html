@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 공유자산</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('shared-resources')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">자산 관리 / 공유자산</p>
+      <h1>공유자산</h1>
+      <p class="subcopy">차량·회의실·좌석 등 공유자산을 등록합니다. 예약은 사용자가 '예약' 화면에서 합니다.</p>
+    </div>
+    <div class="top-actions"><a class="button" th:href="@{/shared-resources/categories}">카테고리 관리</a></div>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">등록</p><h2>자산 등록</h2></div></div>
+    <form method="post" th:action="@{/shared-resources}" th:object="${resourceForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:760px;">
+      <p th:each="err : ${#fields.globalErrors()}" class="error-message" th:text="${err}">오류</p>
+      <div class="asset-toolbar">
+        <input type="text" th:field="*{name}" maxlength="100" placeholder="자산 이름 (예: 회의실 A / 법인차량 1호)" required>
+        <select th:field="*{category}" required aria-label="카테고리">
+          <option value="" disabled>카테고리</option>
+          <option th:each="c : ${categories}" th:value="${c}" th:text="${c}">회의실</option>
+        </select>
+        <input type="text" th:field="*{location}" maxlength="200" placeholder="위치 (선택)">
+      </div>
+      <div class="asset-toolbar">
+        <input type="number" th:field="*{capacity}" min="0" placeholder="정원/수용 (선택)">
+        <input type="text" th:field="*{description}" maxlength="500" placeholder="설명 (선택)">
+      </div>
+      <p th:if="${#fields.hasErrors('name')}" class="error-message" th:errors="*{name}"></p>
+      <div><button class="button primary" type="submit">등록</button></div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">등록된 자산</p><h2>공유자산</h2></div>
+      <span class="pill" th:text="${#lists.size(resources)} + '개'">0개</span></div>
+    <p th:if="${#lists.isEmpty(resources)}" class="subcopy">등록된 공유자산이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(resources)}" class="data-table table-scroll">
+      <div class="table-row table-head"><span>이름</span><span>카테고리</span><span>위치</span><span>정원</span><span>상태</span><span>관리</span></div>
+      <div class="table-row" th:each="r : ${resources}">
+        <strong th:text="${r.name}">이름</strong>
+        <span th:text="${r.category}">회의실</span>
+        <span th:text="${r.location != null ? r.location : '—'}">위치</span>
+        <span th:text="${r.capacity != null ? r.capacity : '—'}">정원</span>
+        <b th:classappend="${r.status.name() == 'ACTIVE'} ? 'good' : 'warn'" th:text="${r.status.label}">사용가능</b>
+        <span class="table-actions">
+          <a class="button" th:href="@{'/shared-resources/' + ${r.id} + '/edit'}">수정</a>
+          <form method="post" th:action="@{'/shared-resources/' + ${r.id} + '/delete'}" style="display:inline"
+                onsubmit="return confirm('이 자산을 삭제할까요? 관련 예약도 함께 삭제됩니다.')">
+            <button class="button" type="submit">삭제</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

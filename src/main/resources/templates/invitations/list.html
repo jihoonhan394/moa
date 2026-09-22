@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 초대</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('invitations')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow">사용자 관리 / 초대</p><h1>사용자 초대</h1>
+      <p class="subcopy">이메일로 초대하면 부서·역할·온보딩이 미리 지정된 채로 가입됩니다. 여러 명을 한 번에 초대할 수 있습니다.</p></div>
+  </header>
+
+  <!-- 초대 결과 -->
+  <section class="panel" th:if="${results != null}">
+    <div class="panel-head"><div><p class="eyebrow">결과</p><h2>초대 발송 결과</h2></div></div>
+    <div class="data-table">
+      <div class="table-row table-head"><span>이메일</span><span>상태</span><span>링크(복사)</span></div>
+      <div class="table-row" th:each="r : ${results}">
+        <span th:text="${r.email}">이메일</span>
+        <span th:text="${r.skipped} ? ('건너뜀: ' + ${r.reason}) : (${r.emailed} ? '메일 발송됨' : '메일 미발송 — 메일 설정의 [발송 활성화]를 켰는지 확인하거나 아래 링크를 복사해 전달')"
+              th:style="${r.skipped} ? 'color:#c0392b' : (${r.emailed} ? 'color:#2e7d32' : 'color:#b26a00')">상태</span>
+        <input th:unless="${r.skipped}" type="text" th:value="${r.link}" readonly onclick="this.select()" style="width:100%">
+        <span th:if="${r.skipped}">—</span>
+      </div>
+    </div>
+    <p class="subcopy" style="margin-top:.5rem">메일이 미설정이면 위 링크를 복사해 직접 전달하세요. 링크는 7일간 유효합니다.</p>
+  </section>
+
+  <!-- 초대 폼 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">새 초대</p><h2>초대 보내기</h2></div></div>
+    <form method="post" th:action="@{/invitations}" class="stack-form" style="display:grid;gap:.6rem;max-width:680px">
+      <label>이메일 (여러 명은 줄바꿈 또는 쉼표로 구분)
+        <textarea name="emails" rows="4" required placeholder="hong@company.com&#10;kim@company.com&#10;lee@company.com"></textarea>
+      </label>
+      <label>부서(그룹)
+        <select name="groupId">
+          <option value="">— 없음(나중에 배정) —</option>
+          <option th:each="g : ${groups}" th:value="${g.id}" th:selected="${g.id == selectedGroup}" th:text="${g.name}">부서</option>
+        </select>
+      </label>
+      <fieldset style="border:1px solid #e3e6ea;border-radius:8px;padding:.5rem .75rem">
+        <legend class="subcopy">역할(기본 일반 사용자)</legend>
+        <label class="checkbox-row" th:each="r : ${roleOptions}">
+          <input type="checkbox" name="roles" th:value="${r}" th:checked="${r.name() == 'USER'}"> <span th:text="${r.label}">역할</span>
+        </label>
+      </fieldset>
+      <label>온보딩 템플릿(선택)
+        <select name="templateId">
+          <option value="">— 없음 —</option>
+          <option th:each="t : ${templates}" th:value="${t.id}" th:text="${t.name}">템플릿</option>
+        </select>
+      </label>
+      <label>공통 이름(선택 — 비우면 수락 시 본인이 입력)
+        <input type="text" name="name" maxlength="100" placeholder="보통 비워 둡니다">
+      </label>
+      <div><button class="button primary" type="submit">초대 보내기</button></div>
+    </form>
+  </section>
+
+  <!-- 초대 목록 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">보낸 초대</p><h2>초대 현황</h2></div></div>
+    <p th:if="${#lists.isEmpty(invitations)}" class="subcopy">아직 보낸 초대가 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(invitations)}" class="data-table">
+      <div class="table-row table-head"><span>이메일</span><span>부서</span><span>상태</span><span>만료</span><span>관리</span></div>
+      <div class="table-row" th:each="inv : ${invitations}">
+        <span th:text="${inv.email}">이메일</span>
+        <span th:text="${inv.groupId != null ? groupNames.get(inv.groupId) : '—'} ?: '—'">부서</span>
+        <span th:text="${inv.status}"
+              th:style="${inv.status.name() == 'ACCEPTED'} ? 'color:#2e7d32' : (${inv.status.name() == 'REVOKED'} ? 'color:#c0392b' : '')">상태</span>
+        <span th:text="${#temporals.format(inv.expiresAt, 'yyyy-MM-dd')}">만료</span>
+        <span class="table-actions">
+          <form th:if="${inv.status.name() != 'ACCEPTED'}" method="post" th:action="@{'/invitations/' + ${inv.id} + '/resend'}" style="display:inline">
+            <button class="button" type="submit" title="새 링크 생성(+메일 발송 시도)">재발송·링크</button>
+          </form>
+          <form th:if="${inv.status.name() == 'PENDING'}" method="post" th:action="@{'/invitations/' + ${inv.id} + '/revoke'}" style="display:inline">
+            <button class="button danger" type="submit">철회</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="'MOA - 솔루션 수정 · ' + ${solution.name}">MOA - 솔루션 수정</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('solutions')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">제어 / 솔루션 수정</p>
+      <h1 th:text="${solution.name}">솔루션</h1>
+      <p class="subcopy">등록값을 수정합니다(자격증명·명령·제어 채널 등). 자격증명을 붙여야 STATUS/START/STOP이 동작합니다.</p>
+    </div>
+    <div class="top-actions"><a class="button" th:href="@{/solutions}">← 목록으로</a></div>
+  </header>
+
+  <section class="panel">
+    <form method="post" th:action="@{'/solutions/' + ${solution.id} + '/update'}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:720px;">
+      <div class="asset-toolbar">
+        <select name="assetId" required aria-label="서버 자산">
+          <option th:each="a : ${assets}" th:value="${a.id}"
+                  th:text="${a.name + ' (' + (a.host != null ? a.host : '-') + ')'}"
+                  th:selected="${a.id == solution.assetId}">서버</option>
+        </select>
+        <input type="text" name="name" maxlength="100" th:value="${solution.name}" placeholder="솔루션 이름" required>
+        <select name="type" required aria-label="유형">
+          <option th:each="t : ${types}" th:value="${t}" th:text="${t}" th:selected="${t == solution.type}">유형</option>
+        </select>
+      </div>
+      <div class="asset-toolbar">
+        <input type="text" name="identifier" maxlength="500" th:value="${solution.identifier}"
+               placeholder="식별자(서비스명/유닛/컨테이너명/앱이름)" required>
+        <select name="category" aria-label="카테고리">
+          <option value="" th:selected="${solution.category == null}">카테고리 (선택)</option>
+          <option th:each="n : ${solutionCategories}" th:value="${n.path}"
+                  th:text="${#strings.repeat('— ', n.depth) + n.name}"
+                  th:selected="${n.path == solution.category}">그룹웨어 / WAS</option>
+        </select>
+      </div>
+
+      <div class="form-section">
+        <div><p class="eyebrow">접속·제어</p><h2>자격증명 · 제어 채널</h2></div>
+        <div class="asset-toolbar">
+          <select name="credentialId" aria-label="자격증명">
+            <option value="" th:selected="${solution.credentialId == null}">자격증명(선택) — 없으면 제어 실패</option>
+            <option th:each="c : ${credentials}" th:value="${c.id}" th:text="${c.name + ' (' + c.username + ')'}"
+                    th:selected="${c.id == solution.credentialId}">cred</option>
+          </select>
+          <select name="controlProtocol" aria-label="제어 채널">
+            <option th:each="p : ${protocols}" th:value="${p}" th:text="${p}" th:selected="${p == solution.controlProtocol}">SSH</option>
+          </select>
+          <input type="number" name="controlPort" min="1" max="65535" th:value="${solution.controlPort}"
+                 placeholder="제어 포트(선택, WinRM 기본 5985)">
+        </div>
+        <div class="asset-toolbar">
+          <select name="status" aria-label="상태">
+            <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}" th:selected="${s == solution.status}">ACTIVE</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div><p class="eyebrow">상태확인</p><h2>health</h2></div>
+        <div class="asset-toolbar">
+          <select name="healthCheckType" aria-label="health 유형">
+            <option th:each="h : ${healthTypes}" th:value="${h}" th:text="${h}" th:selected="${h == solution.healthCheckType}">NONE</option>
+          </select>
+          <input type="text" name="healthCheckTarget" maxlength="500" th:value="${solution.healthCheckTarget}"
+                 placeholder="health 대상(포트/명령, 선택)">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div><p class="eyebrow">CUSTOM 명령</p><h2>사용자 지정 start/stop/status</h2></div>
+        <div class="asset-toolbar">
+          <input type="text" name="startCommand" maxlength="1000" th:value="${solution.startCommand}" placeholder="start 명령">
+          <input type="text" name="stopCommand" maxlength="1000" th:value="${solution.stopCommand}" placeholder="stop 명령">
+          <input type="text" name="statusCommand" maxlength="1000" th:value="${solution.statusCommand}" placeholder="status 명령">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div><p class="eyebrow">소유팀</p><h2>소유팀(그룹)</h2></div>
+        <select name="ownerGroupId" aria-label="소유팀(그룹)" style="max-width:360px">
+          <option value="" th:selected="${solution.ownerGroupId == null}">소유팀 없음 (인프라 전용)</option>
+          <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}"
+                  th:selected="${g.id == solution.ownerGroupId}">부서</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:.5rem">
+        <button class="button primary" type="submit">변경 저장</button>
+        <a class="button" th:href="@{/solutions}">취소</a>
+      </div>
+    </form>
+  </section>
+</main></div>
+</body>
+</html>

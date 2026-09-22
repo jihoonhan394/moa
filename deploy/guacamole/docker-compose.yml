@@ -1,0 +1,23 @@
+# 로컬 웹 SSH/RDP 게이트웨이(Apache Guacamole). guacamole-auth-json 방식이라 별도 DB/관리자 계정이 필요 없다.
+# 공유키는 커밋 금지 — 셸/.env의 MOA_GUACAMOLE_SECRET_KEY(32 hex)에서 주입한다.
+#   실행:  MOA_GUACAMOLE_SECRET_KEY=$(openssl rand -hex 16) docker compose up -d
+#          또는 프로젝트 .env(gitignore)에 값을 두고  docker compose --env-file ../../.env up -d
+#   접속:  http://localhost:8080/guacamole   → MOA_GUACAMOLE_BASE_URL 로 사용
+services:
+  guacd:
+    image: guacamole/guacd:1.5.5
+    restart: unless-stopped
+
+  guacamole:
+    image: guacamole/guacamole:1.5.5
+    restart: unless-stopped
+    depends_on:
+      - guacd
+    environment:
+      GUACD_HOSTNAME: guacd
+      # guacamole-auth-json 활성화. MOA_GUACAMOLE_SECRET_KEY와 반드시 동일해야 한다.
+      JSON_SECRET_KEY: ${MOA_GUACAMOLE_SECRET_KEY}
+      # MOA 서버가 접속하므로, MOA 호스트/도커 네트워크를 신뢰망으로 둔다(필요 시 조정).
+      JSON_TRUSTED_NETWORKS: 0.0.0.0/0
+    ports:
+      - "8080:8080"

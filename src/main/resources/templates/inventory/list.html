@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 인벤토리</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('inventory')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">자산 관리</p>
+      <h1>자산 (실물·SW·렌탈·보증)</h1>
+      <p class="subcopy">노트북·모니터 등 실물, SW 라이선스, 렌탈/리스 제품, 보증 제품을 등록하고 사용자에게 배정·회수하며
+        만료(라이선스·보증·리스)를 추적합니다. (서버·웹 접속 자산은 '접속 자산' 메뉴)</p>
+    </div>
+    <div class="top-actions">
+      <a class="button" th:href="@{/inventory/categories}">카테고리 관리</a>
+      <a class="button" th:href="@{/inventory/import}">CSV 대량 등록</a>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">등록</p><h2>항목 등록</h2></div></div>
+    <form method="post" th:action="@{/inventory}" th:object="${inventoryForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:760px;">
+      <p th:each="err : ${#fields.globalErrors()}" class="error-message" th:text="${err}">오류</p>
+      <div class="asset-toolbar">
+        <input type="text" th:field="*{name}" maxlength="100" placeholder="항목 이름 (예: MacBook Pro 14 #12)" required>
+        <select th:field="*{category}" required aria-label="카테고리(실물/SW 아래 경로)">
+          <option value="">카테고리 (실물/SW 아래)</option>
+          <option th:each="n : ${assetCategories}" th:value="${n.path}"
+                  th:text="${#strings.repeat('— ', n.depth) + n.name}">실물 / 사무기기 / 컴퓨터</option>
+        </select>
+      </div>
+      <div class="asset-toolbar">
+        <input type="text" th:field="*{serialNo}" maxlength="100" placeholder="시리얼/자산번호 (선택)">
+        <input type="text" th:field="*{note}" maxlength="500" placeholder="비고 (선택)">
+      </div>
+      <div class="asset-toolbar">
+        <label style="display:grid;gap:.15rem;font-size:.78rem;color:#7a869a">구매일<input type="date" th:field="*{purchaseDate}"></label>
+        <label style="display:grid;gap:.15rem;font-size:.78rem;color:#7a869a">SW 라이선스 만료<input type="date" th:field="*{expiresAt}"></label>
+        <label style="display:grid;gap:.15rem;font-size:.78rem;color:#7a869a">보증 만료<input type="date" th:field="*{warrantyEnds}"></label>
+        <label style="display:grid;gap:.15rem;font-size:.78rem;color:#7a869a">리스/렌탈 만료<input type="date" th:field="*{leaseEnds}"></label>
+      </div>
+      <p class="subcopy" style="margin:0">보증·리스·라이선스 만료는 <b>만료 관리</b> 대시보드에 자동 표시되고 임박 시 알림이 갑니다.</p>
+      <div class="asset-toolbar">
+        <select name="ownerGroupId" aria-label="소유팀(그룹)">
+          <option value="">소유팀 없음 (자산관리자 전용)</option>
+          <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}">부서</option>
+        </select>
+        <span class="subcopy" style="align-self:center">소유팀을 지정하면 그 팀원이 '내 워크스페이스'에서 팀 자산으로 조회합니다.</span>
+      </div>
+      <p th:if="${#fields.hasErrors('name')}" class="error-message" th:errors="*{name}"></p>
+      <div><button class="button primary" type="submit">등록</button></div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">등록된 항목</p><h2>인벤토리</h2></div>
+      <span class="pill" th:text="${#lists.size(items)} + '개'">0개</span></div>
+    <p th:if="${#lists.isEmpty(items)}" class="subcopy">등록된 항목이 없습니다. 위에서 등록하세요.</p>
+    <div th:unless="${#lists.isEmpty(items)}" class="data-table table-scroll">
+      <div class="table-row table-head"><span>이름</span><span>유형</span><span>상태</span><span>배정</span><span>만료</span><span>관리</span></div>
+      <div class="table-row" th:each="item : ${items}">
+        <div>
+          <strong th:text="${item.name}">이름</strong>
+          <small th:if="${item.category != null}" th:text="${item.category} + (${item.serialNo != null} ? ' · ' + ${item.serialNo} : '')" style="display:block;color:#7a869a">카테고리</small>
+          <small th:if="${item.ownerGroupId != null}" th:text="'소유팀: ' + ${groupNames.getOrDefault(item.ownerGroupId, '(삭제된 그룹)')}" style="display:block;color:#4c83e0">소유팀</small>
+        </div>
+        <span th:text="${item.type.label}">실물</span>
+        <b th:classappend="${item.status.name() == 'AVAILABLE'} ? 'good' : (${item.status.name() == 'RETIRED'} ? 'bad' : 'warn')" th:text="${item.status.label}">가용</b>
+        <span th:text="${item.assignedUserId != null ? userNames.get(item.assignedUserId) : '—'}">배정</span>
+        <span th:text="${item.expiresAt != null ? item.expiresAt : '—'}">만료</span>
+        <span class="table-actions">
+          <a class="button" th:href="@{'/inventory/' + ${item.id} + '/edit'}">수정</a>
+          <details style="display:inline-block">
+            <summary class="button" style="list-style:none;cursor:pointer">소유팀</summary>
+            <div style="margin-top:.5rem;text-align:left;min-width:220px">
+              <form method="post" th:action="@{'/inventory/' + ${item.id} + '/owner'}" style="display:flex;gap:.4rem">
+                <select name="ownerGroupId" style="flex:1">
+                  <option value="" th:selected="${item.ownerGroupId == null}">소유팀 없음 (자산관리자 전용)</option>
+                  <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}"
+                          th:selected="${g.id == item.ownerGroupId}">부서</option>
+                </select>
+                <button class="button primary" type="submit">적용</button>
+              </form>
+            </div>
+          </details>
+          <form th:if="${item.status.name() != 'ASSIGNED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/assign'}" style="display:inline">
+            <select name="userId" required aria-label="배정 사용자">
+              <option value="" disabled selected>사용자 선택</option>
+              <option th:each="u : ${tenantUsers}" th:value="${u.id}" th:text="${u.name + ' (' + u.username + ')'}">사용자</option>
+            </select>
+            <button class="button" type="submit">배정</button>
+          </form>
+          <form th:if="${item.status.name() == 'ASSIGNED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/reclaim'}" style="display:inline">
+            <button class="button" type="submit">회수</button>
+          </form>
+          <form th:if="${item.status.name() != 'RETIRED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/retire'}" style="display:inline">
+            <button class="button" type="submit">폐기</button>
+          </form>
+          <form method="post" th:action="@{'/inventory/' + ${item.id} + '/delete'}" style="display:inline"
+                onsubmit="return confirm('이 항목을 삭제할까요?')">
+            <button class="button" type="submit">삭제</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

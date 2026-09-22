@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="'MOA - ' + ${space.name}">MOA - 위키 공간</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('wiki')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">
+        <a th:href="@{/wiki}">위키</a>
+        <span th:each="a : ${ancestors}"> / <a th:href="@{'/wiki/spaces/' + ${a.id}}" th:text="${a.name}">상위</a></span>
+        / 공간
+      </p>
+      <h1 th:text="${space.name}">공간</h1>
+      <p class="subcopy" th:if="${space.description != null}" th:text="${space.description}">설명</p>
+    </div>
+    <div class="top-actions">
+      <a class="button primary" th:if="${canEdit}" th:href="@{'/wiki/spaces/' + ${space.id} + '/new'}">새 문서</a>
+      <a class="button" th:if="${canManage}" th:href="@{'/wiki/spaces/' + ${space.id} + '/templates'}">서식 관리</a>
+      <a class="button" th:if="${canManage}" th:href="@{'/wiki/spaces/' + ${space.id} + '/permissions'}">권한 관리</a>
+    </div>
+  </header>
+
+  <p th:if="${wikiError}" class="modal-note" style="color:#c0392b" th:text="${wikiError}">오류</p>
+
+  <!-- 열람자 배지: 이 공간을 누가 볼 수 있는지 항상 노출 -->
+  <section class="panel" th:if="${!#lists.isEmpty(viewers)}">
+    <p class="eyebrow" style="margin:0 0 .4rem">이 공간 권한 (상위에서 상속 포함)</p>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+      <span class="pill" th:each="v : ${viewers}" th:text="${v.subject} + ' · ' + ${v.level}">대상</span>
+    </div>
+  </section>
+
+  <section class="panel" th:if="${!#lists.isEmpty(children)}">
+    <div class="panel-head"><div><p class="eyebrow">하위 폴더</p><h2>폴더</h2></div></div>
+    <div class="data-table">
+      <div class="table-row" th:each="c : ${children}">
+        <a th:href="@{'/wiki/spaces/' + ${c.id}}" style="font-weight:600" th:text="'📁 ' + ${c.name}">폴더</a>
+        <a class="button" th:href="@{'/wiki/spaces/' + ${c.id}}">열기</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">문서</p><h2>페이지</h2></div>
+      <span class="pill" th:text="${#lists.size(pages)} + '개'">0개</span></div>
+    <p th:if="${#lists.isEmpty(pages)}" class="subcopy">문서가 없습니다.<span th:if="${canEdit}"> 우측 상단 '새 문서'로 만드세요.</span></p>
+    <div th:unless="${#lists.isEmpty(pages)}" class="data-table">
+      <div class="table-row" th:each="p : ${pages}">
+        <a th:href="@{'/wiki/' + ${p.id}}" style="font-weight:600" th:text="${p.title}">제목</a>
+        <span th:text="${#temporals.format(p.updatedAt, 'yyyy-MM-dd HH:mm')}">수정</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" th:if="${canManage}">
+    <div class="panel-head"><div><p class="eyebrow">관리</p><h2>하위 폴더 만들기 · 공간 삭제</h2></div></div>
+    <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/subfolders'}" th:object="${spaceForm}" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;max-width:760px">
+      <input type="text" th:field="*{name}" maxlength="100" placeholder="하위 폴더 이름" required style="flex:1;min-width:180px">
+      <input type="text" th:field="*{description}" maxlength="500" placeholder="설명 (선택)" style="flex:2;min-width:200px">
+      <button class="button" type="submit">하위 폴더 추가</button>
+    </form>
+    <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/delete'}" style="margin-top:.6rem"
+          onsubmit="return confirm('이 폴더를 삭제할까요? (문서가 있으면 삭제되지 않습니다)')">
+      <button class="button" type="submit" style="color:#c0392b">공간 삭제</button>
+    </form>
+  </section>
+</main></div>
+</body>
+</html>

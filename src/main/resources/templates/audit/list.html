@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 감사 로그</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('audit')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">보안 및 감사 / 감사 로그</p>
+      <h1>감사 로그</h1>
+      <p class="subcopy">그룹·권한·사용자 변경과 웹 자산 열람 등 관리 행위 이력입니다. (조회 전용)</p>
+    </div>
+  </header>
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">이력</p><h2>관리 행위 기록</h2></div><span class="pill" th:text="${#lists.size(logs)} + '건'">0건</span></div>
+    <p th:if="${#lists.isEmpty(logs)}" class="subcopy">기록된 감사 로그가 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(logs)}" class="data-table table-scroll">
+      <div class="table-row table-head"><span>시각</span><span>행위자</span><span>행위</span><span>대상</span><span>결과</span></div>
+      <div class="table-row" th:each="log : ${logs}">
+        <span th:text="${log.createdAt}">시각</span>
+        <span th:text="${log.actor}">행위자</span>
+        <div>
+          <strong th:text="${log.action}">ACTION</strong>
+          <small th:if="${log.message != null}" th:text="${log.message}" style="display:block;color:#7a869a">상세</small>
+        </div>
+        <span th:text="${log.target}">대상</span>
+        <b th:classappend="${log.result.name() == 'SUCCESS'} ? 'good' : 'warn'" th:text="${log.result}">SUCCESS</b>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

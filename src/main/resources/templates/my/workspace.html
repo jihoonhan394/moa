@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 내 워크스페이스</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('my-workspace')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow">내 워크스페이스</p><h1>내 워크스페이스</h1>
+      <p class="subcopy">나에게 배정된 자원과 온보딩 할 일을 한 곳에서 봅니다.</p></div>
+  </header>
+
+  <!-- 공지: 운영·점검·시스템 공지(브로드캐스트). 회사 일반 공지는 그룹웨어 SaaS 몫. -->
+  <section class="panel" th:if="${!#lists.isEmpty(notices)}">
+    <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center">
+      <div><p class="eyebrow">공지</p><h2>운영·점검 공지</h2></div>
+      <a class="button" th:href="@{/notices}">전체 보기</a>
+    </div>
+    <div class="data-table">
+      <div class="table-row" th:each="n : ${notices}">
+        <a th:href="@{'/notices/' + ${n.id}}" th:text="${n.title}">공지 제목</a>
+        <span class="subcopy" th:text="${#temporals.format(n.createdAt, 'yyyy-MM-dd')}">날짜</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 알림 (MOA 도메인 개인 이벤트: 점검 영향·만료·온보딩·승인 등). -->
+  <section class="panel" th:if="${!#lists.isEmpty(recentNotifications)}">
+    <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center">
+      <div><p class="eyebrow">내 알림</p><h2>확인할 소식</h2></div>
+      <a class="button" th:href="@{/notifications}">전체 보기</a>
+    </div>
+    <div class="data-table">
+      <div class="table-row" th:each="n : ${recentNotifications}" th:style="${n.read} ? 'opacity:.6' : ''">
+        <a th:if="${n.link != null}" th:href="${n.link}" th:text="${n.title}">알림</a>
+        <span th:if="${n.link == null}" th:text="${n.title}">알림</span>
+        <span class="subcopy" th:text="${#temporals.format(n.createdAt, 'yyyy-MM-dd HH:mm')}">시각</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 온보딩 체크리스트 -->
+  <section class="panel" th:if="${!#lists.isEmpty(tasks)}">
+    <h2>온보딩 체크리스트 <small th:text="'(' + ${progress} + '% 완료)'" style="color:#7a869a">(0% 완료)</small></h2>
+    <div class="data-table">
+      <div class="table-row" th:each="t : ${tasks}" th:style="${t.done} ? 'opacity:.55' : ''">
+        <div>
+          <span th:if="${t.kind.name() == 'ACK_DOC'}" class="pill" style="background:#eef;">필독</span>
+          <span th:text="${t.label}" th:style="${t.done} ? 'text-decoration:line-through' : 'font-weight:600'">할 일</span>
+        </div>
+        <div>
+          <span th:if="${t.done}" style="color:#3a7;">완료됨</span>
+          <form th:unless="${t.done}" method="post" th:action="@{'/my/workspace/tasks/' + ${t.id} + '/done'}" style="display:inline">
+            <button class="button" type="submit" th:text="${t.kind.name() == 'ACK_DOC'} ? '읽고 동의' : '완료'">완료</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 내 자산(경영지원팀이 배정, 읽기 전용) -->
+  <section class="panel">
+    <h2>내 자산</h2>
+    <p th:if="${#lists.isEmpty(myAssets)}" class="subcopy">배정된 자산이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(myAssets)}" class="data-table">
+      <div class="table-row table-head"><span>이름</span><span>유형</span><span>시리얼</span><span>상태</span></div>
+      <div class="table-row" th:each="a : ${myAssets}">
+        <span th:text="${a.name}">이름</span>
+        <span th:text="${a.type != null} ? ${a.type.label} : '-'">유형</span>
+        <span th:text="${a.serialNo} ?: '-'">시리얼</span>
+        <span th:text="${a.status != null} ? ${a.status.label} : '-'">상태</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 우리 팀 자산(소유팀으로 배정된 자산, 읽기 전용) -->
+  <section class="panel" th:if="${!#lists.isEmpty(teamAssets)}">
+    <h2>우리 팀 자산</h2>
+    <p class="subcopy" style="margin:.2rem 0 .5rem">내 부서가 소유한 자산입니다(개인 배정과 별개).</p>
+    <div class="data-table">
+      <div class="table-row table-head"><span>이름</span><span>유형</span><span>시리얼</span><span>상태</span></div>
+      <div class="table-row" th:each="a : ${teamAssets}">
+        <span th:text="${a.name}">이름</span>
+        <span th:text="${a.type != null} ? ${a.type.label} : '-'">유형</span>
+        <span th:text="${a.serialNo} ?: '-'">시리얼</span>
+        <span th:text="${a.status != null} ? ${a.status.label} : '-'">상태</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 내 솔루션 -->
+  <section class="panel">
+    <h2>내 솔루션</h2>
+    <p th:if="${#lists.isEmpty(mySolutions)}" class="subcopy">배정된 솔루션이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(mySolutions)}" class="data-table">
+      <div class="table-row" th:each="s : ${mySolutions}">
+        <span th:text="${s.name}">솔루션</span>
+        <a class="button" th:href="@{/my-solutions}">제어하기</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 내 위키 공간 -->
+  <section class="panel">
+    <h2>내 위키 공간</h2>
+    <p th:if="${#lists.isEmpty(mySpaces)}" class="subcopy">열람 권한이 부여된 공간이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(mySpaces)}" class="data-table">
+      <div class="table-row" th:each="w : ${mySpaces}">
+        <span th:text="${w.name}">공간</span>
+        <a class="button" th:href="@{/wiki}">위키 열기</a>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

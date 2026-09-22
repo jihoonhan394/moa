@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 우리 팀 자산 관리</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('team')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">팀 관리 / 우리 팀 자산</p>
+      <h1>우리 팀 자산 관리</h1>
+      <p class="subcopy">내가 이끄는 부서가 <b>소유한 자산</b>을 직접 등록·수정·삭제·배정합니다.
+        (전체 인벤토리는 자산 관리자 소관)</p>
+    </div>
+    <a class="button" th:href="@{/team}">← 팀 콘솔</a>
+  </header>
+
+  <p th:if="${teamOk}" class="subcopy good" th:text="${teamOk}" style="margin:.2rem 0"></p>
+  <p th:if="${teamError}" class="error-message" th:text="${teamError}" style="margin:.2rem 0"></p>
+
+  <section class="panel" th:if="${#lists.isEmpty(ledGroups)}">
+    <p class="subcopy">이끄는 부서가 없습니다. 부서장으로 지정되면 여기서 팀 자산을 관리할 수 있습니다.</p>
+  </section>
+
+  <div th:unless="${#lists.isEmpty(ledGroups)}">
+    <!-- 등록 -->
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">등록</p><h2>팀 자산 등록</h2></div></div>
+      <form method="post" th:action="@{/team/inventory}" th:object="${inventoryForm}"
+            style="display:grid;gap:.5rem;max-width:760px">
+        <div class="asset-toolbar">
+          <input type="text" th:field="*{name}" maxlength="100" placeholder="항목 이름 (예: 개발팀 모니터 #3)" required>
+          <select th:field="*{type}" required aria-label="유형">
+            <option value="" disabled>유형</option>
+            <option th:each="t : ${types}" th:value="${t}" th:text="${t.label}">실물</option>
+          </select>
+          <input type="text" th:field="*{category}" maxlength="100" placeholder="카테고리 (선택)">
+        </div>
+        <div class="asset-toolbar">
+          <input type="text" th:field="*{serialNo}" maxlength="100" placeholder="시리얼/자산번호 (선택)">
+          <input type="text" th:field="*{note}" maxlength="500" placeholder="비고 (선택)">
+          <select name="ownerGroupId" required aria-label="소유 부서">
+            <option value="" disabled selected>소유 부서 선택</option>
+            <option th:each="g : ${ledGroups}" th:value="${g.id}" th:text="${g.name}">부서</option>
+          </select>
+        </div>
+        <div><button class="button primary" type="submit">등록</button></div>
+      </form>
+    </section>
+
+    <!-- 목록 -->
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">보유</p><h2>우리 팀 자산</h2></div>
+        <span class="pill" th:text="${#lists.size(items)} + '개'">0개</span></div>
+      <p th:if="${#lists.isEmpty(items)}" class="subcopy">등록된 팀 자산이 없습니다.</p>
+      <div th:unless="${#lists.isEmpty(items)}" class="data-table table-scroll">
+        <div class="table-row table-head"><span>이름</span><span>유형</span><span>상태</span><span>배정</span><span>소유부서</span><span>관리</span></div>
+        <div class="table-row" th:each="item : ${items}">
+          <strong th:text="${item.name}">이름</strong>
+          <span th:text="${item.type.label}">실물</span>
+          <b th:classappend="${item.status.name() == 'AVAILABLE'} ? 'good' : (${item.status.name() == 'RETIRED'} ? 'bad' : 'warn')" th:text="${item.status.label}">가용</b>
+          <span th:text="${item.assignedUserId != null ? userNames.get(item.assignedUserId) : '—'}">배정</span>
+          <span th:text="${groupNames.getOrDefault(item.ownerGroupId, '-')}" style="color:#7a869a">부서</span>
+          <span class="table-actions">
+            <form th:if="${item.status.name() != 'ASSIGNED'}" method="post" th:action="@{'/team/inventory/' + ${item.id} + '/assign'}" style="display:inline">
+              <select name="userId" required aria-label="배정 팀원">
+                <option value="" disabled selected>팀원 선택</option>
+                <option th:each="u : ${teamUsers}" th:value="${u.id}" th:text="${u.name}">팀원</option>
+              </select>
+              <button class="button" type="submit">배정</button>
+            </form>
+            <form th:if="${item.status.name() == 'ASSIGNED'}" method="post" th:action="@{'/team/inventory/' + ${item.id} + '/reclaim'}" style="display:inline">
+              <button class="button" type="submit">회수</button>
+            </form>
+            <details style="display:inline-block">
+              <summary class="button" style="list-style:none;cursor:pointer">수정</summary>
+              <div style="margin-top:.5rem;text-align:left;min-width:260px">
+                <form method="post" th:action="@{'/team/inventory/' + ${item.id}}" style="display:grid;gap:.35rem">
+                  <input type="text" name="name" th:value="${item.name}" maxlength="100" required placeholder="이름">
+                  <select name="type" required>
+                    <option th:each="t : ${types}" th:value="${t}" th:text="${t.label}" th:selected="${t == item.type}">유형</option>
+                  </select>
+                  <input type="text" name="category" th:value="${item.category}" maxlength="100" placeholder="카테고리">
+                  <input type="text" name="serialNo" th:value="${item.serialNo}" maxlength="100" placeholder="시리얼">
+                  <input type="text" name="note" th:value="${item.note}" maxlength="500" placeholder="비고">
+                  <button class="button primary" type="submit">저장</button>
+                </form>
+              </div>
+            </details>
+            <form method="post" th:action="@{'/team/inventory/' + ${item.id} + '/delete'}" style="display:inline"
+                  onsubmit="return confirm('이 자산을 삭제할까요?')">
+              <button class="button" type="submit">삭제</button>
+            </form>
+          </span>
+        </div>
+      </div>
+    </section>
+  </div>
+</main></div>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 플랫폼 개요</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('platform-overview')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">플랫폼 / 개요</p>
+      <h1>플랫폼 개요</h1>
+      <p class="subcopy">기관 구독과 계정 현황, 확인이 필요한 항목을 한눈에 봅니다.</p>
+    </div>
+    <div class="top-actions"><a class="button primary" th:href="@{/admin/tenants}">기관 관리</a></div>
+  </header>
+
+  <section class="dashboard-stack">
+    <div class="metric-grid">
+      <article class="metric">
+        <span>전체 기관</span><strong th:text="${tenantTotal}">0</strong>
+        <small>활성 <span th:text="${tenantActive}">0</span></small>
+      </article>
+      <article class="metric" th:classappend="${tenantExpiring + tenantExpired > 0} ? 'warning'">
+        <span>만기 임박 / 만료</span>
+        <strong th:text="${tenantExpiring} + ' / ' + ${tenantExpired}">0 / 0</strong>
+        <small>7일 내 만료 / 이미 만료</small>
+      </article>
+      <article class="metric">
+        <span>활성 사용자</span><strong th:text="${activeUsers}">0</strong>
+        <small>전 기관 · 승인 대기 <span th:text="${pendingUsers}">0</span></small>
+      </article>
+      <article class="metric">
+        <span>플랫폼 운영자</span><strong th:text="${operatorTotal}">0</strong>
+        <small>플랫폼 관리자 계정</small>
+      </article>
+    </div>
+
+    <div class="overview-grid">
+      <section class="panel">
+        <div class="panel-head"><div><p class="eyebrow">주의</p><h2>확인이 필요한 항목</h2></div></div>
+        <ul class="audit-list">
+          <li th:if="${pendingUsers > 0}"><span class="state idle"></span>승인 대기 사용자 <b th:text="${pendingUsers}">0</b>명</li>
+          <li th:if="${tenantExpiring > 0}"><span class="state idle"></span>만기 임박 기관 <b th:text="${tenantExpiring}">0</b>개 (7일 내)</li>
+          <li th:if="${tenantExpired > 0}"><span class="state offline"></span>만료된 기관 <b th:text="${tenantExpired}">0</b>개 — 진입 차단됨</li>
+          <li th:if="${pendingUsers == 0 and tenantExpiring == 0 and tenantExpired == 0}">
+            <span class="state online"></span>확인이 필요한 항목이 없습니다.</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div><p class="eyebrow">기관</p><h2>등록된 기관</h2></div><a class="small-link" th:href="@{/admin/tenants}">기관 관리</a></div>
+        <p th:if="${#lists.isEmpty(recentTenants)}" class="subcopy">등록된 기관이 없습니다.</p>
+        <div th:unless="${#lists.isEmpty(recentTenants)}" class="data-table compact">
+          <div class="table-row table-head"><span>기관</span><span>상태</span><span></span></div>
+          <div class="table-row" th:each="tenant : ${recentTenants}">
+            <div><strong th:text="${tenant.code}">CODE</strong>
+              <small th:text="${tenant.name}" style="display:block;color:#7a869a">기관명</small></div>
+            <span>
+              <span class="state" th:classappend="${tenant.status.name() == 'ACTIVE'} ? 'online' : 'offline'"></span>
+              <span th:text="${tenant.status}">ACTIVE</span>
+              <span th:if="${tenant.isExpired(today)}" style="color:#c0392b;font-weight:600"> · 만료</span>
+              <span th:if="${tenant.isExpiringSoon(today)}" style="color:#e67e22;font-weight:600"> · 만기임박</span>
+            </span>
+            <span class="table-actions"><a class="button" th:href="@{'/admin/tenants/' + ${tenant.id}}">상세</a></span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

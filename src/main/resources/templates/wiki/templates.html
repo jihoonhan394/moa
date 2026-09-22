@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 위키 서식</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('wiki')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow"><a th:href="@{/wiki}">위키</a> / <a th:href="@{'/wiki/spaces/' + ${space.id}}" th:text="${space.name}">공간</a> / 서식</p>
+      <h1>서식 관리</h1>
+      <p class="subcopy">이 공간의 문서 서식(템플릿)을 만듭니다. 편집 권한 사용자가 새 문서에서 불러옵니다.</p></div>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">등록된 서식</p><h2>서식</h2></div>
+      <span class="pill" th:text="${#lists.size(templates)} + '개'">0개</span></div>
+    <p th:if="${#lists.isEmpty(templates)}" class="subcopy">등록된 서식이 없습니다. 아래에서 만드세요.</p>
+    <div th:unless="${#lists.isEmpty(templates)}" class="data-table">
+      <div class="table-row" th:each="t : ${templates}">
+        <strong th:text="${t.name}">서식</strong>
+        <span class="table-actions">
+          <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/templates/' + ${t.id} + '/delete'}" style="display:inline"
+                onsubmit="return confirm('이 서식을 삭제할까요?')">
+            <button class="button" type="submit">삭제</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">등록</p><h2>새 서식 만들기</h2></div></div>
+    <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/templates'}" th:object="${templateForm}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:820px;">
+      <label>서식 이름</label>
+      <input type="text" th:field="*{name}" maxlength="200" placeholder="예: 회의록 / 결정 기록 / 주간보고" required>
+      <p th:if="${#fields.hasErrors('name')}" class="error-message" th:errors="*{name}"></p>
+      <label>서식 내용 <small style="color:#7a869a">(마크다운. 빈칸 자리표시 등 자유롭게)</small></label>
+      <textarea th:field="*{content}" rows="16" maxlength="50000" placeholder="# 제목&#10;&#10;## 개요&#10;- &#10;&#10;## 상세&#10;" required
+                style="width:100%;font-family:inherit;line-height:1.5"></textarea>
+      <p th:if="${#fields.hasErrors('content')}" class="error-message" th:errors="*{content}"></p>
+      <div style="display:flex;gap:0.5rem">
+        <button class="button primary" type="submit">서식 저장</button>
+        <a class="button" th:href="@{'/wiki/spaces/' + ${space.id}}">공간으로</a>
+      </div>
+    </form>
+  </section>
+</main></div>
+</body>
+</html>

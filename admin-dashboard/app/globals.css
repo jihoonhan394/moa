@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+
+    /* App + surfaces */
+    --background: 220 16% 97%;
+    --foreground: 220 14% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 14% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 14% 18%;
+
+    /* Brand blue #1E6FFF */
+    --primary: 218 100% 56%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 16% 95%;
+    --secondary-foreground: 220 14% 22%;
+    --muted: 220 16% 95%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 218 100% 96%;
+    --accent-foreground: 218 100% 40%;
+
+    --destructive: 358 67% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 16% 90%;
+    --input: 222 16% 90%;
+    --ring: 218 100% 56%;
+
+    /* Status */
+    --success: 152 68% 32%;
+    --success-foreground: 0 0% 100%;
+    --warning: 36 73% 42%;
+    --warning-foreground: 0 0% 100%;
+    --info: 218 100% 56%;
+    --info-foreground: 0 0% 100%;
+
+    /* Charts */
+    --chart-1: 218 100% 56%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 152 68% 38%;
+    --chart-4: 36 80% 50%;
+    --chart-5: 262 60% 58%;
+
+    --radius: 0.5rem;
+
+    /* Console sidebar (dark) */
+    --sidebar-background: 220 26% 12%;
+    --sidebar-foreground: 215 20% 75%;
+    --sidebar-primary: 218 100% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 24% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 22% 20%;
+    --sidebar-ring: 218 100% 56%;
+  }
+
+  .dark {
+    --background: 215 28% 7%;
+    --foreground: 213 27% 90%;
+    --card: 217 24% 11%;
+    --card-foreground: 213 27% 90%;
+    --popover: 217 24% 11%;
+    --popover-foreground: 213 27% 90%;
+
+    --primary: 218 100% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217 20% 16%;
+    --secondary-foreground: 213 27% 90%;
+    --muted: 217 20% 16%;
+    --muted-foreground: 215 15% 60%;
+    --accent: 217 30% 18%;
+    --accent-foreground: 213 90% 80%;
+
+    --destructive: 358 67% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217 20% 20%;
+    --input: 217 20% 20%;
+    --ring: 218 100% 60%;
+
+    --success: 152 55% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 36 80% 55%;
+    --warning-foreground: 0 0% 8%;
+    --info: 218 100% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --chart-1: 218 100% 60%;
+    --chart-2: 173 58% 45%;
+    --chart-3: 152 60% 50%;
+    --chart-4: 36 80% 58%;
+    --chart-5: 262 60% 65%;
+
+    --sidebar-background: 220 30% 9%;
+    --sidebar-foreground: 215 20% 72%;
+    --sidebar-primary: 218 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 24% 15%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 22% 18%;
+    --sidebar-ring: 218 100% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

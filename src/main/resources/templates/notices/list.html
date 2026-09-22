@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 공지사항</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell">
+  <aside th:replace="~{fragments/sidebar :: sidebar('notices')}"></aside>
+  <main class="workspace">
+    <header class="topbar">
+      <div><p class="eyebrow">기관 / 공지사항</p><h1>공지사항</h1>
+        <p class="subcopy">기관 공지입니다. 작성·수정은 기관 관리자만 가능합니다.</p></div>
+      <a th:if="${inTenantContext}" class="button primary" th:href="@{/notices/new}">공지 등록</a>
+    </header>
+
+    <p th:if="${message}" class="subcopy" style="color:#2d7a3a" th:text="${message}"></p>
+    <p th:if="${mailMessage}" class="subcopy" style="color:#2d7a3a" th:text="${mailMessage}"></p>
+    <p th:if="${error}" class="subcopy" style="color:#c0392b" th:text="${error}"></p>
+
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">목록</p><h2>등록된 공지</h2></div>
+        <span class="pill" th:text="${#lists.size(notices)} + '건'">0건</span></div>
+      <p th:if="${#lists.isEmpty(notices)}" class="subcopy">등록된 공지가 없습니다.</p>
+      <div th:unless="${#lists.isEmpty(notices)}" class="data-table table-scroll">
+        <div class="table-row table-head"><span>제목</span><span>작성자</span><span>등록일</span><span th:if="${inTenantContext}">관리</span></div>
+        <div class="table-row" th:each="notice : ${notices}">
+          <div>
+            <span th:if="${notice.pinned}" class="pill" style="margin-right:.4rem">고정</span>
+            <a th:href="@{'/notices/' + ${notice.id}}" th:text="${notice.title}">제목</a>
+          </div>
+          <span th:text="${notice.authorName != null ? notice.authorName : '-'}">작성자</span>
+          <span th:text="${#temporals.format(notice.createdAt, 'yyyy-MM-dd HH:mm')}">등록일</span>
+          <span th:if="${inTenantContext}" class="table-actions">
+            <a class="button" th:href="@{'/notices/' + ${notice.id} + '/edit'}">수정</a>
+            <form method="post" th:action="@{'/notices/' + ${notice.id} + '/delete'}" style="display:inline"
+                  onsubmit="return confirm('이 공지를 삭제할까요?');">
+              <button class="button" type="submit">삭제</button>
+            </form>
+          </span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

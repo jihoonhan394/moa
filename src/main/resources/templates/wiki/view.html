@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="'MOA - ' + ${wikiPage.title}">MOA - 위키</title>
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('wiki')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow"><a th:href="@{/wiki}">위키</a> /
+        <a th:href="@{'/wiki/spaces/' + ${space.id}}" th:text="${space.name}">공간</a> / 문서</p>
+      <h1 th:text="${wikiPage.title}">제목</h1>
+      <p class="subcopy">
+        <span th:text="'작성: ' + ${authorName}">작성자</span>
+        · <span th:text="'최종 수정: ' + ${#temporals.format(wikiPage.updatedAt, 'yyyy-MM-dd HH:mm')}">수정</span>
+      </p>
+    </div>
+    <div class="top-actions">
+      <form method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/favorite'}" style="display:inline">
+        <button class="button" type="submit" th:text="${isFavorite} ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기'">☆ 즐겨찾기</button>
+      </form>
+      <button th:if="${aiConfigured}" class="button" type="button" id="aiSummaryBtn"
+              th:attr="data-url=@{'/wiki/' + ${wikiPage.id} + '/summary'}">✨ AI 요약</button>
+      <a class="button" th:href="@{'/wiki/' + ${wikiPage.id} + '/history'}">이력</a>
+      <a class="button" th:if="${canEdit}" th:href="@{'/wiki/' + ${wikiPage.id} + '/edit'}">수정</a>
+      <form th:if="${canDelete}" method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/delete'}"
+            onsubmit="return confirm('이 문서를 삭제할까요?')">
+        <button class="button" type="submit" style="color:#c0392b">삭제</button>
+      </form>
+    </div>
+  </header>
+
+  <p th:if="${wikiError}" class="modal-note" style="color:#c0392b" th:text="${wikiError}">오류</p>
+
+  <!-- 라벨 -->
+  <section class="panel">
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
+      <span class="eyebrow" style="margin:0">라벨</span>
+      <span th:if="${#lists.isEmpty(labels)}" class="subcopy" style="margin:0">없음</span>
+      <span th:each="l : ${labels}" class="pill" style="display:inline-flex;align-items:center;gap:.3rem">
+        <span th:text="${l.label}">라벨</span>
+        <form th:if="${canEdit}" method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/labels/' + ${l.id} + '/delete'}" style="display:inline;margin:0">
+          <button type="submit" style="background:none;border:none;cursor:pointer;color:inherit;padding:0">×</button>
+        </form>
+      </span>
+      <form th:if="${canEdit}" method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/labels'}" style="display:inline-flex;gap:.3rem;margin:0">
+        <input type="text" name="label" maxlength="50" placeholder="라벨 추가" style="width:120px">
+        <button class="button" type="submit">+</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- AI 요약(Tier 1): 버튼 클릭 시 비동기 생성해 표시. 문서 근거·권한 존중. -->
+  <section class="panel" id="aiSummaryPanel" style="display:none">
+    <div class="panel-head"><div><p class="eyebrow">AI 요약</p><h2>핵심 요약</h2></div></div>
+    <pre id="aiSummaryText" style="white-space:pre-wrap;line-height:1.6;font-family:inherit;background:#f7f8fa;padding:1rem;border-radius:8px">…</pre>
+  </section>
+
+  <section class="panel">
+    <!-- renderedContent는 마크다운 렌더 후 새니타이즈한 안전 HTML(XSS 방지 완료). -->
+    <div class="wiki-content" th:utext="${renderedContent}"
+         style="word-break:break-word;line-height:1.7;font-size:0.95rem">내용</div>
+  </section>
+
+  <!-- 첨부파일 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">첨부</p><h2>첨부파일</h2></div>
+      <span class="pill" th:text="${#lists.size(attachments)} + '개'">0개</span></div>
+
+    <form th:if="${canEdit}" method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/attachments'}"
+          enctype="multipart/form-data" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.8rem">
+      <input type="file" name="file" required>
+      <button class="button" type="submit">첨부 업로드</button>
+      <span class="subcopy" style="margin:0">최대 20MB</span>
+    </form>
+
+    <p th:if="${#lists.isEmpty(attachments)}" class="subcopy">첨부파일이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(attachments)}" style="display:grid;gap:.5rem">
+      <div th:each="a : ${attachments}"
+           style="display:flex;gap:.6rem;align-items:center;border-bottom:1px solid rgba(128,128,128,.15);padding-bottom:.5rem">
+        <a th:if="${a.image}" th:href="@{'/wiki/attachments/' + ${a.id}}" target="_blank" rel="noopener">
+          <img th:src="@{'/wiki/attachments/' + ${a.id}}" th:alt="${a.filename}"
+               style="max-height:96px;max-width:160px;border-radius:6px;border:1px solid rgba(128,128,128,.2)">
+        </a>
+        <div style="flex:1;min-width:0">
+          <a th:href="@{'/wiki/attachments/' + ${a.id}}" th:text="${a.filename}"
+             style="font-weight:600;word-break:break-all">파일명</a>
+          <p class="subcopy" style="margin:.1rem 0 0">
+            <span th:text="${#numbers.formatDecimal(a.sizeBytes / 1024.0, 1, 1)} + ' KB'">0 KB</span>
+            · <span th:text="${a.contentType != null ? a.contentType : '파일'}">타입</span>
+          </p>
+        </div>
+        <form th:if="${canEdit}" method="post"
+              th:action="@{'/wiki/attachments/' + ${a.id} + '/delete'}" style="margin:0"
+              onsubmit="return confirm('이 첨부를 삭제할까요?')">
+          <button class="button" type="submit" style="color:#c0392b">삭제</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- 댓글 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">댓글</p><h2>의견</h2></div>
+      <span class="pill" th:text="${#lists.size(comments)} + '개'">0개</span></div>
+    <div th:unless="${#lists.isEmpty(comments)}" style="display:grid;gap:.6rem;margin-bottom:.8rem">
+      <div th:each="c : ${comments}" style="border-bottom:1px solid rgba(128,128,128,.15);padding-bottom:.5rem">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong th:text="${c.authorUserId != null ? commentAuthors.get(c.authorUserId) : '알 수 없음'}">작성자</strong>
+          <span class="subcopy" style="margin:0">
+            <span th:text="${#temporals.format(c.createdAt, 'yyyy-MM-dd HH:mm')}">시각</span>
+            <form th:if="${(c.authorUserId != null and c.authorUserId == myUserId) or canManage}" method="post"
+                  th:action="@{'/wiki/' + ${wikiPage.id} + '/comments/' + ${c.id} + '/delete'}" style="display:inline;margin-left:.4rem">
+              <button type="submit" style="background:none;border:none;cursor:pointer;color:#c0392b">삭제</button>
+            </form>
+          </span>
+        </div>
+        <div th:text="${c.content}" style="white-space:pre-wrap;margin-top:.2rem">내용</div>
+      </div>
+    </div>
+    <form method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/comments'}" style="display:grid;gap:.4rem;max-width:720px">
+      <textarea name="content" rows="3" maxlength="2000" required placeholder="댓글을 입력하세요"
+                style="width:100%;font-family:inherit;line-height:1.5"></textarea>
+      <div><button class="button primary" type="submit">댓글 등록</button></div>
+    </form>
+  </section>
+</main></div>
+<script th:src="@{/js/wiki-view.js}" defer></script>
+</body>
+</html>

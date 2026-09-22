@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 팀 관리</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('team')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">부서장 / 팀 관리</p>
+      <h1>팀 관리</h1>
+      <p class="subcopy">내 부서 팀원의 접근 현황을 검토하고, 온보딩 적용과 역할 위임을 합니다.
+        (모든 작업 대상은 내가 이끄는 부서의 팀원으로 한정됩니다.)</p>
+    </div>
+    <div class="top-actions" style="display:flex;gap:.4rem;flex-wrap:wrap">
+      <a class="button" th:href="@{/team/inventory}">우리 팀 자산 →</a>
+      <a class="button" th:href="@{/team/servers}">우리 팀 서버 →</a>
+      <a class="button" th:href="@{/team/solutions}">우리 팀 솔루션 →</a>
+      <a class="button" th:href="@{/team/deputies}">팀 내 대직 →</a>
+    </div>
+  </header>
+
+  <p th:if="${teamOk != null}" class="subcopy" style="color:#2e7d32" th:text="${teamOk}">완료</p>
+  <p th:if="${teamError != null}" class="subcopy" style="color:#c0392b" th:text="${teamError}">오류</p>
+
+  <section class="panel" th:if="${!isAdmin and #lists.isEmpty(ledGroups)}">
+    <p class="subcopy">현재 부서장으로 지정된 그룹이 없습니다. 기관 관리자에게 그룹 상세에서 <b>부서장 지정</b>을 요청하세요.</p>
+  </section>
+
+  <div th:if="${isAdmin or !#lists.isEmpty(ledGroups)}">
+    <p th:if="${!isAdmin}" class="subcopy">내 부서:
+      <span th:each="g : ${ledGroups}" class="pill" style="margin-right:.3rem" th:text="${g.name}">부서</span>
+    </p>
+
+    <!-- 온보딩 적용 -->
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">온보딩</p><h2>신입에게 온보딩 적용</h2></div></div>
+      <p th:if="${#lists.isEmpty(templates)}" class="subcopy">아직 온보딩 템플릿이 없습니다. 자원 관리자가 '입사 온보딩'에서 먼저 만들어야 합니다.</p>
+      <p th:if="${#lists.isEmpty(members)}" class="subcopy">팀원이 없습니다. 그룹에 팀원을 먼저 추가하세요.</p>
+      <form th:if="${!#lists.isEmpty(templates) and !#lists.isEmpty(members)}"
+            method="post" th:action="@{/team/apply}" class="inline-form">
+        <select name="templateId" required>
+          <option value="">— 템플릿 —</option>
+          <option th:each="t : ${templates}" th:value="${t.id}" th:text="${t.name}">템플릿</option>
+        </select>
+        <select name="userId" required>
+          <option value="">— 신입(팀원) —</option>
+          <option th:each="m : ${members}" th:value="${m.user.id}" th:text="${m.user.name} + ' (' + ${m.user.username} + ')'">팀원</option>
+        </select>
+        <button class="button primary" type="submit">온보딩 적용</button>
+      </form>
+    </section>
+
+    <!-- 팀원 접근 현황 + 역할 위임 -->
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">접근 현황 · 역할 위임</p><h2>팀원</h2></div><span class="pill" th:text="${#lists.size(members)} + '명'">0명</span></div>
+      <p th:if="${#lists.isEmpty(members)}" class="subcopy">팀원이 없습니다.</p>
+      <p th:if="${#lists.isEmpty(delegatableRoles)}" class="subcopy">위임 가능한 관리 역할이 없습니다(자신이 보유한 인프라/자산 관리자 역할만 위임 가능).</p>
+      <div th:unless="${#lists.isEmpty(members)}" class="data-table">
+        <div class="table-row table-head"><span>팀원</span><span>솔루션</span><span>자산</span><span>위키</span><span>역할 위임</span></div>
+        <div class="table-row" th:each="m : ${members}">
+          <div>
+            <strong th:text="${m.user.name}">이름</strong>
+            <small th:text="'@' + ${m.user.username}" style="display:block;color:#7a869a">아이디</small>
+            <span th:each="r : ${m.roles}" th:if="${r.name() != 'USER'}" class="pill" style="margin-top:.2rem" th:text="${r.label}">역할</span>
+          </div>
+          <span th:text="${#lists.isEmpty(m.solutions)} ? '—' : ${#strings.listJoin(m.solutions, ', ')}">솔루션</span>
+          <span th:text="${#lists.isEmpty(m.assets)} ? '—' : ${#strings.listJoin(m.assets, ', ')}">자산</span>
+          <span th:text="${#lists.isEmpty(m.spaces)} ? '—' : ${#strings.listJoin(m.spaces, ', ')}">위키</span>
+          <span class="table-actions">
+            <form th:each="role : ${delegatableRoles}" method="post" th:action="@{/team/roles}" style="display:inline">
+              <input type="hidden" name="userId" th:value="${m.user.id}">
+              <input type="hidden" name="role" th:value="${role}">
+              <input type="hidden" name="grant" th:value="${!m.roles.contains(role)}">
+              <button class="button" type="submit"
+                      th:text="${m.roles.contains(role)} ? (${role.label} + ' 회수') : (${role.label} + ' 위임')">위임</button>
+            </form>
+          </span>
+        </div>
+      </div>
+      <p class="subcopy" style="margin-top:.5rem">위임은 <b>자신이 보유한 관리 역할만</b> 팀원에게 부여/회수합니다(가진 권한만 나눠줌).</p>
+    </section>
+  </div>
+</main></div>
+</body>
+</html>

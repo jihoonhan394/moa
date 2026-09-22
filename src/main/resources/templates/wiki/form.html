@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 위키 편집</title>
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('wiki')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow"><a th:href="@{/wiki}">위키</a> /
+      <a th:href="@{'/wiki/spaces/' + ${space.id}}" th:text="${space.name}">공간</a> /
+      <span th:text="${mode == 'new'} ? '새 문서' : '수정'">편집</span></p>
+      <h1 th:text="${mode == 'new'} ? '새 문서' : '문서 수정'">문서</h1></div>
+  </header>
+
+  <p th:if="${wikiError}" class="modal-note" style="color:#c0392b" th:text="${wikiError}">오류</p>
+
+  <section class="panel" th:if="${mode == 'new' and !#lists.isEmpty(templates)}">
+    <div class="panel-head"><div><p class="eyebrow">서식</p><h2>서식 불러오기</h2></div></div>
+    <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/pages/from-template'}" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+      <select name="templateId" required style="flex:1;min-width:240px">
+        <option value="" disabled selected>서식 선택</option>
+        <option th:each="t : ${templates}" th:value="${t.id}" th:text="${t.name}">서식</option>
+      </select>
+      <button class="button" type="submit">불러오기</button>
+    </form>
+    <p class="subcopy" style="margin-top:.4rem">선택한 서식이 아래 폼에 채워집니다.</p>
+  </section>
+
+  <section class="panel" th:if="${mode == 'new' and aiConfigured}">
+    <div class="panel-head"><div><p class="eyebrow">AI</p><h2>AI로 초안 생성</h2></div></div>
+    <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/ai-draft'}" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+      <input type="text" name="topic" maxlength="200" required style="flex:1;min-width:280px"
+             placeholder="주제를 입력하면 AI가 초안 작성 (예: 신규 입사자 온보딩 가이드)">
+      <button class="button" type="submit">AI 초안 생성</button>
+    </form>
+    <p class="subcopy" style="margin-top:.4rem">생성된 초안은 아래 폼에 채워집니다. 검토·수정 후 저장하세요.</p>
+  </section>
+
+  <section class="panel">
+    <form method="post"
+          th:action="${mode == 'new'} ? @{'/wiki/spaces/' + ${space.id} + '/pages'} : @{'/wiki/' + ${pageId}}"
+          th:object="${wikiForm}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:1100px;">
+      <label>제목</label>
+      <input type="text" th:field="*{title}" maxlength="200" placeholder="문서 제목" required>
+      <p th:if="${#fields.hasErrors('title')}" class="error-message" th:errors="*{title}"></p>
+
+      <label>내용 <small style="color:#7a869a">(마크다운 · 표·취소선 지원 · 오른쪽에 실시간 미리보기)</small></label>
+      <!-- 마크다운 툴바: 선택 영역을 감싸거나 줄 앞에 삽입(wiki-editor.js) -->
+      <div class="wiki-toolbar" id="wikiToolbar" style="display:flex;flex-wrap:wrap;gap:.3rem">
+        <button type="button" class="button" data-md="bold" title="굵게" style="font-weight:800">B</button>
+        <button type="button" class="button" data-md="italic" title="기울임" style="font-style:italic">I</button>
+        <button type="button" class="button" data-md="h2" title="제목">H</button>
+        <button type="button" class="button" data-md="ul" title="목록">• 목록</button>
+        <button type="button" class="button" data-md="quote" title="인용">❝ 인용</button>
+        <button type="button" class="button" data-md="code" title="코드">&lt;/&gt;</button>
+        <button type="button" class="button" data-md="link" title="링크">🔗 링크</button>
+        <button type="button" class="button" data-md="table" title="표">▦ 표</button>
+        <span th:if="${aiConfigured}" style="width:1px;background:rgba(128,128,128,.3);margin:0 .25rem"></span>
+        <button th:if="${aiConfigured}" type="button" class="button" data-ai="summarize" title="선택 영역 요약">✨ 요약</button>
+        <button th:if="${aiConfigured}" type="button" class="button" data-ai="improve" title="문장 다듬기·맞춤법">✨ 개선</button>
+        <button th:if="${aiConfigured}" type="button" class="button" data-ai="translate" title="한↔영 번역">✨ 번역</button>
+        <button th:if="${aiConfigured}" type="button" class="button" data-ai="continue" title="이어서 작성">✨ 이어쓰기</button>
+        <span id="wikiAiStatus" class="subcopy" style="margin:0 0 0 .4rem;align-self:center"></span>
+      </div>
+      <!-- 입력 | 미리보기 분할(좁은 화면에선 한 열로) -->
+      <div class="wiki-split" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:.6rem;align-items:stretch">
+        <textarea th:field="*{content}" id="wikiContent"
+                  th:attr="data-preview-url=@{/wiki/preview},data-ai-url=@{/wiki/ai-assist}"
+                  rows="22" maxlength="50000" placeholder="마크다운으로 작성할 수 있습니다." required
+                  style="width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.5"></textarea>
+        <div class="wiki-preview" id="wikiPreview"
+             style="border:1px solid rgba(128,128,128,.25);border-radius:8px;padding:.75rem 1rem;overflow:auto;max-height:520px">
+          <div class="wiki-content" style="word-break:break-word;line-height:1.7;font-size:0.95rem"></div>
+        </div>
+      </div>
+      <p th:if="${#fields.hasErrors('content')}" class="error-message" th:errors="*{content}"></p>
+      <div style="display:flex;gap:0.5rem">
+        <button class="button primary" type="submit">저장</button>
+        <a class="button" th:href="@{'/wiki/spaces/' + ${space.id}}">취소</a>
+      </div>
+    </form>
+  </section>
+</main></div>
+<script th:src="@{/js/wiki-editor.js}" defer></script>
+</body>
+</html>

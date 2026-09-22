@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="'MOA - ' + ${notice.title}">MOA - 공지</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell">
+  <aside th:replace="~{fragments/sidebar :: sidebar('notices')}"></aside>
+  <main class="workspace">
+    <header class="topbar">
+      <div><p class="eyebrow">기관 / 공지사항</p>
+        <h1><span th:if="${notice.pinned}" class="pill" style="margin-right:.5rem">고정</span><span th:text="${notice.title}">제목</span></h1>
+        <p class="subcopy">
+          <span th:text="${notice.authorName != null ? notice.authorName : '-'}">작성자</span>
+          · <span th:text="${#temporals.format(notice.createdAt, 'yyyy-MM-dd HH:mm')}">등록일</span>
+        </p>
+      </div>
+      <a class="button" th:href="@{/notices}">목록</a>
+    </header>
+
+    <section class="panel">
+      <p style="white-space:pre-wrap;line-height:1.7;margin:0" th:text="${notice.body}">본문</p>
+    </section>
+
+    <section th:if="${inTenantContext}" class="panel">
+      <div class="table-actions">
+        <a class="button" th:href="@{'/notices/' + ${notice.id} + '/edit'}">수정</a>
+        <form method="post" th:action="@{'/notices/' + ${notice.id} + '/delete'}" style="display:inline"
+              onsubmit="return confirm('이 공지를 삭제할까요?');">
+          <button class="button" type="submit">삭제</button>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

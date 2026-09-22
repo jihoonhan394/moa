@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 우리 팀 솔루션 관리</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('team')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">팀 관리 / 우리 팀 솔루션</p>
+      <h1>우리 팀 솔루션 관리</h1>
+      <p class="subcopy">내가 이끄는 부서가 <b>소유한 솔루션</b>을 등록·수정·삭제·제어합니다.
+        솔루션은 <b>우리 팀 소유 서버</b>에만 붙일 수 있습니다. (전체 솔루션은 인프라 관리자 소관)</p>
+    </div>
+    <a class="button" th:href="@{/team}">← 팀 콘솔</a>
+  </header>
+
+  <p th:if="${teamOk}" class="subcopy good" th:text="${teamOk}" style="margin:.2rem 0"></p>
+  <p th:if="${teamError}" class="error-message" th:text="${teamError}" style="margin:.2rem 0"></p>
+
+  <section class="panel" th:if="${#lists.isEmpty(ledGroups)}">
+    <p class="subcopy">이끄는 부서가 없습니다. 부서장으로 지정되면 여기서 팀 솔루션을 관리할 수 있습니다.</p>
+  </section>
+  <section class="panel" th:if="${!#lists.isEmpty(ledGroups) and #lists.isEmpty(teamServers)}">
+    <p class="subcopy">먼저 <a th:href="@{/team/servers}">우리 팀 서버</a>를 등록해야 솔루션을 붙일 수 있습니다.</p>
+  </section>
+
+  <div th:if="${!#lists.isEmpty(ledGroups) and !#lists.isEmpty(teamServers)}">
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">등록</p><h2>팀 솔루션 등록</h2></div></div>
+      <form method="post" th:action="@{/team/solutions}" style="display:grid;gap:.5rem;max-width:760px">
+        <div class="asset-toolbar">
+          <select name="assetId" required aria-label="팀 소유 서버">
+            <option value="" disabled selected>팀 소유 서버 선택</option>
+            <option th:each="a : ${teamServers}" th:value="${a.id}" th:text="${a.name}">서버</option>
+          </select>
+          <input type="text" name="name" maxlength="100" placeholder="솔루션 이름" required>
+          <select name="type" required aria-label="유형">
+            <option th:each="t : ${types}" th:value="${t}" th:text="${t}">유형</option>
+          </select>
+        </div>
+        <div class="asset-toolbar">
+          <input type="text" name="identifier" maxlength="500" placeholder="식별자(서비스명/유닛/컨테이너명)" required>
+          <select name="credentialId" aria-label="자격증명">
+            <option value="">자격증명 없음</option>
+            <option th:each="c : ${credentials}" th:value="${c.id}" th:text="${c.name}">자격증명</option>
+          </select>
+          <select name="status" aria-label="상태">
+            <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}">ACTIVE</option>
+          </select>
+        </div>
+        <div class="asset-toolbar">
+          <select name="healthCheckType" aria-label="health 유형">
+            <option th:each="h : ${healthTypes}" th:value="${h}" th:text="${h}">NONE</option>
+          </select>
+          <select name="controlProtocol" aria-label="제어 채널">
+            <option th:each="p : ${protocols}" th:value="${p}" th:text="${p}">SSH</option>
+          </select>
+          <input type="number" name="controlPort" min="1" max="65535" placeholder="제어 포트(선택)">
+        </div>
+        <div class="asset-toolbar">
+          <input type="text" name="startCommand" maxlength="1000" placeholder="CUSTOM: start 명령(선택)">
+          <input type="text" name="stopCommand" maxlength="1000" placeholder="stop 명령(선택)">
+          <input type="text" name="statusCommand" maxlength="1000" placeholder="status 명령(선택)">
+        </div>
+        <select name="ownerGroupId" required aria-label="소유 부서" style="max-width:280px">
+          <option value="" disabled selected>소유 부서 선택</option>
+          <option th:each="g : ${ledGroups}" th:value="${g.id}" th:text="${g.name}">부서</option>
+        </select>
+        <div><button class="button primary" type="submit">등록</button></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">보유</p><h2>우리 팀 솔루션</h2></div>
+        <span class="pill" th:text="${#lists.size(solutions)} + '개'">0개</span></div>
+      <p th:if="${#lists.isEmpty(solutions)}" class="subcopy">등록된 팀 솔루션이 없습니다.</p>
+      <div th:unless="${#lists.isEmpty(solutions)}" class="data-table table-scroll">
+        <div class="table-row table-head"><span>이름</span><span>서버</span><span>소유부서</span><span>제어</span></div>
+        <div class="table-row" th:each="sol : ${solutions}">
+          <strong th:text="${sol.name}">이름</strong>
+          <span th:text="${assetNames.getOrDefault(sol.assetId, '-')}" style="color:#7a869a">서버</span>
+          <span th:text="${groupNames.getOrDefault(sol.ownerGroupId, '-')}" style="color:#7a869a">부서</span>
+          <span class="table-actions">
+            <form th:each="act : ${actions}" method="post" th:action="@{'/team/solutions/' + ${sol.id} + '/control'}" style="display:inline">
+              <input type="hidden" name="action" th:value="${act}">
+              <button class="button" type="submit" th:text="${act}">START</button>
+            </form>
+            <form method="post" th:action="@{'/team/solutions/' + ${sol.id} + '/delete'}" style="display:inline"
+                  onsubmit="return confirm('이 솔루션을 삭제할까요?')">
+              <button class="button" type="submit">삭제</button>
+            </form>
+          </span>
+        </div>
+      </div>
+    </section>
+  </div>
+</main></div>
+</body>
+</html>

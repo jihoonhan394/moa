@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 만료 관리</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('expirations')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">현황 / 만료 관리</p>
+      <h1>만료/갱신 통합</h1>
+      <p class="subcopy">라이선스·기간제 접근 권한·기관 구독의 만료를 한곳에서 임박순으로 봅니다. (놓치면 사고)</p>
+    </div>
+  </header>
+
+  <section class="stat-strip" style="display:flex;gap:1rem;margin-bottom:1rem">
+    <div class="panel" style="flex:1;text-align:center">
+      <p class="eyebrow">만료됨</p><strong style="font-size:1.6rem" th:classappend="${overdue > 0} ? 'bad' : ''" th:text="${overdue}">0</strong>
+    </div>
+    <div class="panel" style="flex:1;text-align:center">
+      <p class="eyebrow">14일 내 임박</p><strong style="font-size:1.6rem" th:classappend="${soon > 0} ? 'warn' : ''" th:text="${soon}">0</strong>
+    </div>
+    <div class="panel" style="flex:1;text-align:center">
+      <p class="eyebrow">전체 추적</p><strong style="font-size:1.6rem" th:text="${#lists.size(rows)}">0</strong>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">임박순</p><h2>만료 항목</h2></div></div>
+    <p th:if="${#lists.isEmpty(rows)}" class="subcopy">추적 중인 만료 항목이 없습니다. 인벤토리 만료일·기간제 접근·구독 만기가 있으면 여기에 모입니다.</p>
+    <div th:unless="${#lists.isEmpty(rows)}" class="data-table table-scroll">
+      <div class="table-row table-head"><span>종류</span><span>대상</span><span>상세</span><span>만료일</span><span>남은 기간</span><span>AI</span></div>
+      <div class="table-row" th:each="r : ${rows}">
+        <span th:text="${r.category}">종류</span>
+        <strong th:text="${r.label}">대상</strong>
+        <span th:text="${r.detail}" style="color:#7a869a">상세</span>
+        <span th:text="${r.expiresOn}">만료일</span>
+        <b th:classappend="${r.daysLeft < 0} ? 'bad' : (${r.daysLeft <= 14} ? 'warn' : 'good')"
+           th:text="${r.daysLeft < 0} ? ('만료 ' + (${r.daysLeft} * -1) + '일 지남') : (${r.daysLeft == 0} ? '오늘' : ('D-' + ${r.daysLeft}))">D-3</b>
+        <form method="post" th:action="@{/expirations/ai-draft}" style="display:inline">
+          <input type="hidden" name="sourceType" th:value="${r.sourceType}">
+          <input type="hidden" name="sourceId" th:value="${r.sourceId}">
+          <input type="hidden" name="category" th:value="${r.category}">
+          <input type="hidden" name="label" th:value="${r.label}">
+          <input type="hidden" name="expiresOn" th:value="${r.expiresOn}">
+          <input type="hidden" name="daysLeft" th:value="${r.daysLeft}">
+          <button class="button" type="submit" title="AI 영향분석·후속조치 초안">AI 초안</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

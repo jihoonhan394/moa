@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 공유자산 수정</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('shared-resources')}"></aside><main class="workspace">
+  <header class="topbar">
+    <div><p class="eyebrow">자산 관리 / 공유자산</p><h1>자산 수정</h1></div>
+  </header>
+  <section class="panel">
+    <form method="post" th:action="@{'/shared-resources/' + ${resourceId}}" th:object="${resourceForm}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:560px;">
+      <div th:if="${#fields.hasGlobalErrors()}" class="error-message"><p th:each="e : ${#fields.globalErrors()}" th:text="${e}" style="margin:.1rem 0"></p></div>
+      <label>이름</label><input type="text" th:field="*{name}" maxlength="100" required>
+      <p th:if="${#fields.hasErrors('name')}" class="error-message" th:errors="*{name}"></p>
+      <label>카테고리</label>
+      <select th:field="*{category}" required>
+        <option value="" th:selected="${resourceForm.category == null}" disabled>카테고리 선택</option>
+        <option th:each="c : ${categories}" th:value="${c}" th:text="${c}" th:selected="${c == resourceForm.category}">회의실</option>
+      </select>
+      <p th:if="${#fields.hasErrors('category')}" class="error-message" th:errors="*{category}"></p>
+      <label>위치</label><input type="text" th:field="*{location}" maxlength="200">
+      <label>정원/수용</label><input type="number" th:field="*{capacity}" min="0">
+      <label>상태</label>
+      <select th:field="*{status}"><option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}">사용가능</option></select>
+      <label>설명</label><input type="text" th:field="*{description}" maxlength="500">
+      <div style="display:flex;gap:0.5rem">
+        <button class="button primary" type="submit">저장</button>
+        <a class="button" th:href="@{/shared-resources}">취소</a>
+      </div>
+    </form>
+  </section>
+</main></div>
+</body>
+</html>

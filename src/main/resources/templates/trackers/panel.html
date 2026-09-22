@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 만기·점검</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow" th:text="${isAsset} ? '서버·접속 자산 / 만기·점검' : '인벤토리 / 만기·점검'">만기·점검</p>
+      <h1 th:text="${targetName}">대상</h1>
+      <p class="subcopy">인증서·보험·검사 같은 <b>1회성 만기</b>와 필터 교체·정기점검 같은 <b>반복 점검</b>을 기록합니다.
+        모두 <b>만료 관리 대시보드</b>에 자동 표시되고 임박 시 알림이 갑니다.</p>
+    </div>
+    <a class="button" th:href="@{${backPath}}">← 목록</a>
+  </header>
+
+  <!-- SSL 자동감지 (서버·접속 자산 전용) -->
+  <section class="panel" th:if="${isAsset}">
+    <div class="panel-head"><div><p class="eyebrow">자동 감지</p><h2>SSL 인증서</h2></div></div>
+    <p class="subcopy" style="margin:.2rem 0 .6rem">호스트에 TLS로 접속해 서버 인증서의 만료일·발급자·유효기간·SAN을 읽어옵니다(발급·설치는 하지 않습니다).
+      SNI를 사용하므로 가상호스트도 지원하며, 한 번 감지하면 <b>매일 자동으로 재점검</b>해 만료일을 최신으로 유지합니다.</p>
+    <p th:if="${probeMessage}" class="subcopy good" th:text="${probeMessage}" style="margin-bottom:.6rem"></p>
+    <p th:if="${probeError}" class="error-message" th:text="${probeError}" style="margin-bottom:.6rem"></p>
+    <form method="post" th:action="@{${basePath} + '/trackers/probe-ssl'}"
+          style="display:flex;gap:.5rem;align-items:end;flex-wrap:wrap">
+      <div style="display:grid;gap:.2rem"><label>호스트</label>
+        <input type="text" name="host" th:value="${sslHost}" placeholder="example.com" required style="min-width:220px"></div>
+      <div style="display:grid;gap:.2rem"><label>포트</label>
+        <input type="number" name="port" th:value="${sslPort}" min="1" max="65535" required style="width:110px"></div>
+      <button class="button primary" type="submit">인증서 만료일 감지</button>
+    </form>
+  </section>
+
+  <!-- 항목 목록 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">등록됨</p><h2>만기·점검 항목</h2></div></div>
+    <p class="subcopy" th:if="${#lists.isEmpty(trackers)}" style="margin:.4rem 0">아직 등록된 항목이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(trackers)}" class="data-table table-scroll">
+      <div class="table-row table-head" style="grid-template-columns:1.4fr .8fr .9fr .8fr .8fr .7fr .9fr">
+        <span>항목</span><span>예정일</span><span>남은 기간</span><span>주기</span><span>최근 완료</span><span>출처</span><span></span>
+      </div>
+      <div class="table-row" th:each="t : ${trackers}" style="grid-template-columns:1.4fr .8fr .9fr .8fr .8fr .7fr .9fr"
+           th:with="d=${T(java.time.temporal.ChronoUnit).DAYS.between(today, t.dueOn)}">
+        <span><strong th:text="${t.label}">라벨</strong>
+          <small th:if="${t.detail}" th:text="${t.detail}" style="display:block;color:#7a869a">상세</small></span>
+        <span th:text="${t.dueOn}">2026-01-01</span>
+        <b th:classappend="${d <= 7} ? 'bad' : (${d <= 30} ? 'warn' : 'good')"
+           th:text="${d < 0} ? ('만료 ' + (${d} * -1) + '일 지남') : (${d == 0} ? '오늘' : (${d <= 7} ? ('D-' + ${d} + ' 임박') : ('D-' + ${d})))">D-3</b>
+        <span th:text="${t.recurring} ? (${t.recurEveryDays} + '일마다') : '1회성'">-</span>
+        <span th:text="${t.lastDoneOn} ?: '-'" style="color:#7a869a">-</span>
+        <span th:text="${t.source == 'SSL_PROBE'} ? 'SSL 자동' : '수동'" style="color:#7a869a">수동</span>
+        <span style="display:flex;gap:.35rem;white-space:nowrap">
+          <form method="post" th:action="@{${basePath} + '/trackers/' + ${t.id} + '/done'}" style="display:inline">
+            <button class="button" type="submit" th:text="${t.recurring} ? '완료(다음)' : '완료'">완료</button>
+          </form>
+          <form method="post" th:action="@{${basePath} + '/trackers/' + ${t.id} + '/delete'}" style="display:inline"
+                onsubmit="return confirm('이 항목을 삭제할까요?');">
+            <button class="button" type="submit">삭제</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 수동 추가 -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">추가</p><h2>항목 등록</h2></div></div>
+    <form method="post" th:action="@{${basePath} + '/trackers'}" style="display:grid;gap:.5rem;max-width:560px">
+      <label>이름</label>
+      <input type="text" name="label" maxlength="100" required placeholder="예: 차량 보험 만기 / 정수기 필터 교체">
+      <label>예정일</label><input type="date" name="dueOn" required>
+      <label>반복 주기(일) — 비우면 1회성</label>
+      <input type="number" name="recurEveryDays" min="1" placeholder="예: 90 (분기점검)">
+      <p class="subcopy" style="margin:0">반복으로 등록하면 '완료' 시 예정일이 자동으로 다음 주기로 넘어갑니다.</p>
+      <div><button class="button primary" type="submit">등록</button></div>
+    </form>
+  </section>
+</main></div>
+</body>
+</html>
