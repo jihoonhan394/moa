@@ -95,11 +95,11 @@ Codex와 Claude Code는 작업 전 이 파일과 `doc/1차-진행/AGENTS.md`를 
 
 ## Git 브랜치 워크플로우
 
-- 브랜치 계층: `main` → `mtcmhjh20` → `developer`. `main`/`mtcmhjh20`에는 직접 커밋하지 않는다.
-- 기능은 `developer`에서 `feature/<이름>` 브랜치를 따서 작업한다: `git checkout developer && git checkout -b feature/<이름>`.
-- 테스트 통과 후 `developer`에 **스쿼시 머지**한다: `git checkout developer && git merge --squash feature/<이름>` 후 커밋.
+- 브랜치: `main`(항상 그린·배포 기준)을 보호하고, 기능은 기능별 `feature/<이름>` 브랜치에서 작업한다. `main`에는 사소한 문서/설정 외 직접 커밋하지 않는다.
+- 기능은 `main`에서 `feature/<이름>` 브랜치를 따서 작업한다: `git checkout main && git checkout -b feature/<이름>`.
+- 테스트 통과 후 `main`에 **스쿼시 머지**한다: `git checkout main && git merge --squash feature/<이름>` 후 커밋.
 - **스쿼시 머지 시 반드시 포함**한다: ① 기능 단위의 커밋 메시지, ② **README.md 갱신**(현재 범위/기능 반영), ③ **버전 올리기**(`build.gradle`의 `version`).
-- 원격은 `origin`(github.com/mtcmhjh20/moa). 머지 후 `git push origin developer`.
+- 원격은 `origin`(github.com/jihoonhan394/moa). 머지 후 `git push origin main`. (옛 스터디 저장소 `mtcmhjh20/moa`는 아카이브 — 전체 히스토리는 로컬 번들 `moa-archive-20260922.bundle`에 보존.)
 - 커밋 위생: `.env`·비밀·`*.exe`·`*.zip`·`doc/`(로컬 문서)는 커밋 금지(`.gitignore` 확인). 스테이징에 비밀정보 유입 여부를 커밋 전 확인한다. 커밋 메시지 끝에 `Co-Authored-By` 라인을 남긴다.
 
 ## 인프라·환경 참고
