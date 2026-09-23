@@ -11,12 +11,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.moara.moa.security.MoaUserDetails;
+import com.moara.moa.tenant.CreateTenantCommand;
 import com.moara.moa.tenant.Tenant;
+import com.moara.moa.tenant.TenantService;
 import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
 import com.moara.moa.user.UserForm;
 import com.moara.moa.user.UserRole;
 import com.moara.moa.user.UserStatus;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -31,6 +34,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class ManagedUserControllerTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private ManagedUserService userService;
+  @Autowired private TenantService tenantService;
 
   @Test
   void listShowsTenantUsers() throws Exception {
@@ -162,6 +166,91 @@ class ManagedUserControllerTest {
 
     // 본인 계정은 그대로 활성 유지.
     assertEquals(UserStatus.ACTIVE, userService.findById(admin.getId()).getStatus());
+  }
+
+  // ── 교차 테넌트 부정 테스트: A기관 관리자가 B기관 사용자의 UUID로 접근을 시도하면 거부(404) ──
+
+  @Test
+  void crossTenantEditFormIsNotFound() throws Exception {
+    ManagedUser admin = createMoaUser();
+    UUID otherTenant = createOtherTenant();
+    ManagedUser victim = createTenantUser(otherTenant, UserStatus.ACTIVE);
+
+    mockMvc.perform(get("/users/" + victim.getId() + "/edit").with(authentication(auth(admin))))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void crossTenantRoleEscalationAttemptIsNotFoundAndRoleUnchanged() throws Exception {
+    ManagedUser admin = createMoaUser();
+    UUID otherTenant = createOtherTenant();
+    ManagedUser victim = createTenantUser(otherTenant, UserStatus.ACTIVE);
+
+    // B기관 사용자를 TENANT_ADMIN으로 승격 시도 — 가장 중요한 케이스(권한 탈취).
+    mockMvc.perform(post("/users/" + victim.getId())
+            .with(authentication(auth(admin))).with(csrf())
+            .param("username", victim.getUsername())
+            .param("name", victim.getName())
+            .param("email", victim.getEmail())
+            .param("phone", "010-1234-5678")
+            .param("password", "")
+            .param("status", "ACTIVE")
+            .param("roles", "TENANT_ADMIN"))
+        .andExpect(status().isNotFound());
+
+    // 404만이 아니라 실제로 역할이 바뀌지 않았는지도 확인(부작용 없음).
+    assertEquals(java.util.Set.of(UserRole.USER), userService.findById(otherTenant, victim.getId()).getRoles());
+  }
+
+  @Test
+  void crossTenantApproveIsNotFoundAndStatusUnchanged() throws Exception {
+    ManagedUser admin = createMoaUser();
+    UUID otherTenant = createOtherTenant();
+    ManagedUser victim = createTenantUser(otherTenant, UserStatus.PENDING);
+
+    mockMvc.perform(post("/users/" + victim.getId() + "/approve")
+            .with(authentication(auth(admin))).with(csrf()))
+        .andExpect(status().isNotFound());
+
+    assertEquals(UserStatus.PENDING, userService.findById(otherTenant, victim.getId()).getStatus());
+  }
+
+  @Test
+  void crossTenantDisableIsNotFoundAndStatusUnchanged() throws Exception {
+    ManagedUser admin = createMoaUser();
+    UUID otherTenant = createOtherTenant();
+    ManagedUser victim = createTenantUser(otherTenant, UserStatus.ACTIVE);
+
+    mockMvc.perform(post("/users/" + victim.getId() + "/disable")
+            .with(authentication(auth(admin))).with(csrf()))
+        .andExpect(status().isNotFound());
+
+    assertEquals(UserStatus.ACTIVE, userService.findById(otherTenant, victim.getId()).getStatus());
+  }
+
+  @Test
+  void crossTenantActivateIsNotFoundAndStatusUnchanged() throws Exception {
+    ManagedUser admin = createMoaUser();
+    UUID otherTenant = createOtherTenant();
+    ManagedUser victim = createTenantUser(otherTenant, UserStatus.ACTIVE);
+    userService.disable(otherTenant, victim.getId());
+
+    mockMvc.perform(post("/users/" + victim.getId() + "/activate")
+            .with(authentication(auth(admin))).with(csrf()))
+        .andExpect(status().isNotFound());
+
+    assertEquals(UserStatus.DISABLED, userService.findById(otherTenant, victim.getId()).getStatus());
+  }
+
+  private UUID createOtherTenant() {
+    String suffix = String.valueOf(System.nanoTime());
+    return tenantService.createTenant(new CreateTenantCommand("타기관" + suffix, "OTH" + suffix)).getId();
+  }
+
+  private ManagedUser createTenantUser(UUID tenantId, UserStatus status) {
+    String username = "other" + System.nanoTime();
+    return userService.create(tenantId, new UserForm(
+        username, "타기관사용자", username + "@example.com", "safe-password-123", status));
   }
 
   private ManagedUser findByUsername(String username) {

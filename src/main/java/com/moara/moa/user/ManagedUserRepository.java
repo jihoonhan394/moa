@@ -15,6 +15,9 @@ public interface ManagedUserRepository extends JpaRepository<ManagedUser, UUID> 
 
   List<ManagedUser> findAllByTenantIdOrderByNameAsc(UUID tenantId);
 
+  /** 기관 스코프 단건 조회 — 교차 테넌트 접근 차단용(AGENTS.md 멀티테넌트 불변식). */
+  Optional<ManagedUser> findByIdAndTenantId(UUID id, UUID tenantId);
+
   Optional<ManagedUser> findByUsernameIgnoreCase(String username);
 
   boolean existsByUsernameIgnoreCase(String username);

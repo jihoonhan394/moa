@@ -57,7 +57,10 @@ public class MaintenanceController {
   public String addOwner(@RequestParam String target, @RequestParam UUID userId) {
     Target parsed = Target.parse(target);
     if (parsed != null) {
-      maintenanceService.addOwner(tenantContext.currentTenantId(), parsed.type(), parsed.id(), userId);
+      UUID tenantId = tenantContext.currentTenantId();
+      requireOwnTarget(tenantId, parsed);
+      userService.findById(tenantId, userId); // 담당자도 자기 기관 사용자여야 한다
+      maintenanceService.addOwner(tenantId, parsed.type(), parsed.id(), userId);
     }
     return "redirect:/maintenance";
   }
@@ -82,9 +85,22 @@ public class MaintenanceController {
       populate(model, windowForm);
       return "maintenance";
     }
+    UUID tenantId = tenantContext.currentTenantId();
+    requireOwnTarget(tenantId, parsed);
     maintenanceService.createWindow(
-        tenantContext.currentTenantId(), parsed.type(), parsed.id(), tenantContext.currentUserId(), windowForm);
+        tenantId, parsed.type(), parsed.id(), tenantContext.currentUserId(), windowForm);
     return "redirect:/maintenance";
+  }
+
+  /**
+   * 대상(자산/솔루션)이 현재 기관 소속인지 검증한다. 누락하면 타 기관 자원에 점검 일정·담당자를
+   * 붙일 수 있고, 알림이 타 기관 사용자에게 발송된다(AGENTS.md 멀티테넌트 불변식).
+   */
+  private void requireOwnTarget(UUID tenantId, Target target) {
+    switch (target.type()) {
+      case ASSET -> assetService.findById(tenantId, target.id());
+      case SOLUTION -> solutionService.findById(tenantId, target.id());
+    }
   }
 
   /** 화면의 단일 대상 선택값("TYPE:uuid")을 타입+식별자로 분해한다. 형식이 틀리면 null. */

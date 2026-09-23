@@ -19,11 +19,11 @@ class ManagedUserServiceTest {
     ManagedUser created = userService.create(new UserForm(
         username, "테스트 사용자", username + "@example.com", "safe-password-123", UserStatus.ACTIVE));
 
-    ManagedUser updated = userService.update(created.getId(), new UserForm(
+    ManagedUser updated = userService.update(Tenant.DEFAULT_TENANT_ID, created.getId(), new UserForm(
         username, "수정 사용자", username + "@example.com", "", UserStatus.ACTIVE));
     assertEquals("수정 사용자", updated.getName());
 
-    userService.disable(created.getId());
+    userService.disable(Tenant.DEFAULT_TENANT_ID, created.getId());
     assertEquals(UserStatus.DISABLED, userService.findById(created.getId()).getStatus());
   }
 

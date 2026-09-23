@@ -157,9 +157,9 @@ class UserLifecycleServiceTest {
   @Test
   void disabledUserCanBeReactivated() {
     ManagedUser user = createUser();
-    userService.disable(user.getId());
+    userService.disable(MOA, user.getId());
     assertEquals(UserStatus.DISABLED, userService.findById(user.getId()).getStatus());
-    userService.activate(user.getId());
+    userService.activate(MOA, user.getId());
     assertEquals(UserStatus.ACTIVE, userService.findById(user.getId()).getStatus());
   }
 

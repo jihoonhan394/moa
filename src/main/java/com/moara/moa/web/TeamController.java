@@ -9,6 +9,7 @@ import com.moara.moa.security.TenantContext;
 import com.moara.moa.solution.ManagedSolution;
 import com.moara.moa.solution.SolutionAccessService;
 import com.moara.moa.user.ManagedUser;
+import com.moara.moa.user.ManagedUserNotFoundException;
 import com.moara.moa.user.ManagedUserService;
 import com.moara.moa.user.UserRole;
 import com.moara.moa.wiki.WikiSpace;
@@ -99,14 +100,14 @@ public class TeamController {
       redirectAttributes.addFlashAttribute("teamError", "자신이 보유한 관리 역할만 위임할 수 있습니다.");
       return "redirect:/team";
     }
-    ManagedUser member = userService.findById(userId);
+    ManagedUser member = userService.findById(tenantId, userId);
     Set<UserRole> newRoles = new java.util.HashSet<>(member.getRoles());
     if (grant) {
       newRoles.add(role);
     } else {
       newRoles.remove(role);
     }
-    userService.assignRoles(userId, newRoles);
+    userService.assignRoles(tenantId, userId, newRoles);
     redirectAttributes.addFlashAttribute("teamOk",
         (grant ? "위임: " : "회수: ") + member.getName() + " → " + role.getLabel());
     return "redirect:/team";
@@ -147,8 +148,25 @@ public class TeamController {
         .toList();
   }
 
+  /**
+   * 대상 사용자를 관리할 수 있는가. <b>테넌트 소속 확인을 분기 밖에서 무조건 수행</b>한다 —
+   * {@code isTenantAdmin() || leads(...)} 형태로 두면 관리자일 때 단락되어 테넌트 검증이
+   * 통째로 건너뛰어지고, 모든 기관에 관리자가 있으므로 교차 테넌트 조작이 열린다.
+   */
   private boolean canManage(UUID tenantId, UUID targetUserId) {
+    if (!belongsToTenant(tenantId, targetUserId)) {
+      return false;
+    }
     return isTenantAdmin() || groupService.leads(tenantId, tenantContext.currentUserId(), targetUserId);
+  }
+
+  private boolean belongsToTenant(UUID tenantId, UUID targetUserId) {
+    try {
+      userService.findById(tenantId, targetUserId);
+      return true;
+    } catch (ManagedUserNotFoundException notFound) {
+      return false;
+    }
   }
 
   private boolean isTenantAdmin() {

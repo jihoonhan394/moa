@@ -89,7 +89,7 @@ public class ManagedUserController {
 
   @GetMapping("/users/{id}/edit")
   public String editForm(@PathVariable UUID id, Model model) {
-    ManagedUser user = userService.findById(id);
+    ManagedUser user = userService.findById(tenantContext.currentTenantId(), id);
     model.addAttribute("userId", id);
     model.addAttribute("userForm", new UserForm(
         user.getUsername(), user.getName(), user.getEmail(), user.getPhoneDisplay(), "", user.getStatus()));
@@ -115,8 +115,9 @@ public class ManagedUserController {
       return "users/form";
     }
     try {
-      userService.update(id, userForm);
-      userService.assignRoles(id, roleSet);
+      UUID tenantId = tenantContext.currentTenantId();
+      userService.update(tenantId, id, userForm);
+      userService.assignRoles(tenantId, id, roleSet);
       audit("USER_UPDATE", id, userForm.username());
       return "redirect:/users";
     } catch (DuplicateManagedUserException exception) {
@@ -170,14 +171,14 @@ public class ManagedUserController {
 
   @PostMapping("/users/{id}/approve")
   public String approve(@PathVariable UUID id) {
-    ManagedUser approved = userService.approve(id);
+    ManagedUser approved = userService.approve(tenantContext.currentTenantId(), id);
     audit("USER_APPROVE", id, approved.getUsername());
     return "redirect:/users";
   }
 
   @PostMapping("/users/{id}/disable")
   public String disable(@PathVariable UUID id) {
-    userService.disable(id);
+    userService.disable(tenantContext.currentTenantId(), id);
     audit("USER_DISABLE", id, null);
     return "redirect:/users";
   }
@@ -185,7 +186,7 @@ public class ManagedUserController {
   /** 비활성(휴면) 사용자를 다시 활성(재직)으로. 접근 권한은 보존돼 있으므로 그대로 복원된다. */
   @PostMapping("/users/{id}/activate")
   public String activate(@PathVariable UUID id) {
-    userService.activate(id);
+    userService.activate(tenantContext.currentTenantId(), id);
     audit("USER_ACTIVATE", id, null);
     return "redirect:/users";
   }

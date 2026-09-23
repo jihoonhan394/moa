@@ -176,7 +176,7 @@ public class TenantController {
   @PostMapping("/admin/tenants/{id}/admins/{userId}/enable")
   public String enableAdmin(@PathVariable UUID id, @PathVariable UUID userId) {
     ManagedUser admin = requireTenantAdmin(tenantService.getById(id), userId);
-    userService.activate(admin.getId());
+    userService.activate(admin.getTenantId(), admin.getId());
     audit("TENANT_ADMIN_ENABLE", id, admin.getUsername());
     return "redirect:/admin/tenants/" + id;
   }
@@ -184,7 +184,7 @@ public class TenantController {
   @PostMapping("/admin/tenants/{id}/admins/{userId}/disable")
   public String disableAdmin(@PathVariable UUID id, @PathVariable UUID userId) {
     ManagedUser admin = requireTenantAdmin(tenantService.getById(id), userId);
-    userService.deactivate(admin.getId());
+    userService.deactivate(admin.getTenantId(), admin.getId());
     audit("TENANT_ADMIN_DISABLE", id, admin.getUsername());
     return "redirect:/admin/tenants/" + id;
   }

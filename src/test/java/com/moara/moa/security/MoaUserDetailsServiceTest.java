@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.moara.moa.tenant.Tenant;
 import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
 import com.moara.moa.user.UserForm;
@@ -59,7 +60,7 @@ class MoaUserDetailsServiceTest {
     String username = "user" + System.nanoTime();
     ManagedUser created = userService.create(new UserForm(
         username, "홍길동", username + "@example.com", "safe-password-123", UserStatus.ACTIVE));
-    userService.disable(created.getId());
+    userService.disable(Tenant.DEFAULT_TENANT_ID, created.getId());
 
     UserDetails details = userDetailsService.loadUserByUsername(username);
     assertFalse(details.isEnabled());

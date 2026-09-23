@@ -124,7 +124,7 @@ public class PlatformController {
       model.addAttribute("selfDisableError", "본인 계정은 비활성화할 수 없습니다.");
       return "admin/operators";
     }
-    userService.disable(id);
+    userService.disableOperator(id);
     audit("OPERATOR_DISABLE", id, null);
     return "redirect:/admin/operators";
   }

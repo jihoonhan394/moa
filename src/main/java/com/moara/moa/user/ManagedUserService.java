@@ -35,8 +35,22 @@ public class ManagedUserService {
     return userRepository.count();
   }
 
+  /**
+   * 테넌트 무관 전역 조회. <b>플랫폼(SYSTEM_ADMIN) 콘솔과 부트스트랩 전용</b>이며, 호출부가 스스로
+   * 소속을 검증해야 한다(예: {@code TenantController.requireTenantAdmin}). 기관 스코프 경로에서는
+   * 반드시 {@link #findById(UUID, UUID)}를 쓴다 — 교차 테넌트 접근이 열린다.
+   */
   public ManagedUser findById(UUID id) {
     return userRepository.findById(id).orElseThrow(() -> new ManagedUserNotFoundException(id));
+  }
+
+  /**
+   * 기관 스코프 단건 조회. 대상이 해당 기관 소속이 아니면 존재 여부조차 노출하지 않고
+   * {@link ManagedUserNotFoundException}(404)을 던진다(AGENTS.md 멀티테넌트 불변식).
+   */
+  public ManagedUser findById(UUID tenantId, UUID id) {
+    return userRepository.findByIdAndTenantId(id, tenantId)
+        .orElseThrow(() -> new ManagedUserNotFoundException(id));
   }
 
   /** 기본 테넌트(MOA)에 사용자를 생성한다(테스트/부트스트랩 경로). */
@@ -77,8 +91,8 @@ public class ManagedUserService {
    * 대상이 플랫폼 운영자(SYSTEM_ADMIN)면 이 경로로 바꾸지 않는다(플랫폼 계정 보호).
    */
   @Transactional
-  public void assignRoles(UUID id, Set<UserRole> roles) {
-    ManagedUser user = findById(id);
+  public void assignRoles(UUID tenantId, UUID id, Set<UserRole> roles) {
+    ManagedUser user = findById(tenantId, id);
     if (user.hasRole(UserRole.SYSTEM_ADMIN)) {
       return;
     }
@@ -118,8 +132,8 @@ public class ManagedUserService {
 
   /** 승인 대기(PENDING) 사용자를 활성화한다. 기관 관리자/플랫폼 운영자만 호출한다. */
   @Transactional
-  public ManagedUser approve(UUID id) {
-    ManagedUser user = findById(id);
+  public ManagedUser approve(UUID tenantId, UUID id) {
+    ManagedUser user = findById(tenantId, id);
     // 상태만 전환한다(연락처 등 다른 필드 불변, email/phone null인 계정에서도 안전).
     user.changeStatus(UserStatus.ACTIVE, OffsetDateTime.now());
     return user;
@@ -177,14 +191,14 @@ public class ManagedUserService {
 
   /** 사용자를 활성(ACTIVE)으로 전환한다. */
   @Transactional
-  public void activate(UUID id) {
-    findById(id).changeStatus(UserStatus.ACTIVE, OffsetDateTime.now());
+  public void activate(UUID tenantId, UUID id) {
+    findById(tenantId, id).changeStatus(UserStatus.ACTIVE, OffsetDateTime.now());
   }
 
   /** 사용자를 비활성(DISABLED)으로 전환한다(로그인 차단). */
   @Transactional
-  public void deactivate(UUID id) {
-    findById(id).changeStatus(UserStatus.DISABLED, OffsetDateTime.now());
+  public void deactivate(UUID tenantId, UUID id) {
+    findById(tenantId, id).changeStatus(UserStatus.DISABLED, OffsetDateTime.now());
   }
 
   /**
@@ -269,8 +283,8 @@ public class ManagedUserService {
   }
 
   @Transactional
-  public ManagedUser update(UUID id, UserForm form) {
-    ManagedUser user = findById(id);
+  public ManagedUser update(UUID tenantId, UUID id, UserForm form) {
+    ManagedUser user = findById(tenantId, id);
     validateDuplicates(user.getTenantId(), form, id);
     user.update(form, OffsetDateTime.now());
     if (form.password() != null && !form.password().isBlank()) {
@@ -281,8 +295,21 @@ public class ManagedUserService {
   }
 
   @Transactional
-  public void disable(UUID id) {
-    findById(id).changeStatus(UserStatus.DISABLED, OffsetDateTime.now());
+  public void disable(UUID tenantId, UUID id) {
+    findById(tenantId, id).changeStatus(UserStatus.DISABLED, OffsetDateTime.now());
+  }
+
+  /**
+   * 플랫폼 운영자(SYSTEM_ADMIN, {@code tenant_id IS NULL}) 비활성화. 기관 스코프가 없는 대상이라
+   * 별도 경로를 두되, <b>운영자가 아닌 계정은 거부</b>해 기관 사용자로 넘어가지 않게 한다.
+   */
+  @Transactional
+  public void disableOperator(UUID id) {
+    ManagedUser user = findById(id);
+    if (user.getTenantId() != null || !user.hasRole(UserRole.SYSTEM_ADMIN)) {
+      throw new ManagedUserNotFoundException(id);
+    }
+    user.changeStatus(UserStatus.DISABLED, OffsetDateTime.now());
   }
 
   private void validateDuplicates(UUID tenantId, UserForm form) {

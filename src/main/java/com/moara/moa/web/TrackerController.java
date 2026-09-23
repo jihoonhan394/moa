@@ -52,7 +52,9 @@ public class TrackerController {
   public String addInventoryTracker(
       @PathVariable UUID id, @RequestParam String label,
       @RequestParam LocalDate dueOn, @RequestParam(required = false) Integer recurEveryDays) {
-    trackerService.add(tenantContext.currentTenantId(), TrackerTargetType.INVENTORY, id, label, dueOn, recurEveryDays);
+    UUID tenantId = tenantContext.currentTenantId();
+    inventoryService.findById(tenantId, id); // 소유권 검증 — 타 기관 항목에 트래커 생성 차단
+    trackerService.add(tenantId, TrackerTargetType.INVENTORY, id, label, dueOn, recurEveryDays);
     return "redirect:/inventory/" + id + "/trackers";
   }
 
@@ -82,7 +84,9 @@ public class TrackerController {
   public String addAssetTracker(
       @PathVariable UUID id, @RequestParam String label,
       @RequestParam LocalDate dueOn, @RequestParam(required = false) Integer recurEveryDays) {
-    trackerService.add(tenantContext.currentTenantId(), TrackerTargetType.ASSET, id, label, dueOn, recurEveryDays);
+    UUID tenantId = tenantContext.currentTenantId();
+    assetService.findById(tenantId, id); // 소유권 검증 — 타 기관 자산에 트래커 생성 차단
+    trackerService.add(tenantId, TrackerTargetType.ASSET, id, label, dueOn, recurEveryDays);
     return "redirect:/assets/" + id + "/trackers";
   }
 

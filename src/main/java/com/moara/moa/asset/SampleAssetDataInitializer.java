@@ -62,7 +62,8 @@ public class SampleAssetDataInitializer {
         userService.findByTenant(TENANT).stream()
             .filter(u -> "dev.kim".equals(u.getUsername()))
             .findFirst()
-            .ifPresent(admin -> userService.assignRoles(admin.getId(), Set.of(UserRole.TENANT_ADMIN)));
+            .ifPresent(admin ->
+                userService.assignRoles(admin.getTenantId(), admin.getId(), Set.of(UserRole.TENANT_ADMIN)));
       }
       if (groupRepository.count() == 0) {
         seedGroups(groupService, permissionSetService, assetService, userService);
