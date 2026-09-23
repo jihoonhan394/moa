@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -68,6 +69,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  */
 @Controller
 public class WikiController {
+  /** inline 렌더를 허용하는 이미지 타입(화이트리스트). SVG는 스크립트 실행이 가능해 제외한다. */
+  private static final Set<String> INLINE_SAFE_IMAGE_TYPES = Set.of(
+      "image/png", "image/jpeg", "image/gif", "image/webp", "image/bmp");
+
   // AI 프롬프트에 싣는 본문/선택 텍스트 상한(초대형 문서로 인한 비용·타임아웃 방지).
   private static final int MAX_AI_INPUT = 8000;
   private final WikiSpaceService spaceService;
@@ -449,13 +454,21 @@ public class WikiController {
     WikiPage wikiPage = pageService.findById(tenantId, attachment.getPageId());
     requireView(wikiPage.getSpaceId());
     Resource resource = new FileSystemResource(attachmentService.resolve(attachment));
+    // 업로더가 신고한 Content-Type은 신뢰할 수 없다. 안전한 이미지 타입만 inline으로 렌더하고
+    // 나머지는 전부 첨부(다운로드)로 내린다 — 특히 image/svg+xml은 스크립트를 품을 수 있어
+    // inline으로 주면 앱 오리진에서 실행된다(저장형 XSS).
+    boolean inlineSafe = isInlineSafeImage(attachment.getContentType());
     ContentDisposition disposition = ContentDisposition
-        .builder(attachment.isImage() ? "inline" : "attachment")
+        .builder(inlineSafe ? "inline" : "attachment")
         .filename(attachment.getFilename(), StandardCharsets.UTF_8)
         .build();
-    MediaType mediaType = mediaType(attachment.getContentType());
+    MediaType mediaType = inlineSafe
+        ? mediaType(attachment.getContentType())
+        : MediaType.APPLICATION_OCTET_STREAM;
     return ResponseEntity.ok()
         .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+        // 브라우저가 내용을 보고 타입을 추측(sniffing)해 실행하지 못하게 막는다.
+        .header("X-Content-Type-Options", "nosniff")
         .contentType(mediaType)
         .body(resource);
   }
@@ -485,6 +498,22 @@ public class WikiController {
       return "";
     }
     return text.length() <= max ? text : text.substring(0, max) + " …(이하 생략)";
+  }
+
+  /**
+   * inline 렌더를 허용할 안전한 이미지 타입인지. 화이트리스트 방식이며 <b>SVG는 제외</b>한다
+   * (스크립트 실행 가능). 목록에 없으면 첨부로 내려받게 해 브라우저가 실행하지 않는다.
+   */
+  private static boolean isInlineSafeImage(String contentType) {
+    if (contentType == null) {
+      return false;
+    }
+    String normalized = contentType.toLowerCase(Locale.ROOT).trim();
+    int separator = normalized.indexOf(';');
+    if (separator >= 0) {
+      normalized = normalized.substring(0, separator).trim();
+    }
+    return INLINE_SAFE_IMAGE_TYPES.contains(normalized);
   }
 
   private static MediaType mediaType(String contentType) {

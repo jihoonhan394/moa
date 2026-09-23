@@ -16,6 +16,7 @@ import com.moara.moa.tracker.TrackerTargetType;
 import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -33,6 +34,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class ExpirationService {
+  /**
+   * 만료 판정 기준 시간대. JVM 기본 존에 맡기면 서버가 UTC일 때 KST 자정~09시 사이의
+   * "오늘"이 하루 어긋나 D-day 계산과 알림 임계일 매칭이 빗나간다. 화면과 배치가 같은
+   * 기준을 쓰도록 여기서 고정한다.
+   */
+  public static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
+
   private final InventoryItemService inventoryService;
   private final PermissionSetService permissionService;
   private final ManagedUserService userService;
@@ -53,7 +61,7 @@ public class ExpirationService {
   }
 
   public List<ExpirationRow> findAll(UUID tenantId) {
-    LocalDate today = LocalDate.now();
+    LocalDate today = LocalDate.now(ZONE);
     List<ExpirationRow> rows = new ArrayList<>();
 
     // 1) 인벤토리 라이프사이클 만기(폐기 제외): 라이선스/기타(expiresAt) + 보증 + 리스·계약.
