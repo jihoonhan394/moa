@@ -1,5 +1,7 @@
 package com.moara.moa.web;
 
+import com.moara.moa.audit.AuditLogService;
+import com.moara.moa.audit.AuditResult;
 import com.moara.moa.group.AccessGroupService;
 import com.moara.moa.invitation.InvitationService;
 import com.moara.moa.onboarding.OnboardingService;
@@ -30,17 +32,20 @@ public class InvitationController {
   private final AccessGroupService groupService;
   private final OnboardingService onboardingService;
   private final TenantContext tenantContext;
+  private final AuditLogService auditLogService;
 
   @Value("${moa.base-url:}")
   private String configuredBaseUrl;
 
   public InvitationController(
       InvitationService invitationService, AccessGroupService groupService,
-      OnboardingService onboardingService, TenantContext tenantContext) {
+      OnboardingService onboardingService, TenantContext tenantContext,
+      AuditLogService auditLogService) {
     this.invitationService = invitationService;
     this.groupService = groupService;
     this.onboardingService = onboardingService;
     this.tenantContext = tenantContext;
+    this.auditLogService = auditLogService;
   }
 
   @GetMapping("/invitations")
@@ -73,6 +78,10 @@ public class InvitationController {
         ? Set.of(UserRole.USER) : roles.stream().collect(Collectors.toSet());
     var results = invitationService.invite(
         tenantId, tenantContext.currentUserId(), emailList, name, groupId, roleSet, templateId, baseUrl());
+    long emailed = results.stream().filter(r -> r.emailed()).count();
+    long skipped = results.stream().filter(r -> r.skipped()).count();
+    audit("INVITATION_SEND", null, AuditResult.SUCCESS,
+        "초대 발송 " + results.size() + "명(메일발송 " + emailed + ", 건너뜀 " + skipped + ")");
     redirectAttributes.addFlashAttribute("results", results);
     return "redirect:/invitations";
   }
@@ -80,6 +89,7 @@ public class InvitationController {
   @PostMapping("/invitations/{id}/revoke")
   public String revoke(@PathVariable UUID id) {
     invitationService.revoke(tenantContext.currentTenantId(), id);
+    audit("INVITATION_REVOKE", id, AuditResult.SUCCESS, null);
     return "redirect:/invitations";
   }
 
@@ -87,6 +97,8 @@ public class InvitationController {
   @PostMapping("/invitations/{id}/resend")
   public String resend(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
     var result = invitationService.resend(tenantContext.currentTenantId(), id, baseUrl());
+    audit("INVITATION_RESEND", id, result.skipped() ? AuditResult.FAILURE : AuditResult.SUCCESS,
+        result.skipped() ? result.reason() : "재발송(메일발송=" + result.emailed() + ")");
     redirectAttributes.addFlashAttribute("results", List.of(result));
     return "redirect:/invitations";
   }
@@ -97,5 +109,13 @@ public class InvitationController {
       return configuredBaseUrl.replaceAll("/+$", "");
     }
     return ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+  }
+
+  private void audit(String action, UUID targetId, AuditResult result, String message) {
+    UUID actorId = tenantContext.currentUserId();
+    if (actorId != null) {
+      auditLogService.recordTenantAction(
+          tenantContext.currentTenantId(), actorId, action, "Invitation", targetId, result, message);
+    }
   }
 }

@@ -1,5 +1,7 @@
 package com.moara.moa.web;
 
+import com.moara.moa.audit.AuditLogService;
+import com.moara.moa.audit.AuditResult;
 import com.moara.moa.onboarding.OnboardingItemType;
 import com.moara.moa.onboarding.OnboardingService;
 import com.moara.moa.onboarding.OnboardingTemplate;
@@ -25,14 +27,17 @@ public class OnboardingController {
   private final ManagedSolutionService solutionService;
   private final WikiSpaceService wikiSpaceService;
   private final TenantContext tenantContext;
+  private final AuditLogService auditLogService;
 
   public OnboardingController(
       OnboardingService onboardingService, ManagedSolutionService solutionService,
-      WikiSpaceService wikiSpaceService, TenantContext tenantContext) {
+      WikiSpaceService wikiSpaceService, TenantContext tenantContext,
+      AuditLogService auditLogService) {
     this.onboardingService = onboardingService;
     this.solutionService = solutionService;
     this.wikiSpaceService = wikiSpaceService;
     this.tenantContext = tenantContext;
+    this.auditLogService = auditLogService;
   }
 
   @GetMapping("/onboarding")
@@ -54,6 +59,7 @@ public class OnboardingController {
   @PostMapping("/onboarding/templates")
   public String create(@RequestParam String name) {
     OnboardingTemplate created = onboardingService.createTemplate(tenantContext.currentTenantId(), name);
+    audit("ONBOARDING_TEMPLATE_CREATE", created.getId(), name);
     return "redirect:/onboarding?template=" + created.getId();
   }
 
@@ -64,19 +70,30 @@ public class OnboardingController {
       @RequestParam(required = false) UUID refId,
       @RequestParam(required = false) String label) {
     onboardingService.addItem(tenantContext.currentTenantId(), id, type, refId, label);
+    audit("ONBOARDING_ITEM_ADD", id, "유형=" + type + (label == null || label.isBlank() ? "" : ", 라벨=" + label));
     return "redirect:/onboarding?template=" + id;
   }
 
   @PostMapping("/onboarding/templates/{id}/items/{itemId}/delete")
   public String removeItem(@PathVariable UUID id, @PathVariable UUID itemId) {
     onboardingService.removeItem(tenantContext.currentTenantId(), id, itemId);
+    audit("ONBOARDING_ITEM_REMOVE", itemId, null);
     return "redirect:/onboarding?template=" + id;
   }
 
   @PostMapping("/onboarding/templates/{id}/delete")
   public String deleteTemplate(@PathVariable UUID id) {
     onboardingService.deleteTemplate(tenantContext.currentTenantId(), id);
+    audit("ONBOARDING_TEMPLATE_DELETE", id, null);
     return "redirect:/onboarding";
   }
 
+  private void audit(String action, UUID targetId, String message) {
+    UUID actorId = tenantContext.currentUserId();
+    if (actorId != null) {
+      auditLogService.recordTenantAction(
+          tenantContext.currentTenantId(), actorId, action, "OnboardingTemplate", targetId,
+          AuditResult.SUCCESS, message);
+    }
+  }
 }

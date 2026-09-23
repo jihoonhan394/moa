@@ -1,11 +1,14 @@
 package com.moara.moa.web;
 
+import com.moara.moa.audit.AuditLogService;
+import com.moara.moa.audit.AuditResult;
 import com.moara.moa.mail.MailNotAllowedException;
 import com.moara.moa.mail.MailSendResult;
 import com.moara.moa.mail.MailService;
 import com.moara.moa.mail.MailSetting;
 import com.moara.moa.mail.MailSettingForm;
 import com.moara.moa.mail.MailSettingService;
+import com.moara.moa.security.TenantContext;
 import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
 import com.moara.moa.user.UserRole;
@@ -13,6 +16,7 @@ import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -34,12 +38,17 @@ public class PlatformMailController {
   private final MailSettingService settingService;
   private final MailService mailService;
   private final ManagedUserService userService;
+  private final TenantContext tenantContext;
+  private final AuditLogService auditLogService;
 
   public PlatformMailController(
-      MailSettingService settingService, MailService mailService, ManagedUserService userService) {
+      MailSettingService settingService, MailService mailService, ManagedUserService userService,
+      TenantContext tenantContext, AuditLogService auditLogService) {
     this.settingService = settingService;
     this.mailService = mailService;
     this.userService = userService;
+    this.tenantContext = tenantContext;
+    this.auditLogService = auditLogService;
   }
 
   @GetMapping("/admin/mail")
@@ -68,6 +77,8 @@ public class PlatformMailController {
       return "admin/mail";
     }
     settingService.savePlatform(mailForm);
+    audit("MAIL_SETTING_SAVE", AuditResult.SUCCESS,
+        "SMTP 설정 저장(호스트 " + mailForm.host() + ":" + mailForm.port() + ")");
     redirect.addFlashAttribute("message", "SMTP 설정을 저장했습니다.");
     return "redirect:/admin/mail";
   }
@@ -81,11 +92,14 @@ public class PlatformMailController {
     }
     try {
       mailService.sendTest(setting, testTo);
+      audit("MAIL_TEST_SEND", AuditResult.SUCCESS, "테스트 발송 성공(호스트 " + setting.getHost() + ")");
       redirect.addFlashAttribute("message", "테스트 메일을 발송했습니다: " + testTo);
     } catch (MailNotAllowedException notAllowed) {
+      audit("MAIL_TEST_SEND", AuditResult.FAILURE, "테스트 발송 거부(호스트 " + setting.getHost() + ")");
       redirect.addFlashAttribute("error", "테스트 발송 실패: " + notAllowed.getMessage());
     } catch (RuntimeException exception) {
       log.warn("플랫폼 SMTP 테스트 발송 실패", exception);
+      audit("MAIL_TEST_SEND", AuditResult.FAILURE, "테스트 발송 실패(호스트 " + setting.getHost() + ")");
       redirect.addFlashAttribute("error", "테스트 발송에 실패했습니다. SMTP 설정(호스트/포트/인증)을 확인하세요.");
     }
     return "redirect:/admin/mail";
@@ -110,12 +124,16 @@ public class PlatformMailController {
     }
     try {
       MailSendResult result = mailService.sendBulk(setting, to, subject, body);
+      audit("MAIL_BROADCAST_SEND", AuditResult.SUCCESS,
+          "전체 발송 " + to.size() + "명(성공 " + result.sent() + ", 실패 " + result.failed() + ")");
       redirect.addFlashAttribute("message",
           "발송 완료 — 성공 " + result.sent() + "통, 실패 " + result.failed() + "통");
     } catch (MailNotAllowedException notAllowed) {
+      audit("MAIL_BROADCAST_SEND", AuditResult.FAILURE, "전체 발송 " + to.size() + "명 대상 거부");
       redirect.addFlashAttribute("error", "발송 실패: " + notAllowed.getMessage());
     } catch (RuntimeException exception) {
       log.warn("플랫폼 SMTP 발송 실패", exception);
+      audit("MAIL_BROADCAST_SEND", AuditResult.FAILURE, "전체 발송 " + to.size() + "명 대상 실패");
       redirect.addFlashAttribute("error", "발송에 실패했습니다. SMTP 설정을 확인하세요.");
     }
     return "redirect:/admin/mail";
@@ -143,5 +161,12 @@ public class PlatformMailController {
       }
     }
     return out;
+  }
+
+  private void audit(String action, AuditResult result, String message) {
+    UUID actorId = tenantContext.currentUserId();
+    if (actorId != null) {
+      auditLogService.recordGlobalAction(actorId, null, action, "MailSetting", null, result, message);
+    }
   }
 }

@@ -1,6 +1,8 @@
 package com.moara.moa.web;
 
 import com.moara.moa.asset.AssetService;
+import com.moara.moa.audit.AuditLogService;
+import com.moara.moa.audit.AuditResult;
 import com.moara.moa.maintenance.MaintenanceService;
 import com.moara.moa.maintenance.MaintenanceTargetType;
 import com.moara.moa.maintenance.MaintenanceWindowForm;
@@ -35,16 +37,18 @@ public class MaintenanceController {
   private final ManagedSolutionService solutionService;
   private final ManagedUserService userService;
   private final TenantContext tenantContext;
+  private final AuditLogService auditLogService;
 
   public MaintenanceController(
       MaintenanceService maintenanceService, AssetService assetService,
       ManagedSolutionService solutionService, ManagedUserService userService,
-      TenantContext tenantContext) {
+      TenantContext tenantContext, AuditLogService auditLogService) {
     this.maintenanceService = maintenanceService;
     this.assetService = assetService;
     this.solutionService = solutionService;
     this.userService = userService;
     this.tenantContext = tenantContext;
+    this.auditLogService = auditLogService;
   }
 
   @GetMapping("/maintenance")
@@ -61,6 +65,8 @@ public class MaintenanceController {
       requireOwnTarget(tenantId, parsed);
       userService.findById(tenantId, userId); // 담당자도 자기 기관 사용자여야 한다
       maintenanceService.addOwner(tenantId, parsed.type(), parsed.id(), userId);
+      audit("MAINTENANCE_OWNER_ADD", parsed.id(),
+          "대상=" + parsed.type() + ", 담당자=" + userId);
     }
     return "redirect:/maintenance";
   }
@@ -68,6 +74,7 @@ public class MaintenanceController {
   @PostMapping("/maintenance/owners/{id}/delete")
   public String removeOwner(@PathVariable UUID id) {
     maintenanceService.removeOwner(tenantContext.currentTenantId(), id);
+    audit("MAINTENANCE_OWNER_REMOVE", id, null);
     return "redirect:/maintenance";
   }
 
@@ -87,8 +94,10 @@ public class MaintenanceController {
     }
     UUID tenantId = tenantContext.currentTenantId();
     requireOwnTarget(tenantId, parsed);
-    maintenanceService.createWindow(
+    var window = maintenanceService.createWindow(
         tenantId, parsed.type(), parsed.id(), tenantContext.currentUserId(), windowForm);
+    audit("MAINTENANCE_WINDOW_CREATE", window.getId(),
+        "대상=" + parsed.type() + ":" + parsed.id() + ", 제목=" + windowForm.title());
     return "redirect:/maintenance";
   }
 
@@ -163,5 +172,14 @@ public class MaintenanceController {
     Map<UUID, String> names = new LinkedHashMap<>();
     userService.findByTenant(tenantId).forEach(u -> names.put(u.getId(), u.getName()));
     return names;
+  }
+
+  private void audit(String action, UUID targetId, String message) {
+    UUID actorId = tenantContext.currentUserId();
+    if (actorId != null) {
+      auditLogService.recordTenantAction(
+          tenantContext.currentTenantId(), actorId, action, "Maintenance", targetId,
+          AuditResult.SUCCESS, message);
+    }
   }
 }

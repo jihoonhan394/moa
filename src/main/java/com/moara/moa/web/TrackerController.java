@@ -2,6 +2,8 @@ package com.moara.moa.web;
 
 import com.moara.moa.asset.Asset;
 import com.moara.moa.asset.AssetService;
+import com.moara.moa.audit.AuditLogService;
+import com.moara.moa.audit.AuditResult;
 import com.moara.moa.inventory.InventoryItem;
 import com.moara.moa.inventory.InventoryItemService;
 import com.moara.moa.security.TenantContext;
@@ -29,15 +31,18 @@ public class TrackerController {
   private final AssetService assetService;
   private final SslProbeService sslProbeService;
   private final TenantContext tenantContext;
+  private final AuditLogService auditLogService;
 
   public TrackerController(
       ResourceTrackerService trackerService, InventoryItemService inventoryService,
-      AssetService assetService, SslProbeService sslProbeService, TenantContext tenantContext) {
+      AssetService assetService, SslProbeService sslProbeService, TenantContext tenantContext,
+      AuditLogService auditLogService) {
     this.trackerService = trackerService;
     this.inventoryService = inventoryService;
     this.assetService = assetService;
     this.sslProbeService = sslProbeService;
     this.tenantContext = tenantContext;
+    this.auditLogService = auditLogService;
   }
 
   // ── 인벤토리 대상 ────────────────────────────────────────────────
@@ -55,18 +60,21 @@ public class TrackerController {
     UUID tenantId = tenantContext.currentTenantId();
     inventoryService.findById(tenantId, id); // 소유권 검증 — 타 기관 항목에 트래커 생성 차단
     trackerService.add(tenantId, TrackerTargetType.INVENTORY, id, label, dueOn, recurEveryDays);
+    audit("TRACKER_CREATE", id, "대상=INVENTORY:" + id + ", 라벨=" + label + ", 만기=" + dueOn);
     return "redirect:/inventory/" + id + "/trackers";
   }
 
   @PostMapping("/inventory/{id}/trackers/{trackerId}/done")
   public String doneInventoryTracker(@PathVariable UUID id, @PathVariable UUID trackerId) {
     trackerService.markDone(tenantContext.currentTenantId(), trackerId);
+    audit("TRACKER_COMPLETE", trackerId, null);
     return "redirect:/inventory/" + id + "/trackers";
   }
 
   @PostMapping("/inventory/{id}/trackers/{trackerId}/delete")
   public String deleteInventoryTracker(@PathVariable UUID id, @PathVariable UUID trackerId) {
     trackerService.remove(tenantContext.currentTenantId(), trackerId);
+    audit("TRACKER_DELETE", trackerId, null);
     return "redirect:/inventory/" + id + "/trackers";
   }
 
@@ -87,18 +95,21 @@ public class TrackerController {
     UUID tenantId = tenantContext.currentTenantId();
     assetService.findById(tenantId, id); // 소유권 검증 — 타 기관 자산에 트래커 생성 차단
     trackerService.add(tenantId, TrackerTargetType.ASSET, id, label, dueOn, recurEveryDays);
+    audit("TRACKER_CREATE", id, "대상=ASSET:" + id + ", 라벨=" + label + ", 만기=" + dueOn);
     return "redirect:/assets/" + id + "/trackers";
   }
 
   @PostMapping("/assets/{id}/trackers/{trackerId}/done")
   public String doneAssetTracker(@PathVariable UUID id, @PathVariable UUID trackerId) {
     trackerService.markDone(tenantContext.currentTenantId(), trackerId);
+    audit("TRACKER_COMPLETE", trackerId, null);
     return "redirect:/assets/" + id + "/trackers";
   }
 
   @PostMapping("/assets/{id}/trackers/{trackerId}/delete")
   public String deleteAssetTracker(@PathVariable UUID id, @PathVariable UUID trackerId) {
     trackerService.remove(tenantContext.currentTenantId(), trackerId);
+    audit("TRACKER_DELETE", trackerId, null);
     return "redirect:/assets/" + id + "/trackers";
   }
 
@@ -115,12 +126,17 @@ public class TrackerController {
               tenantContext.currentTenantId(), TrackerTargetType.ASSET, id,
               "SSL 인증서 (" + host + ")", result.notAfter(), ResourceTrackerService.SOURCE_SSL,
               host, port, detail);
+          audit("TRACKER_SSL_PROBE", id, AuditResult.SUCCESS,
+              host + ":" + port + " 만료일 " + result.notAfter() + " 감지");
           redirect.addFlashAttribute("probeMessage",
               "SSL 인증서 만료일 " + result.notAfter() + " 감지됨 — " + detail
                   + " (이후 매일 자동 갱신).");
         },
-        () -> redirect.addFlashAttribute("probeError",
-            host + ":" + port + " 에서 인증서를 읽지 못했습니다(연결 불가/TLS 아님)."));
+        () -> {
+          audit("TRACKER_SSL_PROBE", id, AuditResult.FAILURE, host + ":" + port + " 인증서 조회 실패");
+          redirect.addFlashAttribute("probeError",
+              host + ":" + port + " 에서 인증서를 읽지 못했습니다(연결 불가/TLS 아님).");
+        });
     return "redirect:/assets/" + id + "/trackers";
   }
 
@@ -137,6 +153,18 @@ public class TrackerController {
       return h != null ? h : url;
     } catch (RuntimeException exception) {
       return url;
+    }
+  }
+
+  private void audit(String action, UUID targetId, String message) {
+    audit(action, targetId, AuditResult.SUCCESS, message);
+  }
+
+  private void audit(String action, UUID targetId, AuditResult result, String message) {
+    UUID actorId = tenantContext.currentUserId();
+    if (actorId != null) {
+      auditLogService.recordTenantAction(
+          tenantContext.currentTenantId(), actorId, action, "ResourceTracker", targetId, result, message);
     }
   }
 

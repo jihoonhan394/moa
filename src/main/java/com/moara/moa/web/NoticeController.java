@@ -1,5 +1,7 @@
 package com.moara.moa.web;
 
+import com.moara.moa.audit.AuditLogService;
+import com.moara.moa.audit.AuditResult;
 import com.moara.moa.mail.MailSendResult;
 import com.moara.moa.mail.MailService;
 import com.moara.moa.mail.MailSetting;
@@ -33,18 +35,21 @@ public class NoticeController {
   private final MailService mailService;
   private final MailSettingService mailSettingService;
   private final ManagedUserService userService;
+  private final AuditLogService auditLogService;
 
   public NoticeController(
       NoticeService noticeService,
       TenantContext tenantContext,
       MailService mailService,
       MailSettingService mailSettingService,
-      ManagedUserService userService) {
+      ManagedUserService userService,
+      AuditLogService auditLogService) {
     this.noticeService = noticeService;
     this.tenantContext = tenantContext;
     this.mailService = mailService;
     this.mailSettingService = mailSettingService;
     this.userService = userService;
+    this.auditLogService = auditLogService;
   }
 
   @GetMapping("/notices")
@@ -80,6 +85,7 @@ public class NoticeController {
     }
     UUID tenantId = tenantContext.currentTenantId();
     Notice notice = noticeService.create(tenantId, noticeForm, tenantContext.currentUserId(), currentName());
+    audit("NOTICE_CREATE", notice.getId(), AuditResult.SUCCESS, notice.getTitle());
     redirect.addFlashAttribute("message", "공지를 등록했습니다.");
     if (noticeForm.emailToUsers()) {
       emailNotice(tenantId, notice, redirect);
@@ -112,6 +118,7 @@ public class NoticeController {
       return "notices/form";
     }
     noticeService.update(tenantContext.currentTenantId(), id, noticeForm);
+    audit("NOTICE_UPDATE", id, AuditResult.SUCCESS, noticeForm.title());
     redirect.addFlashAttribute("message", "공지를 수정했습니다.");
     return "redirect:/notices";
   }
@@ -119,6 +126,7 @@ public class NoticeController {
   @PostMapping("/notices/{id}/delete")
   public String delete(@PathVariable UUID id, RedirectAttributes redirect) {
     noticeService.delete(tenantContext.currentTenantId(), id);
+    audit("NOTICE_DELETE", id, AuditResult.SUCCESS, null);
     redirect.addFlashAttribute("message", "공지를 삭제했습니다.");
     return "redirect:/notices";
   }
@@ -127,19 +135,25 @@ public class NoticeController {
   private void emailNotice(UUID tenantId, Notice notice, RedirectAttributes redirect) {
     MailSetting setting = mailSettingService.findForTenant(tenantId).orElse(null);
     if (setting == null || !setting.isSendable()) {
+      audit("NOTICE_BROADCAST_SEND", notice.getId(), AuditResult.FAILURE, "SMTP 미설정으로 발송 건너뜀");
       redirect.addFlashAttribute("error", "이메일 발송은 건너뜀 — 기관 SMTP가 설정/활성화되어 있지 않습니다.");
       return;
     }
     List<String> to = userService.activeUserEmails(tenantId);
     if (to.isEmpty()) {
+      audit("NOTICE_BROADCAST_SEND", notice.getId(), AuditResult.FAILURE, "발송 대상 없음");
       redirect.addFlashAttribute("error", "이메일 발송 대상(이메일 보유 사용자)이 없습니다.");
       return;
     }
     try {
       MailSendResult result = mailService.sendBulk(setting, to, "[공지] " + notice.getTitle(), notice.getBody());
+      audit("NOTICE_BROADCAST_SEND", notice.getId(), AuditResult.SUCCESS,
+          "공지 이메일 발송 대상 " + to.size() + "명(성공 " + result.sent() + ", 실패 " + result.failed() + ")");
       redirect.addFlashAttribute("mailMessage",
           "공지 이메일 발송 — 성공 " + result.sent() + "통, 실패 " + result.failed() + "통");
     } catch (RuntimeException exception) {
+      audit("NOTICE_BROADCAST_SEND", notice.getId(), AuditResult.FAILURE,
+          "공지 이메일 발송 실패 대상 " + to.size() + "명");
       redirect.addFlashAttribute("error", "공지 이메일 발송 실패했습니다.");
     }
   }
@@ -147,5 +161,13 @@ public class NoticeController {
   private String currentName() {
     MoaUserDetails user = tenantContext.currentUser();
     return user == null ? null : user.getUsername();
+  }
+
+  private void audit(String action, UUID targetId, AuditResult result, String message) {
+    UUID actorId = tenantContext.currentUserId();
+    if (actorId != null) {
+      auditLogService.recordTenantAction(
+          tenantContext.currentTenantId(), actorId, action, "Notice", targetId, result, message);
+    }
   }
 }
