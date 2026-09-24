@@ -3,8 +3,10 @@ package com.moara.moa.user;
 import com.moara.moa.tenant.Tenant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,6 +31,18 @@ public class ManagedUserService {
 
   public List<ManagedUser> findByTenant(UUID tenantId) {
     return userRepository.findAllByTenantIdOrderByNameAsc(tenantId);
+  }
+
+  /**
+   * 기관 구성원의 표시 이름을 ID로 찾을 수 있게 모아 준다. 목록 화면이 작성자·편집자 이름을 붙일 때
+   * 한 명씩 조회하면 N+1이 되므로, 한 번 읽어 맵으로 쓰라고 제공하는 조회다.
+   */
+  public Map<UUID, String> namesByTenant(UUID tenantId) {
+    Map<UUID, String> names = new HashMap<>();
+    for (ManagedUser user : findByTenant(tenantId)) {
+      names.put(user.getId(), user.getName());
+    }
+    return names;
   }
 
   public long countUsers() {
