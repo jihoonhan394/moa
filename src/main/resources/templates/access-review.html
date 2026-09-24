@@ -54,7 +54,7 @@
 
   <!-- 자산 인벤토리 -->
   <section class="panel">
-    <div class="panel-head"><div><p class="eyebrow">인벤토리</p><h2>자산</h2></div>
+    <div class="panel-head"><div><p class="eyebrow">자산</p><h2>자산</h2></div>
       <span class="pill" th:text="${#lists.size(assets)} + '개'">0개</span></div>
     <p th:if="${#lists.isEmpty(assets)}" class="subcopy">등록된 자산이 없습니다.</p>
     <div th:unless="${#lists.isEmpty(assets)}" class="data-table table-scroll">

@@ -43,7 +43,7 @@
 
     <div class="metric-grid">
       <article class="metric" th:if="${isAssetManager and tenantFeatures.contains('INVENTORY')}">
-        <span>인벤토리</span><strong th:text="${inventoryCount}">0</strong>
+        <span>자산</span><strong th:text="${inventoryCount}">0</strong>
         <small>실물·SW 자산</small>
       </article>
       <article class="metric" th:if="${isAssetManager and tenantFeatures.contains('RESERVATION')}">

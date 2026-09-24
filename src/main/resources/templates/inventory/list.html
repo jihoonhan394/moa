@@ -2,7 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MOA - 인벤토리</title>
+  <title>MOA - 자산</title>
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -10,7 +10,7 @@
   <header class="topbar">
     <div>
       <p class="eyebrow">자산 관리</p>
-      <h1>자산 (실물·SW·렌탈·보증)</h1>
+      <h1>자산</h1>
       <p class="subcopy">노트북·모니터 등 실물, SW 라이선스, 렌탈/리스 제품, 보증 제품을 등록하고 사용자에게 배정·회수하며
         만료(라이선스·보증·리스)를 추적합니다. (서버·웹 접속 자산은 '접속 자산' 메뉴)</p>
     </div>
@@ -21,7 +21,7 @@
   </header>
 
   <section class="panel">
-    <div class="panel-head"><div><p class="eyebrow">등록</p><h2>항목 등록</h2></div></div>
+    <div class="panel-head"><div><p class="eyebrow">등록</p><h2>자산 등록</h2></div></div>
     <form method="post" th:action="@{/inventory}" th:object="${inventoryForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:760px;">
       <p th:each="err : ${#fields.globalErrors()}" class="error-message" th:text="${err}">오류</p>
       <div class="asset-toolbar">
@@ -57,7 +57,7 @@
   </section>
 
   <section class="panel">
-    <div class="panel-head"><div><p class="eyebrow">등록된 항목</p><h2>인벤토리</h2></div>
+    <div class="panel-head"><div><p class="eyebrow">등록된 항목</p><h2>자산 목록</h2></div>
       <span class="pill" th:text="${#lists.size(items)} + '개'">0개</span></div>
     <p th:if="${#lists.isEmpty(items)}" class="subcopy">등록된 항목이 없습니다. 위에서 등록하세요.</p>
     <div th:unless="${#lists.isEmpty(items)}" class="data-table table-scroll">

@@ -121,17 +121,17 @@ class DashboardMenuBoundaryTest {
     // 기관 관리자: 사람 지표는 보이고 물건 지표는 안 보인다.
     assertDashboard(user(tid, Set.of(UserRole.TENANT_ADMIN)),
         new String[] {"<span>활성 사용자</span>", "<span>승인 대기</span>"},
-        new String[] {"<span>인벤토리</span>", "<span>기동 순서</span>"});
+        new String[] {"<span>자산</span>", "<span>기동 순서</span>"});
 
     // 자산 관리자: 물건 지표만.
     assertDashboard(user(tid, Set.of(UserRole.ASSET_MANAGER)),
-        new String[] {"<span>인벤토리</span>", "<span>만료</span>"},
+        new String[] {"<span>자산</span>", "<span>만료</span>"},
         new String[] {"<span>활성 사용자</span>", "<span>기동 순서</span>"});
 
     // 인프라 관리자: 운영 지표만.
     assertDashboard(user(tid, Set.of(UserRole.INFRA_MANAGER)),
         new String[] {"<span>기동 순서</span>", "<span>만료</span>"},
-        new String[] {"<span>활성 사용자</span>", "<span>인벤토리</span>"});
+        new String[] {"<span>활성 사용자</span>", "<span>자산</span>"});
   }
 
   private void assertDashboard(ManagedUser as, String[] shown, String[] hidden) throws Exception {

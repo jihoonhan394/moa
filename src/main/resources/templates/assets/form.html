@@ -11,7 +11,7 @@
     <div>
       <p class="eyebrow" th:text="${serverOnly ? '서버 관리' : '서버'}">서버</p>
       <h1 th:text="${assetId != null ? '자산 수정' : (serverOnly ? '서버 등록' : '서버 등록')}">등록</h1>
-      <p class="subcopy">서버(SSH·RDP) 또는 웹사이트 등 <b>접속 대상</b>을 등록합니다. 실물·SW·렌탈 자산은 '자산' 메뉴(인벤토리)에서 관리합니다.</p>
+      <p class="subcopy">서버(SSH·RDP) 또는 웹사이트 등 <b>접속 대상</b>을 등록합니다. 실물·SW·렌탈 자산은 '자산' 메뉴에서 관리합니다.</p>
     </div>
     <a class="button" th:href="${serverOnly} ? @{/servers} : @{/assets}">목록으로</a>
   </header>

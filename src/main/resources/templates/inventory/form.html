@@ -2,13 +2,13 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MOA - 인벤토리 수정</title>
+  <title>MOA - 자산 수정</title>
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 <div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar('inventory')}"></aside><main class="workspace">
   <header class="topbar">
-    <div><p class="eyebrow">자산 관리 / 인벤토리</p><h1>항목 수정</h1><p class="subcopy">메타 정보를 수정합니다(배정·상태는 목록에서 관리).</p></div>
+    <div><p class="eyebrow">자산 관리</p><h1>자산 수정</h1><p class="subcopy">메타 정보를 수정합니다(배정·상태는 목록에서 관리).</p></div>
   </header>
   <section class="panel">
     <form method="post" th:action="@{'/inventory/' + ${itemId}}" th:object="${inventoryForm}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:560px;">

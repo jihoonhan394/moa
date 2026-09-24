@@ -43,6 +43,18 @@ public class InventoryCustodyService {
     return repository.findByTenantIdAndEndedOnIsNull(tenantId);
   }
 
+  /**
+   * 지금까지 쓴 외부 보관처(고객처·업체) 이름. 자동완성에 쓴다 — 매번 손으로 치면
+   * "모아라 본사"와 "모아라본사"가 다른 거래처로 갈려 장부가 흐려진다. 거래처 마스터를
+   * 만들기 전까지의 최소 방어다.
+   */
+  public List<String> knownExternalHolders(UUID tenantId) {
+    return repository.findDistinctHolderNames(tenantId).stream()
+        .filter(name -> name != null && !name.isBlank())
+        .sorted()
+        .toList();
+  }
+
   /** 반납 예정일이 지났는데 아직 안 돌아온 것. 납품 나간 장비를 잃어버리지 않기 위한 조회다. */
   public List<InventoryCustody> returnOverdue(UUID tenantId, LocalDate today) {
     return open(tenantId).stream().filter(c -> c.isReturnOverdue(today)).toList();

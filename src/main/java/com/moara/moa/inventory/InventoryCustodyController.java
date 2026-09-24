@@ -62,6 +62,7 @@ public class InventoryCustodyController {
     model.addAttribute("tenantUsers", userService.findByTenant(tenantId));
     model.addAttribute("groups", groupService.findAll(tenantId));
     model.addAttribute("today", LocalDate.now());
+    model.addAttribute("knownHolders", custodyService.knownExternalHolders(tenantId));
     model.addAttribute("parts", partService.partsOf(tenantId, id));
     model.addAttribute("attachable", partService.attachableTo(tenantId, id));
     model.addAttribute("parent", item.getParentItemId() == null

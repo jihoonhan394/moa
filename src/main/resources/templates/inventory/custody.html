@@ -9,7 +9,7 @@
 <div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
   <header class="topbar">
     <div>
-      <p class="eyebrow">인벤토리 / 보관·구성품</p>
+      <p class="eyebrow">자산 / 보관·구성품</p>
       <h1 th:text="${item.name}">자산</h1>
       <p class="subcopy">이 자산이 <b>언제부터 누구에게 있었는지</b>와 <b>안에 무엇이 들어 있는지</b>를 봅니다.
         배정·회수·폐기는 자동으로 기록되고, 납품·수리·부품 장착은 아래에서 직접 기록합니다.</p>
@@ -63,7 +63,12 @@
         </select>
       </label>
       <label>받는 곳 <small>(고객처·업체일 때)</small>
-        <input type="text" name="holderName" maxlength="200" placeholder="예: 모아라 본사 / 캐논 서비스센터">
+        <input type="text" name="holderName" maxlength="200" list="known-holders"
+               placeholder="예: 모아라 본사 / 캐논 서비스센터">
+        <!-- 이미 쓴 이름을 고를 수 있게. 손으로 다시 치면 같은 거래처가 둘로 갈린다. -->
+        <datalist id="known-holders">
+          <option th:each="h : ${knownHolders}" th:value="${h}"></option>
+        </datalist>
       </label>
       <label>반납 예정일 <small>(사외 반출일 때)</small>
         <input type="date" name="expectedReturnOn">

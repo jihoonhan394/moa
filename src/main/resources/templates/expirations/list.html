@@ -29,7 +29,7 @@
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">임박순</p><h2>만료 항목</h2></div></div>
-    <p th:if="${#lists.isEmpty(rows)}" class="subcopy">추적 중인 만료 항목이 없습니다. 인벤토리 만료일·기간제 접근·구독 만기가 있으면 여기에 모입니다.</p>
+    <p th:if="${#lists.isEmpty(rows)}" class="subcopy">추적 중인 만료 항목이 없습니다. 자산 만료일·기간제 접근·구독 만기가 있으면 여기에 모입니다.</p>
     <div th:unless="${#lists.isEmpty(rows)}" class="data-table table-scroll">
       <div class="table-row table-head"><span>종류</span><span>대상</span><span>상세</span><span>만료일</span><span>남은 기간</span><span>조치</span></div>
       <div class="table-row" th:each="r : ${rows}">

@@ -9,7 +9,7 @@
 <div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
   <header class="topbar">
     <div>
-      <p class="eyebrow" th:text="${isAsset} ? '서버·접속 자산 / 만기·점검' : '인벤토리 / 만기·점검'">만기·점검</p>
+      <p class="eyebrow" th:text="${isAsset} ? '서버·접속 자산 / 만기·점검' : '자산 / 만기·점검'">만기·점검</p>
       <h1 th:text="${targetName}">대상</h1>
       <p class="subcopy">인증서·보험·검사 같은 <b>1회성 만기</b>와 필터 교체·정기점검 같은 <b>반복 점검</b>을 기록합니다.
         모두 <b>만료 관리 대시보드</b>에 자동 표시되고 임박 시 알림이 갑니다.</p>

@@ -31,7 +31,7 @@
               <span th:switch="${r.name()}">
                 <span th:case="'TENANT_ADMIN'">기관 관리자 (사용자·조직·권한 부여)</span>
                 <span th:case="'INFRA_MANAGER'">인프라 관리자 (서버·솔루션·접속·자격증명)</span>
-                <span th:case="'ASSET_MANAGER'">자산 관리자 (실물·SW 인벤토리)</span>
+                <span th:case="'ASSET_MANAGER'">자산 관리자 (실물·SW 자산)</span>
                 <span th:case="*" th:text="${r.label}">역할</span>
               </span>
             </label>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 내 자산</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">개인 / 내 자산</p>
+      <h1 th:text="${item.name}">자산</h1>
+      <p class="subcopy" th:if="${mine}">현재 <b>내게 배정된</b> 자산입니다.</p>
+      <p class="subcopy" th:unless="${mine}">내가 속한 <b>팀이 보유한</b> 자산입니다.</p>
+    </div>
+    <a class="button" th:href="@{/my/workspace}">← 내 워크스페이스</a>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">기본</p><h2>정보</h2></div></div>
+    <div class="data-table">
+      <div class="table-row"><span>분류</span><strong th:text="${item.category} ?: '-'">분류</strong></div>
+      <div class="table-row"><span>시리얼·자산번호</span><strong th:text="${item.serialNo} ?: '-'">-</strong></div>
+      <div class="table-row" th:if="${item.quantity > 1}">
+        <span>수량</span><strong th:text="${item.quantity} + '개'">1개</strong></div>
+      <div class="table-row" th:if="${item.warrantyEnds != null}">
+        <span>보증 만료</span><strong th:text="${item.warrantyEnds}">-</strong></div>
+      <div class="table-row" th:if="${item.expiresAt != null}">
+        <span>만료일</span><strong th:text="${item.expiresAt}">-</strong></div>
+    </div>
+  </section>
+
+  <!-- 안에 든 부품. 읽기 전용이지만, 받은 장비에 무엇이 들어 있는지는 본인이 알아야 한다. -->
+  <section class="panel" th:if="${!#lists.isEmpty(parts)}">
+    <div class="panel-head"><div><p class="eyebrow">안에 든 것</p><h2>구성품</h2></div></div>
+    <div class="data-table">
+      <div class="table-row table-head"><span>부품</span><span>수량</span><span>시리얼</span></div>
+      <div class="table-row" th:each="p : ${parts}">
+        <strong th:text="${p.name}">부품</strong>
+        <span th:text="${p.quantity}">1</span>
+        <span th:text="${p.serialNo} ?: '-'" style="color:#7a869a">-</span>
+      </div>
+    </div>
+  </section>
+
+  <!--
+    보관 이력. 퇴사·인수인계 때 "이거 제가 언제 받은 게 맞나요?"에 본인이 답할 수 있어야 한다.
+    기록자(누가 입력했나)는 보여 주지 않는다 — 그건 관리·감사의 몫이다.
+  -->
+  <section class="panel">
+    <div class="panel-head">
+      <div><p class="eyebrow">시간순</p><h2>보관 이력</h2></div>
+      <span class="pill" th:text="${#lists.size(rows)} + '구간'">0구간</span>
+    </div>
+    <p th:if="${#lists.isEmpty(rows)}" class="subcopy">
+      기록된 이력이 없습니다. 이 기능이 생기기 전에 배정된 자산일 수 있습니다.</p>
+    <div th:unless="${#lists.isEmpty(rows)}" class="data-table table-scroll">
+      <div class="table-row table-head">
+        <span>보관자</span><span>시작</span><span>종료</span><span>사유</span>
+      </div>
+      <div class="table-row" th:each="r : ${rows}">
+        <strong th:text="${r.holderLabel}">보관자</strong>
+        <span th:text="${r.startedOn}">시작</span>
+        <span th:if="${r.endedOn != null}" th:text="${r.endedOn}">종료</span>
+        <b th:if="${r.endedOn == null}" class="good">보관 중</b>
+        <span th:text="${r.reason} ?: '-'" style="color:#7a869a">사유</span>
+      </div>
+    </div>
+    <p class="subcopy" style="margin-top:.5rem">
+      내용이 사실과 다르면 자산 담당자에게 알려 주세요. 이 화면에서는 고칠 수 없습니다.</p>
+  </section>
+</main></div>
+</body>
+</html>

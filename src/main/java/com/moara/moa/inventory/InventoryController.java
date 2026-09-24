@@ -91,6 +91,16 @@ public class InventoryController {
     }
   }
 
+  /**
+   * 등록 폼은 목록 화면 안에 있다. 다른 도메인(사용자·서버)이 {@code /new}를 쓰다 보니 주소를
+   * 유추해 들어오는 경우가 있는데, 그러면 {@code {id}} 매핑과 엇갈려 <b>405가 떴다</b>.
+   * 목록으로 보낸다 — 거기에 등록 폼이 있다.
+   */
+  @GetMapping("/inventory/new")
+  public String newRedirect() {
+    return "redirect:/inventory#new";
+  }
+
   @GetMapping("/inventory/{id}/edit")
   public String editForm(@PathVariable UUID id, Model model) {
     InventoryItem item = inventoryService.findById(tenantContext.currentTenantId(), id);
