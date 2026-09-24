@@ -6,6 +6,7 @@ import com.moara.moa.security.TenantContext;
 import com.moara.moa.user.DuplicateManagedUserException;
 import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
+import com.moara.moa.user.OffboardFailedException;
 import com.moara.moa.user.OffboardResult;
 import com.moara.moa.user.UserForm;
 import com.moara.moa.user.UserLifecycleService;
@@ -201,7 +202,17 @@ public class ManagedUserController {
       redirect.addFlashAttribute("userError", "본인 계정은 퇴사 처리할 수 없습니다.");
       return "redirect:/users";
     }
-    OffboardResult result = lifecycleService.offboard(tenantContext.currentTenantId(), id);
+    OffboardResult result;
+    try {
+      result = lifecycleService.offboard(tenantContext.currentTenantId(), id);
+    } catch (OffboardFailedException failure) {
+      // 부분 회수를 막기 위해 전체가 롤백됐다. 어느 모듈에서 막혔는지 알려야 복구를 시작할 수 있다.
+      auditFailure("USER_OFFBOARD", id, "회수 실패: " + failure.getHandlerName());
+      redirect.addFlashAttribute("userError",
+          "퇴사 처리에 실패해 아무것도 변경되지 않았습니다(" + failure.getHandlerName()
+              + " 단계에서 오류). 관리자에게 문의하세요.");
+      return "redirect:/users";
+    }
     String detail = result.outcomes().stream()
         .map(outcome -> outcome.label() + " " + outcome.count())
         .collect(java.util.stream.Collectors.joining(", "));
@@ -217,6 +228,16 @@ public class ManagedUserController {
       return true;
     }
     return password.equals(confirm);
+  }
+
+  /** 실패한 특권 행위도 기록한다(성공만 남기면 사고 분석이 불가능하다). */
+  private void auditFailure(String action, UUID targetId, String message) {
+    UUID actorId = tenantContext.currentUserId();
+    if (actorId != null) {
+      auditLogService.recordTenantAction(
+          tenantContext.currentTenantId(), actorId, action, "ManagedUser", targetId,
+          AuditResult.FAILURE, message);
+    }
   }
 
   private void audit(String action, UUID targetId, String message) {

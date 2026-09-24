@@ -24,6 +24,17 @@ public class TenantContext {
     return null;
   }
 
+  /**
+   * 현재 요청의 기관 식별자. 인증 컨텍스트가 없으면 기본 기관을 돌려준다.
+   *
+   * <p>⚠️ <b>이 폴백은 의도적으로 유지한다.</b> {@code GlobalViewAdvice}가 {@code @ControllerAdvice}로
+   * 로그인·기관선택 화면을 포함한 모든 뷰에서 실행되며 여기를 호출한다. fail-closed(예외)로 바꾸면
+   * 인증 전 화면이 전부 깨진다(실제로 시도했다가 11개 테스트가 실패했다).
+   *
+   * <p>따라서 <b>기관 스코프를 실제로 강제하는 책임은 서비스 계층에 있다</b> — 리포지토리 쿼리에
+   * tenant 조건을 넣고, 단건 접근은 소속을 재검증한다(예: {@code ManagedUserService.findById(tenantId, id)},
+   * {@code UserLifecycleService.offboard}). 이 메서드의 반환값만 믿고 권한을 판단해서는 안 된다.
+   */
   public UUID currentTenantId() {
     MoaUserDetails user = currentUser();
     if (user != null && user.getTenantId() != null) {

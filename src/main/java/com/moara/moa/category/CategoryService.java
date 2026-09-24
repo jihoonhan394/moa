@@ -131,7 +131,7 @@ public class CategoryService {
   public void delete(UUID tenantId, UUID id) {
     Category category = repository.findByIdAndTenantId(id, tenantId)
         .orElseThrow(() -> new CategoryNotFoundException(id));
-    if (repository.existsByParentId(id)) {
+    if (repository.existsByTenantIdAndParentId(tenantId, id)) {
       throw new CategoryInUseException("하위 카테고리가 있어 삭제할 수 없습니다. 먼저 하위를 삭제하세요.");
     }
     repository.delete(category);

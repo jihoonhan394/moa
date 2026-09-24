@@ -24,5 +24,6 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
   boolean existsByTenantIdAndDomainAndParentIdAndNameIgnoreCaseAndIdNot(
       UUID tenantId, CategoryDomain domain, UUID parentId, String name, UUID id);
 
-  boolean existsByParentId(UUID parentId);
+  /** 자식 존재 확인은 기관 스코프로 한다(부모 id가 검증된 값이어도 조회를 전역으로 열지 않는다). */
+  boolean existsByTenantIdAndParentId(UUID tenantId, UUID parentId);
 }

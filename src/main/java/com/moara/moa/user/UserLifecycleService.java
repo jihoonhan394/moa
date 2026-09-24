@@ -4,6 +4,8 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class UserLifecycleService {
+  private static final Logger log = LoggerFactory.getLogger(UserLifecycleService.class);
+
   private final ManagedUserRepository userRepository;
   private final List<OffboardHandler> offboardHandlers;
 
@@ -35,7 +39,17 @@ public class UserLifecycleService {
     }
     List<OffboardOutcome> outcomes = new ArrayList<>();
     for (OffboardHandler handler : offboardHandlers) {
-      outcomes.add(handler.offboard(tenantId, userId));
+      try {
+        outcomes.add(handler.offboard(tenantId, userId));
+      } catch (RuntimeException failure) {
+        // 퇴사는 보안 행위라 부분 회수(권한은 지웠는데 자산은 남는 등)를 허용하지 않는다.
+        // 예외를 그대로 올려 전체를 롤백하되, 어느 핸들러가 왜 실패했는지 남긴다 —
+        // 감싸지 않으면 호출부가 원인을 알 수 없어 복구를 시작할 수조차 없다.
+        String handlerName = handler.getClass().getSimpleName();
+        log.error("[OFFBOARD] handler {} failed for user {} (tenant {}) — 전체 롤백",
+            handlerName, userId, tenantId, failure);
+        throw new OffboardFailedException(handlerName, failure);
+      }
     }
     user.changeStatus(UserStatus.OFFBOARDED, OffsetDateTime.now());
     userRepository.save(user);
