@@ -85,6 +85,25 @@ public class AssetController {
   }
 
   /** 서버 상세(인프라 관리자): 하드웨어 사양·OS·카테고리·소유팀 등 등록 정보를 보여준다. */
+  /**
+   * 서버 현황(읽기 전용 집계). {@code /servers}와 한 화면의 탭 둘이라 같은 컨트롤러에 둔다 —
+   * 0.7.13 패키지 정리 때 {@code HomeController}에 남아 있었으나 서버 도메인 화면이다.
+   */
+  @GetMapping("/server-status")
+  public String serverStatus(Model model) {
+    UUID tenantId = tenantContext.currentTenantId();
+    List<Asset> servers = assetService.findAllByType(tenantId, AssetType.SERVER);
+    long active = servers.stream().filter(s -> s.getStatus() == AssetStatus.ACTIVE).count();
+    model.addAttribute("servers", servers);
+    model.addAttribute("serverTotal", servers.size());
+    model.addAttribute("serverActive", active);
+    model.addAttribute("serverInactive", servers.size() - active);
+    model.addAttribute("page", "server-status");
+    model.addAttribute("pageTitle", "서버 현황");
+    model.addAttribute("projectName", "MOA");
+    return "server-status";
+  }
+
   @GetMapping("/servers/{id}")
   public String serverDetail(@PathVariable UUID id, Model model) {
     Asset asset = assetService.findById(tenantContext.currentTenantId(), id);

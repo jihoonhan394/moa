@@ -13,5 +13,11 @@
   <a th:href="@{/access-history}" th:classappend="${current == 'access-history'} ? 'active'">접속 이력</a>
 </nav>
 
+<!-- 서버: 목록·관리(/servers) ↔ 상태 집계(/server-status) -->
+<nav class="subnav" th:fragment="servers(current)" aria-label="서버 화면">
+  <a th:href="@{/servers}" th:classappend="${current == 'servers'} ? 'active'">서버 목록</a>
+  <a th:href="@{/server-status}" th:classappend="${current == 'server-status'} ? 'active'">서버 현황</a>
+</nav>
+
 </body>
 </html>

@@ -31,7 +31,7 @@
     <div class="panel-head"><div><p class="eyebrow">임박순</p><h2>만료 항목</h2></div></div>
     <p th:if="${#lists.isEmpty(rows)}" class="subcopy">추적 중인 만료 항목이 없습니다. 인벤토리 만료일·기간제 접근·구독 만기가 있으면 여기에 모입니다.</p>
     <div th:unless="${#lists.isEmpty(rows)}" class="data-table table-scroll">
-      <div class="table-row table-head"><span>종류</span><span>대상</span><span>상세</span><span>만료일</span><span>남은 기간</span><span>AI</span></div>
+      <div class="table-row table-head"><span>종류</span><span>대상</span><span>상세</span><span>만료일</span><span>남은 기간</span><span>조치</span></div>
       <div class="table-row" th:each="r : ${rows}">
         <span th:text="${r.category}">종류</span>
         <strong th:text="${r.label}">대상</strong>
@@ -39,6 +39,14 @@
         <span th:text="${r.expiresOn}">만료일</span>
         <b th:classappend="${r.daysLeft < 0} ? 'bad' : (${r.daysLeft <= 14} ? 'warn' : 'good')"
            th:text="${r.daysLeft < 0} ? ('만료 ' + (${r.daysLeft} * -1) + '일 지남') : (${r.daysLeft == 0} ? '오늘' : ('D-' + ${r.daysLeft}))">D-3</b>
+        <span class="table-actions">
+          <!-- 대상으로 바로 가기. 링크가 있어도 열 수 있는 역할에게만 보여 준다 —
+               메뉴 노출 = 인가 정책(DashboardMenuBoundaryTest가 지키는 규칙). -->
+          <a th:if="${r.link != null and (
+                 (r.sourceType?.name() == 'INVENTORY' and isAssetManager)
+                 or ((r.sourceType?.name() == 'ASSET' or r.sourceType?.name() == 'ACCESS_GRANT')
+                     and isInfraManager))}"
+             class="button" th:href="@{${r.link}}" title="이 항목을 처리하러 가기">열기</a>
         <form method="post" th:action="@{/expirations/ai-draft}" style="display:inline">
           <input type="hidden" name="sourceType" th:value="${r.sourceType}">
           <input type="hidden" name="sourceId" th:value="${r.sourceId}">
@@ -48,6 +56,7 @@
           <input type="hidden" name="daysLeft" th:value="${r.daysLeft}">
           <button class="button" type="submit" title="AI 영향분석·후속조치 초안">AI 초안</button>
         </form>
+        </span>
       </div>
     </div>
   </section>

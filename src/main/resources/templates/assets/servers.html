@@ -18,6 +18,8 @@
       <div class="top-actions"><a class="button" th:href="@{/servers/categories}">카테고리 관리</a></div>
     </header>
 
+  <nav th:replace="~{fragments/subnav :: servers('servers')}"></nav>
+
     <!-- 등록(인라인) -->
     <section class="panel">
       <div class="panel-head"><div><p class="eyebrow">등록</p><h2>서버 등록</h2></div></div>

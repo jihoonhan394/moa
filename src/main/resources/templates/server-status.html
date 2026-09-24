@@ -18,6 +18,8 @@
       <a class="button" th:href="@{/servers}">서버 관리</a>
     </header>
 
+  <nav th:replace="~{fragments/subnav :: servers('server-status')}"></nav>
+
     <section class="stat-strip" style="display:flex;gap:1rem;margin-bottom:1rem">
       <div class="panel" style="flex:1;text-align:center"><p class="eyebrow">전체 서버</p>
         <strong style="font-size:1.6rem" th:text="${serverTotal}">0</strong></div>

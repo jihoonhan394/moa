@@ -137,21 +137,6 @@ public class HomeController {
     return "index";
   }
 
-  @GetMapping("/server-status")
-  public String serverStatus(Model model) {
-    UUID tenantId = tenantContext.currentTenantId();
-    List<Asset> servers = assetService.findAllByType(tenantId, com.moara.moa.asset.AssetType.SERVER);
-    long active = servers.stream().filter(s -> s.getStatus() == com.moara.moa.asset.AssetStatus.ACTIVE).count();
-    model.addAttribute("servers", servers);
-    model.addAttribute("serverTotal", servers.size());
-    model.addAttribute("serverActive", active);
-    model.addAttribute("serverInactive", servers.size() - active);
-    model.addAttribute("page", "server-status");
-    model.addAttribute("pageTitle", "서버 현황");
-    model.addAttribute("projectName", "MOA");
-    return "server-status";
-  }
-
   public record SessionRow(
       OffsetDateTime at, String user, String asset, String protocol, String status) {}
 }

@@ -118,7 +118,9 @@ public class ExpirationService {
           + (tracker.isRecurring() ? " · " + tracker.getRecurEveryDays() + "일 주기" : "")
           + (ResourceTrackerService.SOURCE_SSL.equals(tracker.getSource()) ? " · SSL 자동감지" : "");
       rows.add(row(category, targetName, detail, tracker.getDueOn(), today,
-          asset ? ExpirationSourceType.ASSET : ExpirationSourceType.INVENTORY, tracker.getTargetId()));
+          asset ? ExpirationSourceType.ASSET : ExpirationSourceType.INVENTORY, tracker.getTargetId(),
+          // 트래커는 편집 폼이 아니라 만기·점검 패널로 — 완료 처리·SSL 재탐지가 거기 있다.
+          (asset ? "/assets/" : "/inventory/") + tracker.getTargetId() + "/trackers"));
     }
 
     rows.sort(Comparator.comparing(ExpirationRow::expiresOn));
@@ -144,8 +146,33 @@ public class ExpirationService {
   private ExpirationRow row(
       String category, String label, String detail, LocalDate expiresOn, LocalDate today,
       ExpirationSourceType sourceType, UUID sourceId) {
+    return row(category, label, detail, expiresOn, today, sourceType, sourceId,
+        defaultLink(sourceType, sourceId));
+  }
+
+  private ExpirationRow row(
+      String category, String label, String detail, LocalDate expiresOn, LocalDate today,
+      ExpirationSourceType sourceType, UUID sourceId, String link) {
     long daysLeft = ChronoUnit.DAYS.between(today, expiresOn);
-    return new ExpirationRow(category, label, detail, expiresOn, daysLeft, sourceType, sourceId);
+    return new ExpirationRow(
+        category, label, detail, expiresOn, daysLeft, sourceType, sourceId, link);
+  }
+
+  /**
+   * 항목을 손볼 수 있는 기본 화면. 인벤토리·자산은 편집 폼으로 보낸다 — 만료일·보증·리스 날짜를
+   * 고치는 곳이 거기이고, 만기·점검 패널로 가는 링크도 그 화면에 있다. 구독 만기는 기관 설정
+   * 소관(플랫폼 콘솔)이라 여기서 열지 않는다.
+   */
+  private String defaultLink(ExpirationSourceType sourceType, UUID sourceId) {
+    if (sourceType == null || sourceId == null) {
+      return null;
+    }
+    return switch (sourceType) {
+      case INVENTORY -> "/inventory/" + sourceId + "/edit";
+      case ASSET -> "/assets/" + sourceId + "/edit";
+      case ACCESS_GRANT -> "/permissions";
+      case SUBSCRIPTION -> null;
+    };
   }
 
   private Map<UUID, String> userNames(UUID tenantId) {

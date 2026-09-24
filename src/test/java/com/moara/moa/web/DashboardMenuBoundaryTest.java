@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.moara.moa.security.MoaUserDetails;
 import com.moara.moa.tenant.CreateTenantCommand;
+import com.moara.moa.tenant.FeatureModule;
 import com.moara.moa.tenant.Tenant;
 import com.moara.moa.tenant.TenantService;
 import com.moara.moa.user.ManagedUser;
@@ -16,6 +17,8 @@ import com.moara.moa.user.ManagedUserService;
 import com.moara.moa.user.UserForm;
 import com.moara.moa.user.UserRole;
 import com.moara.moa.user.UserStatus;
+import java.time.LocalDate;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -99,6 +102,46 @@ class DashboardMenuBoundaryTest {
           .andExpect(content().string(containsString("class=\"subnav\"")))
           .andExpect(content().string(containsString("href=\"/audit\"")))
           .andExpect(content().string(containsString("href=\"/access-history\"")));
+    }
+  }
+
+  /**
+   * 대시보드 지표는 역할을 따라간다. 전에는 아홉 장이 전원에게 똑같이 떠서, 자산 관리자가
+   * 자기가 손댈 수 없는 "승인 대기 사용자" 숫자를 먼저 보고 정작 자기 일인 인벤토리·만료는
+   * 아래로 밀려 있었다. 지표 노출도 메뉴와 같은 규칙(볼 수 있는 사람에게만)을 따른다.
+   */
+  @Test
+  void dashboardMetricsFollowRole() throws Exception {
+    Tenant tenant = tenantService.createTenant(
+        new CreateTenantCommand("지표사", "MET" + System.nanoTime()));
+    tenantService.updateDetail(tenant.getId(), LocalDate.now(), LocalDate.now().plusYears(1),
+        EnumSet.allOf(FeatureModule.class));
+    UUID tid = tenant.getId();
+
+    // 기관 관리자: 사람 지표는 보이고 물건 지표는 안 보인다.
+    assertDashboard(user(tid, Set.of(UserRole.TENANT_ADMIN)),
+        new String[] {"<span>활성 사용자</span>", "<span>승인 대기</span>"},
+        new String[] {"<span>인벤토리</span>", "<span>기동 순서</span>"});
+
+    // 자산 관리자: 물건 지표만.
+    assertDashboard(user(tid, Set.of(UserRole.ASSET_MANAGER)),
+        new String[] {"<span>인벤토리</span>", "<span>만료</span>"},
+        new String[] {"<span>활성 사용자</span>", "<span>기동 순서</span>"});
+
+    // 인프라 관리자: 운영 지표만.
+    assertDashboard(user(tid, Set.of(UserRole.INFRA_MANAGER)),
+        new String[] {"<span>기동 순서</span>", "<span>만료</span>"},
+        new String[] {"<span>활성 사용자</span>", "<span>인벤토리</span>"});
+  }
+
+  private void assertDashboard(ManagedUser as, String[] shown, String[] hidden) throws Exception {
+    var result = mockMvc.perform(get("/dashboard").with(authentication(auth(as))))
+        .andExpect(status().isOk());
+    for (String fragment : shown) {
+      result.andExpect(content().string(containsString(fragment)));
+    }
+    for (String fragment : hidden) {
+      result.andExpect(content().string(not(containsString(fragment))));
     }
   }
 
