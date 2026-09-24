@@ -154,7 +154,7 @@ public class TeamInventoryController {
       redirect.addFlashAttribute("teamError", "본인 팀원에게만 배정할 수 있습니다.");
       return "redirect:/team/inventory";
     }
-    inventoryService.assign(tenantId, id, userId);
+    inventoryService.assign(tenantId, id, userId, tenantContext.currentUserId());
     audit("TEAM_INVENTORY_ASSIGN", id, "user=" + userId);
     redirect.addFlashAttribute("teamOk", "배정했습니다.");
     return "redirect:/team/inventory";
@@ -167,7 +167,7 @@ public class TeamInventoryController {
       redirect.addFlashAttribute("teamError", "본인 부서가 소유한 자산만 회수할 수 있습니다.");
       return "redirect:/team/inventory";
     }
-    inventoryService.reclaim(tenantId, id);
+    inventoryService.reclaim(tenantId, id, tenantContext.currentUserId(), "부서장 회수");
     audit("TEAM_INVENTORY_RECLAIM", id, null);
     redirect.addFlashAttribute("teamOk", "회수했습니다.");
     return "redirect:/team/inventory";

@@ -137,21 +137,21 @@ public class InventoryController {
 
   @PostMapping("/inventory/{id}/assign")
   public String assign(@PathVariable UUID id, @RequestParam UUID userId) {
-    inventoryService.assign(tenantContext.currentTenantId(), id, userId);
+    inventoryService.assign(tenantContext.currentTenantId(), id, userId, tenantContext.currentUserId());
     audit("INVENTORY_ASSIGN", id, "user=" + userId);
     return "redirect:/inventory";
   }
 
   @PostMapping("/inventory/{id}/reclaim")
   public String reclaim(@PathVariable UUID id) {
-    inventoryService.reclaim(tenantContext.currentTenantId(), id);
+    inventoryService.reclaim(tenantContext.currentTenantId(), id, tenantContext.currentUserId(), "회수");
     audit("INVENTORY_RECLAIM", id, null);
     return "redirect:/inventory";
   }
 
   @PostMapping("/inventory/{id}/retire")
   public String retire(@PathVariable UUID id) {
-    inventoryService.retire(tenantContext.currentTenantId(), id);
+    inventoryService.retire(tenantContext.currentTenantId(), id, tenantContext.currentUserId());
     audit("INVENTORY_RETIRE", id, null);
     return "redirect:/inventory";
   }

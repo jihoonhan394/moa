@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 보관 이력</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">인벤토리 / 보관 이력</p>
+      <h1 th:text="${item.name}">자산</h1>
+      <p class="subcopy">이 자산이 <b>언제부터 누구에게 있었는지</b>를 구간으로 기록합니다.
+        배정·회수·폐기는 자동으로 남고, 부서 보관처럼 그 외 이동은 아래에서 직접 기록합니다.</p>
+    </div>
+    <a class="button" th:href="@{/inventory}">← 목록</a>
+  </header>
+
+  <p th:if="${custodyError}" class="subcopy bad" th:text="${custodyError}"></p>
+  <p th:if="${custodyMessage}" class="subcopy good" th:text="${custodyMessage}"></p>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><p class="eyebrow">현재</p><h2>지금 보관자</h2></div>
+    </div>
+    <p th:if="${current == null}" class="subcopy">
+      아직 이동 기록이 없습니다. 배정·회수를 하거나 아래에서 직접 기록하면 여기에 쌓입니다.</p>
+    <p th:unless="${current == null}" class="subcopy">
+      <b th:text="${current.holderType.label}">보관자</b>
+      · <span th:text="${current.startedOn}">시작일</span>부터
+      <span th:if="${current.expectedReturnOn != null}">
+        · 반납 예정 <b th:text="${current.expectedReturnOn}">예정일</b>
+        <b th:if="${current.isReturnOverdue(today)}" class="bad">(반납 초과)</b>
+      </span>
+    </p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">기록</p><h2>보관 이동</h2></div></div>
+    <form method="post" th:action="@{'/inventory/' + ${item.id} + '/custody'}" class="inline-form">
+      <label>보관자
+        <select name="holderType" required>
+          <option value="WAREHOUSE">창고</option>
+          <option value="USER">사용자</option>
+          <option value="GROUP">부서</option>
+        </select>
+      </label>
+      <label>대상 (사용자·부서일 때)
+        <select name="holderId">
+          <option value="">— 선택 —</option>
+          <optgroup label="사용자">
+            <option th:each="u : ${tenantUsers}" th:value="${u.id}" th:text="${u.name}">사용자</option>
+          </optgroup>
+          <optgroup label="부서">
+            <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}">부서</option>
+          </optgroup>
+        </select>
+      </label>
+      <label>사유 <input type="text" name="reason" maxlength="100" placeholder="예: 창고 입고"></label>
+      <label>메모 <input type="text" name="note" maxlength="500"></label>
+      <button class="button primary" type="submit">기록</button>
+    </form>
+    <p class="subcopy" style="margin-top:.4rem">고객처 납품·업체 수리 같은 <b>사외 반출</b>과 부품 장착은 다음 단계에서 열립니다.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><p class="eyebrow">시간순</p><h2>보관 이력</h2></div>
+      <span class="pill" th:text="${#lists.size(rows)} + '구간'">0구간</span>
+    </div>
+    <p th:if="${#lists.isEmpty(rows)}" class="subcopy">기록된 구간이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(rows)}" class="data-table table-scroll">
+      <div class="table-row table-head">
+        <span>보관자</span><span>종류</span><span>시작</span><span>종료</span><span>사유</span><span>기록자</span>
+      </div>
+      <div class="table-row" th:each="r : ${rows}">
+        <strong th:text="${r.holderLabel}">보관자</strong>
+        <span th:text="${r.holderType}">종류</span>
+        <span th:text="${r.startedOn}">시작</span>
+        <span th:if="${r.endedOn != null}" th:text="${r.endedOn}">종료</span>
+        <b th:if="${r.endedOn == null}" class="good">보관 중</b>
+        <span th:text="${r.reason} ?: '-'" style="color:#7a869a">사유</span>
+        <span th:text="${r.actor}" style="color:#7a869a">기록자</span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

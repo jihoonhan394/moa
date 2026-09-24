@@ -15,8 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class InventoryItemService {
   private final InventoryItemRepository repository;
 
-  public InventoryItemService(InventoryItemRepository repository) {
+  private final InventoryCustodyService custodyService;
+
+  public InventoryItemService(
+      InventoryItemRepository repository, InventoryCustodyService custodyService) {
     this.repository = repository;
+    this.custodyService = custodyService;
   }
 
   public List<InventoryItem> findAll(UUID tenantId) {
@@ -49,23 +53,48 @@ public class InventoryItemService {
 
   @Transactional
   public InventoryItem assign(UUID tenantId, UUID id, UUID userId) {
+    return assign(tenantId, id, userId, null);
+  }
+
+  /**
+   * 사용자에게 배정. 상태 변경과 함께 <b>보관 장부에 구간을 남긴다</b> — 그래야 "이 장비가
+   * 지금까지 누구 손을 거쳤나"에 답할 수 있다. {@code assignedUserId}는 활성 구간의 캐시다.
+   */
+  @Transactional
+  public InventoryItem assign(UUID tenantId, UUID id, UUID userId, UUID actorId) {
     InventoryItem item = findById(tenantId, id);
     item.assignTo(userId, OffsetDateTime.now());
-    return repository.save(item);
+    InventoryItem saved = repository.save(item);
+    custodyService.toUser(tenantId, id, userId, "배정", actorId);
+    return saved;
   }
 
   @Transactional
   public InventoryItem reclaim(UUID tenantId, UUID id) {
+    return reclaim(tenantId, id, null, "회수");
+  }
+
+  @Transactional
+  public InventoryItem reclaim(UUID tenantId, UUID id, UUID actorId, String reason) {
     InventoryItem item = findById(tenantId, id);
     item.reclaim(OffsetDateTime.now());
-    return repository.save(item);
+    InventoryItem saved = repository.save(item);
+    custodyService.toWarehouse(tenantId, id, reason, actorId);
+    return saved;
   }
 
   @Transactional
   public InventoryItem retire(UUID tenantId, UUID id) {
+    return retire(tenantId, id, null);
+  }
+
+  @Transactional
+  public InventoryItem retire(UUID tenantId, UUID id, UUID actorId) {
     InventoryItem item = findById(tenantId, id);
     item.retire(OffsetDateTime.now());
-    return repository.save(item);
+    InventoryItem saved = repository.save(item);
+    custodyService.toDisposed(tenantId, id, "폐기", actorId);
+    return saved;
   }
 
   /** 특정 사용자에게 배정된 항목. */
@@ -98,6 +127,11 @@ public class InventoryItemService {
       item.reclaim(now);
     }
     repository.saveAll(assigned);
+    // 퇴사 회수도 장부에 남긴다. 행위자는 이 계층에서 알 수 없어(OffboardHandler SPI에 없다)
+    // null이며, 사유가 그 맥락을 대신한다 — "누가 퇴사 처리했나"는 감사 로그가 답한다.
+    for (InventoryItem item : assigned) {
+      custodyService.toWarehouse(tenantId, item.getId(), "퇴사 회수", null);
+    }
     return assigned.size();
   }
 

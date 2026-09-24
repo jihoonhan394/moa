@@ -35,6 +35,7 @@
         <button class="button primary" type="submit">저장</button>
         <a class="button" th:href="@{/inventory}">취소</a>
         <a class="button" th:href="@{'/inventory/' + ${itemId} + '/trackers'}">만기·점검 관리 →</a>
+        <a class="button" th:href="@{'/inventory/' + ${itemId} + '/custody'}">보관 이력 →</a>
       </div>
     </form>
   </section>
