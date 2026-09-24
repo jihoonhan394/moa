@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 소모품</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">자산 관리 / 소모품</p>
+      <h1>소모품</h1>
+      <p class="subcopy">A4용지·음료수처럼 <b>떨어지면 다시 사는</b> 물건입니다.
+        재고 수량은 관리하지 않고, <b>주문한 날짜와 수량</b>만 남겨 다음 주문 시점을 알려 드립니다.</p>
+    </div>
+  </header>
+
+  <p th:if="${consumableMessage}" class="subcopy good" th:text="${consumableMessage}"></p>
+  <p th:if="${consumableError}" class="subcopy bad" th:text="${consumableError}"></p>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">등록</p><h2>소모품 등록</h2></div></div>
+    <form method="post" th:action="@{/consumables}" th:object="${itemForm}" class="asset-toolbar">
+      <input type="text" th:field="*{name}" maxlength="100" placeholder="이름 (예: A4용지)" required>
+      <input type="text" th:field="*{category}" maxlength="100" placeholder="분류 (선택)">
+      <input type="text" th:field="*{unit}" maxlength="20" placeholder="단위 (예: 박스)">
+      <input type="number" th:field="*{cycleDays}" min="1" placeholder="예상 주기(일)">
+      <select name="ownerGroupId">
+        <option value="">담당팀 없음</option>
+        <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}">팀</option>
+      </select>
+      <button class="button primary" type="submit">등록</button>
+      <p class="error-message" th:errors="*{name}"></p>
+    </form>
+    <p class="subcopy" style="margin-top:.4rem">
+      <b>예상 주기</b>를 적어 두면 주문 이력이 쌓이기 전에도 알림이 옵니다. 모르면 비워 두세요 —
+      주문이 3번 쌓이면 실제 간격으로 저절로 계산됩니다.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><p class="eyebrow">등록된 품목</p><h2>목록</h2></div>
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <span th:if="${dueCount > 0}" class="pill warn"
+              th:text="'주문할 때 ' + ${dueCount} + '건'">0건</span>
+        <span class="pill" th:text="${#lists.size(items)} + '개'">0개</span>
+      </div>
+    </div>
+    <p th:if="${#lists.isEmpty(items)}" class="subcopy">등록된 소모품이 없습니다. 위에서 등록하세요.</p>
+    <div th:unless="${#lists.isEmpty(items)}" class="data-table table-scroll">
+      <div class="table-row table-head">
+        <span>이름</span><span>담당팀</span><span>주기</span><span>마지막 주문</span><span>다음 예상</span><span></span>
+      </div>
+      <div class="table-row" th:each="i : ${items}" th:with="f=${forecasts.get(i.id)}">
+        <div>
+          <strong th:text="${i.name}">이름</strong>
+          <small th:if="${!i.active}" class="pill" style="margin-left:.3rem">사용 중지</small>
+          <small th:if="${i.category != null}" th:text="${i.category}"
+                 style="display:block;color:#7a869a">분류</small>
+        </div>
+        <span th:text="${i.ownerGroupId != null} ? ${groupNames.getOrDefault(i.ownerGroupId, '-')} : '-'"
+              style="color:#7a869a">담당팀</span>
+        <!-- 근거가 무엇인지 함께 보여 준다. 숫자만 있으면 믿을지 말지 판단할 수 없다. -->
+        <span th:if="${f.cycleDays() == null}" style="color:#7a869a">-</span>
+        <span th:unless="${f.cycleDays() == null}">
+          <b th:text="${f.cycleDays()} + '일'">25일</b>
+          <small th:switch="${f.basis().name()}" style="display:block;color:#7a869a">
+            <span th:case="'MEASURED'">실측</span>
+            <span th:case="'IRREGULAR'">불규칙</span>
+            <span th:case="'CONFIGURED'">설정값</span>
+          </small>
+        </span>
+        <span th:text="${f.lastOrderedOn()} ?: '-'" style="color:#7a869a">마지막</span>
+        <span th:if="${f.dueOn() == null}" style="color:#7a869a">-</span>
+        <b th:unless="${f.dueOn() == null}"
+           th:classappend="${f.isDue(today)} ? 'warn' : 'good'"
+           th:text="${f.dueOn()} + (${f.isDue(today)} ? ' (지남)' : '')">예상일</b>
+        <span class="table-actions">
+          <a class="button" th:href="@{'/consumables/' + ${i.id}}">주문 기록</a>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

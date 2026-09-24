@@ -53,7 +53,7 @@ public class SecurityConfig {
             .hasRole("INFRA_MANAGER")
             // 실물·SW 인벤토리와 공유자산(등록)은 자산 관리자(ASSET_MANAGER) 전용.
             // (공유자산 '예약'/reservations는 일반 사용자 소비 화면 → 아래 authenticated + 기능 인터셉터로 게이팅.)
-            .requestMatchers("/inventory/**", "/shared-resources/**")
+            .requestMatchers("/inventory/**", "/shared-resources/**", "/consumables/**")
             .hasRole("ASSET_MANAGER")
             // 만료/갱신 통합 대시보드: 관리 권한(기관·인프라·자산 관리자) 누구나 조회.
             .requestMatchers("/expirations", "/expirations/**")

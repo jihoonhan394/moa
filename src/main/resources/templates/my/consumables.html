@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 소모품 요청</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">개인 / 소모품 요청</p>
+      <h1>소모품 요청</h1>
+      <p class="subcopy">쓰려는데 <b>떨어진 물건</b>을 알려 주세요.
+        자산 담당자가 모든 선반을 볼 수는 없어서, 먼저 발견하신 분의 한마디가 가장 빠릅니다.</p>
+    </div>
+  </header>
+
+  <p th:if="${requestMessage}" class="subcopy good" th:text="${requestMessage}"></p>
+  <p th:if="${requestError}" class="subcopy bad" th:text="${requestError}"></p>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">요청</p><h2>떨어진 물건 알리기</h2></div></div>
+    <p th:if="${#lists.isEmpty(items)}" class="subcopy">
+      아직 등록된 소모품이 없습니다. 자산 담당자가 품목을 등록하면 여기서 요청할 수 있습니다.</p>
+    <form th:unless="${#lists.isEmpty(items)}" method="post" th:action="@{/my/consumables}"
+          class="asset-toolbar">
+      <select name="itemId" required>
+        <option value="">— 무엇이 떨어졌나요? —</option>
+        <!-- 이미 요청이 있으면 인원수를 함께 보여 준다. 중복 요청을 말리지는 않되 알려는 준다. -->
+        <option th:each="i : ${items}" th:value="${i.id}"
+                th:text="${i.name} + (${openCounts.containsKey(i.id)} ? ' — 이미 ' + ${openCounts.get(i.id)} + '명 요청 중' : '')">품목</option>
+      </select>
+      <input type="text" name="note" maxlength="500"
+             placeholder="자세히 (예: 제로 콜라가 떨어졌어요)">
+      <button class="button primary" type="submit">요청</button>
+    </form>
+    <p class="subcopy" style="margin-top:.4rem">
+      몇 개가 필요한지는 <b>안 적으셔도 됩니다</b> — 얼마나 살지는 담당자가 정합니다.
+      목록에 없는 물건이면 <b>기타</b> 품목을 고르고 비고에 적어 주세요.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><p class="eyebrow">내 요청</p><h2>처리 현황</h2></div>
+      <span class="pill" th:text="${#lists.size(requests)} + '건'">0건</span>
+    </div>
+    <p th:if="${#lists.isEmpty(requests)}" class="subcopy">아직 요청하신 것이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(requests)}" class="data-table table-scroll">
+      <div class="table-row table-head">
+        <span>품목</span><span>내용</span><span>상태</span><span>담당자 회신</span><span></span>
+      </div>
+      <div class="table-row" th:each="r : ${requests}">
+        <strong th:text="${r.itemName}">품목</strong>
+        <span th:text="${r.note} ?: '-'" style="color:#7a869a">내용</span>
+        <b th:text="${r.status}">상태</b>
+        <span th:text="${r.reason} ?: '-'" style="color:#7a869a">회신</span>
+        <span class="table-actions">
+          <form th:if="${r.cancelable}" method="post"
+                th:action="@{'/my/consumables/' + ${r.id} + '/cancel'}" style="display:inline">
+            <button class="button" type="submit">취소</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

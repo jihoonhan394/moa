@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 소모품 상세</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">소모품</p>
+      <h1 th:text="${item.name}">소모품</h1>
+      <p class="subcopy">주문할 때마다 <b>날짜와 수량</b>만 남기시면 다음 주문 시점을 계산합니다.</p>
+    </div>
+    <a class="button" th:href="@{/consumables}">← 목록</a>
+  </header>
+
+  <p th:if="${consumableMessage}" class="subcopy good" th:text="${consumableMessage}"></p>
+  <p th:if="${consumableError}" class="subcopy bad" th:text="${consumableError}"></p>
+
+  <!--
+    예측 근거를 숫자 그대로 보여 준다. 담당자가 "이번엔 아직 남았는데"라고 판단할 수 있어야
+    하고, 평균이 틀렸다면 그것도 바로 보여야 한다. 확신의 정도는 문구가 반영한다.
+  -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">예측</p><h2>다음 주문 시점</h2></div></div>
+
+    <p th:if="${forecast.basis().name() == 'NONE'}" class="subcopy">
+      아직 예측할 근거가 없습니다. 주문을 <b>3번</b> 기록하면 실제 간격으로 계산되고,
+      그 전에도 <b>예상 주기</b>를 적어 두면 바로 알려 드립니다.</p>
+
+    <div th:unless="${forecast.basis().name() == 'NONE'}">
+      <p class="subcopy" th:switch="${forecast.basis().name()}">
+        <span th:case="'MEASURED'">최근 주문 간격으로 계산했습니다.</span>
+        <span th:case="'IRREGULAR'"><b>주문 간격이 일정하지 않습니다</b> — 참고용으로만 보세요.</span>
+        <span th:case="'CONFIGURED'">아직 실측 근거가 없어 <b>설정하신 주기</b>로 계산했습니다.</span>
+      </p>
+      <div class="data-table">
+        <div class="table-row">
+          <span>다음 예상</span>
+          <b th:classappend="${forecast.isDue(today)} ? 'warn' : 'good'"
+             th:text="${forecast.dueOn()} + (${forecast.isDue(today)} ? ' — 주문할 때가 됐습니다' : '')">예상일</b>
+        </div>
+        <div class="table-row"><span>주기</span><strong th:text="${forecast.cycleDays()} + '일'">25일</strong></div>
+        <div class="table-row" th:if="${forecast.dailyUsage() != null}">
+          <span>추정 소비</span>
+          <strong th:text="${#numbers.formatDecimal(forecast.dailyUsage(), 1, 3)} + ' ' + (${item.unit} ?: '개') + '/일'">0.04</strong>
+        </div>
+        <div class="table-row" th:if="${!#lists.isEmpty(forecast.intervals())}">
+          <span>최근 간격</span>
+          <strong th:text="${#strings.listJoin(forecast.intervals(), ' · ')} + '일'">30 · 20 · 25일</strong>
+        </div>
+        <div class="table-row" th:if="${forecast.lastOrderedOn() != null}">
+          <span>마지막 주문</span>
+          <strong th:text="${forecast.lastOrderedOn()} + ' · ' + ${forecast.lastQuantity()} + (${item.unit} ?: '개')">-</strong>
+        </div>
+      </div>
+
+      <!-- 실측이 설정값과 크게 다르면 제안만 한다. 몰래 바꾸면 담당자가 통제권을 잃는다. -->
+      <form th:if="${suggestsChange}" method="post"
+            th:action="@{'/consumables/' + ${item.id} + '/adopt-cycle'}" style="margin-top:.6rem">
+        <input type="hidden" name="cycleDays" th:value="${forecast.cycleDays()}">
+        <p class="subcopy">실제 주기는 <b th:text="${forecast.cycleDays()} + '일'">18일</b>인데
+          설정은 <b th:text="${item.cycleDays} + '일'">30일</b>입니다.</p>
+        <button class="button" type="submit">설정을 실측값으로 바꾸기</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">기록</p><h2>주문 등록</h2></div></div>
+    <form method="post" th:action="@{'/consumables/' + ${item.id} + '/orders'}"
+          th:object="${orderForm}" class="asset-toolbar">
+      <label>주문일 <input type="date" th:field="*{orderedOn}" required></label>
+      <label>수량 <input type="number" th:field="*{quantity}" min="1"></label>
+      <input type="text" th:field="*{note}" maxlength="500" placeholder="메모 (선택)">
+      <button class="button primary" type="submit">기록</button>
+    </form>
+    <p class="subcopy" style="margin-top:.4rem">
+      날짜는 오늘, 수량은 직전 주문량이 채워져 있습니다 — 맞으면 그대로 누르세요.
+      <b>발주일이든 입고일이든 한 가지로 일관되게</b> 넣으면 간격은 같습니다.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><p class="eyebrow">이력</p><h2>주문 기록</h2></div>
+      <span class="pill" th:text="${#lists.size(orders)} + '건'">0건</span>
+    </div>
+    <p th:if="${#lists.isEmpty(orders)}" class="subcopy">기록된 주문이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(orders)}" class="data-table table-scroll">
+      <div class="table-row table-head"><span>주문일</span><span>수량</span><span>메모</span><span>기록자</span></div>
+      <div class="table-row" th:each="o : ${orders}">
+        <strong th:text="${o.orderedOn}">날짜</strong>
+        <span th:text="${o.quantity} + ' ' + (${item.unit} ?: '개')">1개</span>
+        <span th:text="${o.note} ?: '-'" style="color:#7a869a">메모</span>
+        <span th:text="${o.actor}" style="color:#7a869a">기록자</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">설정</p><h2>품목 수정</h2></div></div>
+    <form method="post" th:action="@{'/consumables/' + ${item.id}}" th:object="${itemForm}"
+          class="asset-toolbar">
+      <input type="text" th:field="*{name}" maxlength="100" required>
+      <input type="text" th:field="*{category}" maxlength="100" placeholder="분류">
+      <input type="text" th:field="*{unit}" maxlength="20" placeholder="단위">
+      <input type="number" th:field="*{cycleDays}" min="1" placeholder="예상 주기(일)">
+      <select name="ownerGroupId">
+        <option value="">담당팀 없음</option>
+        <option th:each="g : ${groups}" th:value="${g.id}"
+                th:selected="${g.id == item.ownerGroupId}" th:text="${g.name}">팀</option>
+      </select>
+      <button class="button" type="submit">저장</button>
+    </form>
+    <form method="post" th:action="@{'/consumables/' + ${item.id} + '/active'}" style="margin-top:.5rem">
+      <input type="hidden" name="active" th:value="${!item.active}">
+      <button class="button" type="submit"
+              th:text="${item.active} ? '사용 중지' : '다시 사용'">사용 중지</button>
+      <span class="subcopy" style="margin-left:.4rem">중지해도 주문 이력은 남습니다.</span>
+    </form>
+  </section>
+</main></div>
+</body>
+</html>

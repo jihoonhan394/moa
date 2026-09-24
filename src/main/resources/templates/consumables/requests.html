@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 소모품 요청 처리</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">소모품 / 요청</p>
+      <h1>소모품 요청 처리</h1>
+      <p class="subcopy">직원들이 알려 온 <b>떨어진 물건</b>입니다.
+        접수한 뒤 <b>주문을 기록하면 자동으로 완료</b> 처리되고 요청자에게 알림이 갑니다.</p>
+    </div>
+    <a class="button" th:href="@{/consumables}">소모품 목록</a>
+  </header>
+
+  <p th:if="${requestMessage}" class="subcopy good" th:text="${requestMessage}"></p>
+  <p th:if="${requestError}" class="subcopy bad" th:text="${requestError}"></p>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><p class="eyebrow">요청</p><h2>목록</h2></div>
+      <span th:if="${openCount > 0}" class="pill warn" th:text="'처리 대기 ' + ${openCount} + '건'">0건</span>
+    </div>
+    <p th:if="${#lists.isEmpty(requests)}" class="subcopy">들어온 요청이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(requests)}" class="data-table table-scroll">
+      <div class="table-row table-head">
+        <span>품목</span><span>요청자</span><span>내용</span><span>상태</span><span>처리</span>
+      </div>
+      <div class="table-row" th:each="r : ${requests}">
+        <div>
+          <strong th:text="${r.itemName}">품목</strong>
+          <small th:if="${r.reviewOn != null}" th:text="'재검토 ' + ${r.reviewOn}"
+                 style="display:block;color:#7a869a">재검토</small>
+        </div>
+        <span th:text="${r.requester}">요청자</span>
+        <span th:text="${r.note} ?: '-'" style="color:#7a869a">내용</span>
+        <div>
+          <b th:text="${r.statusLabel}">상태</b>
+          <small th:if="${r.reason != null}" th:text="${r.reason}"
+                 style="display:block;color:#7a869a">사유</small>
+        </div>
+        <span class="table-actions" th:if="${r.open}">
+          <form th:if="${r.status.name() == 'REQUESTED'}" method="post"
+                th:action="@{'/consumables/requests/' + ${r.id} + '/acknowledge'}" style="display:inline">
+            <button class="button primary" type="submit">접수</button>
+          </form>
+          <a class="button" th:href="@{'/consumables/' + ${r.itemId}}">주문 기록 →</a>
+          <!-- 거절·보류는 사유가 필수다. 이유 없이 닫히면 요청자는 같은 요청을 반복한다. -->
+          <form method="post" th:action="@{'/consumables/requests/' + ${r.id} + '/hold'}"
+                style="display:inline-flex;gap:.2rem">
+            <input type="text" name="reason" placeholder="보류 사유" required style="width:110px">
+            <input type="date" name="reviewOn" title="재검토 예정일(선택)">
+            <button class="button" type="submit">보류</button>
+          </form>
+          <form method="post" th:action="@{'/consumables/requests/' + ${r.id} + '/reject'}"
+                style="display:inline-flex;gap:.2rem">
+            <input type="text" name="reason" placeholder="거절 사유" required style="width:110px">
+            <button class="button" type="submit">거절</button>
+          </form>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

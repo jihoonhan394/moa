@@ -149,6 +149,17 @@ public class AccessGroupService {
         .toList();
   }
 
+  /** 이 그룹의 부서장 식별자들. 소모품 주문 알림처럼 "담당팀에게 알린다"에 쓴다. */
+  public java.util.Set<UUID> leaderIds(UUID tenantId, UUID groupId) {
+    if (groupId == null) {
+      return java.util.Set.of();
+    }
+    return memberRepository.findAllByTenantIdAndGroupId(tenantId, groupId).stream()
+        .filter(UserGroupMember::isLeader)
+        .map(UserGroupMember::getUserId)
+        .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
+  }
+
   /** 부서장이 이끄는 그룹들의 팀원 식별자(본인 제외). 위임 대상 후보. */
   public java.util.Set<UUID> teamMemberIds(UUID tenantId, UUID leaderUserId) {
     java.util.Set<UUID> ids = new java.util.LinkedHashSet<>();

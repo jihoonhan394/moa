@@ -4,6 +4,7 @@ import com.moara.moa.access.AccessRequestNotFoundException;
 import com.moara.moa.asset.AssetNotFoundException;
 import com.moara.moa.category.CategoryNotFoundException;
 import com.moara.moa.connection.ConnectionSessionNotFoundException;
+import com.moara.moa.consumable.ConsumableItemNotFoundException;
 import com.moara.moa.credential.CredentialNotFoundException;
 import com.moara.moa.group.AccessGroupNotFoundException;
 import com.moara.moa.inventory.InventoryItemNotFoundException;
@@ -45,6 +46,7 @@ public class GlobalExceptionHandler {
       AssetNotFoundException.class,
       CategoryNotFoundException.class,
       ConnectionSessionNotFoundException.class,
+      ConsumableItemNotFoundException.class,
       CredentialNotFoundException.class,
       InventoryItemNotFoundException.class,
       ManagedUserNotFoundException.class,
