@@ -63,6 +63,45 @@ class DashboardMenuBoundaryTest {
     }
   }
 
+  /**
+   * 회귀: {@code /expirations}는 SecurityConfig가 세 역할 모두에게 열어 두는데 사이드바는
+   * <b>자산 관리자에게만</b> 보여 줬다. 인프라 관리자는 서버·접근권한 만료가 자기 소관인데도
+   * 메뉴에서 만료 화면을 찾을 수 없었다. 이 파일의 규칙(메뉴 노출 = 인가 정책)을 그대로 적용한다.
+   */
+  @Test
+  void expirationsMenuVisibleToEveryRoleAllowedToOpenIt() throws Exception {
+    Tenant tenant = tenantService.createTenant(new CreateTenantCommand("만료경계사", "EXP" + System.nanoTime()));
+    UUID tid = tenant.getId();
+
+    for (UserRole role : new UserRole[] {
+        UserRole.TENANT_ADMIN, UserRole.INFRA_MANAGER, UserRole.ASSET_MANAGER}) {
+      ManagedUser manager = user(tid, Set.of(role));
+      mockMvc.perform(get("/dashboard").with(authentication(auth(manager))))
+          .andExpect(status().isOk())
+          .andExpect(content().string(containsString("href=\"/expirations\"")));
+      mockMvc.perform(get("/expirations").with(authentication(auth(manager))))
+          .andExpect(status().isOk());
+    }
+  }
+
+  /**
+   * 감사 로그와 접속 이력은 사이드바 항목 둘이 아니라 한 화면의 탭 둘이다. 어느 쪽으로 들어와도
+   * 서로에게 갈 수 있어야 묶음이 성립한다 — 한쪽에서 탭이 빠지면 나머지는 도달 불가가 된다.
+   */
+  @Test
+  void auditAndAccessHistoryLinkToEachOtherAsTabs() throws Exception {
+    Tenant tenant = tenantService.createTenant(new CreateTenantCommand("감사탭사", "AUD" + System.nanoTime()));
+    ManagedUser admin = user(tenant.getId(), Set.of(UserRole.TENANT_ADMIN));
+
+    for (String url : new String[] {"/audit", "/access-history"}) {
+      mockMvc.perform(get(url).with(authentication(auth(admin))))
+          .andExpect(status().isOk())
+          .andExpect(content().string(containsString("class=\"subnav\"")))
+          .andExpect(content().string(containsString("href=\"/audit\"")))
+          .andExpect(content().string(containsString("href=\"/access-history\"")));
+    }
+  }
+
   private ManagedUser user(UUID tid, Set<UserRole> roles) {
     long n = System.nanoTime();
     String email = "bnd" + n + "@test.com";

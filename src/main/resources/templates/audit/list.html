@@ -14,6 +14,8 @@
       <p class="subcopy">그룹·권한·사용자 변경과 웹 자산 열람 등 관리 행위 이력입니다. (조회 전용)</p>
     </div>
   </header>
+
+  <nav th:replace="~{fragments/subnav :: audit('audit')}"></nav>
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">이력</p><h2>관리 행위 기록</h2></div><span class="pill" th:text="${#lists.size(logs)} + '건'">0건</span></div>
     <p th:if="${#lists.isEmpty(logs)}" class="subcopy">기록된 감사 로그가 없습니다.</p>

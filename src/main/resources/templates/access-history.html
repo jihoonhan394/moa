@@ -15,6 +15,8 @@
     </div>
   </header>
 
+  <nav th:replace="~{fragments/subnav :: audit('access-history')}"></nav>
+
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">로그인</p><h2>로그인 이력</h2></div>
       <span class="pill" th:text="${#lists.size(logins)} + '건'">0건</span></div>

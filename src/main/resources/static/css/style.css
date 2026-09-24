@@ -746,6 +746,21 @@ body { background: var(--page-background); }
 .nav a.active::before { content: ""; position: absolute; left: -14px; top: 50%; transform: translateY(-50%); width: 3px; height: 18px; border-radius: 0 3px 3px 0; background: var(--accent); }
 .nav-label { margin: 16px 12px 5px; color: var(--muted); font-size: .66rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; opacity: .82; }
 .nav-icon { width: 16px; text-align: center; }
+/* 화면 묶음 탭. 사이드바 항목을 늘리는 대신 이어지는 일끼리 한 화면처럼 보이게 한다. */
+.subnav { display: flex; gap: 4px; margin: -8px 0 20px; border-bottom: 1px solid var(--line); }
+.subnav a { padding: 8px 14px; color: var(--muted); font-size: .88rem; font-weight: 600; text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.subnav a:hover { color: var(--ink); }
+.subnav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* 접이식 메뉴 그룹(개인). summary가 nav-label 역할을 하되 클릭 가능함을 화살표로 알린다.
+   관리 역할을 겸한 사용자에게만 접힌 채로 렌더된다 — 순수 일반 사용자에겐 이게 주 메뉴다. */
+.nav-collapsible > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.nav-collapsible > summary::-webkit-details-marker { display: none; }
+.nav-collapsible > summary::after { content: "›"; margin-left: auto; font-size: .9rem; transition: transform .15s ease; opacity: .7; }
+.nav-collapsible[open] > summary::after { transform: rotate(90deg); }
+.nav-collapsible > summary:hover { opacity: 1; }
+.app-shell.sidebar-collapsed .nav-collapsible > summary { display: none; }
+
 .operator { border-color: var(--line); background: var(--field); color: var(--ink); }
 .workspace { padding: 30px 36px 52px; }
 .topbar { margin-bottom: 24px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  화면 묶음용 보조 탭. 사이드바 항목을 늘리는 대신, 이어지는 일끼리 한 화면처럼 묶는다.
+  URL은 그대로 두므로 북마크·알림 링크가 계속 동작한다(리다이렉트 불필요).
+-->
+
+<!-- 보안 및 감사: 관리 행위 기록(감사 로그) ↔ 로그인·접속 세션(접속 이력) -->
+<nav class="subnav" th:fragment="audit(current)" aria-label="감사 화면">
+  <a th:href="@{/audit}" th:classappend="${current == 'audit'} ? 'active'">감사 로그</a>
+  <a th:href="@{/access-history}" th:classappend="${current == 'access-history'} ? 'active'">접속 이력</a>
+</nav>
+
+</body>
+</html>
