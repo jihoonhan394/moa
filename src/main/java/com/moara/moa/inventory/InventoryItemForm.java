@@ -1,5 +1,6 @@
 package com.moara.moa.inventory;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
@@ -18,12 +19,31 @@ public record InventoryItemForm(
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate purchaseDate,
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate warrantyEnds,
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate leaseEnds,
-    @Size(max = 500) String note) {
+    @Size(max = 500) String note,
+    /**
+     * 같은 물건 여러 개를 한 건으로 등록할 때의 개수(예: RAM 32GB 2개). 비우면 1이다.
+     * 부품을 다른 장비로 <b>일부만</b> 옮기려면 이 값이 있어야 한다.
+     * 시리얼이 있는 물건은 개체 하나를 가리키므로 쪼갤 수 없다.
+     */
+    @Min(1) Integer quantity) {
 
   /** 라이프사이클 필드 도입 이전 호출부(테스트/기본 폼) 호환용. 구매·보증·리스는 미지정(null). */
   public InventoryItemForm(
       String name, InventoryItemType type, String category, String serialNo,
       LocalDate expiresAt, String note) {
-    this(name, type, category, serialNo, expiresAt, null, null, null, note);
+    this(name, type, category, serialNo, expiresAt, null, null, null, note, null);
+  }
+
+  /** 수량 도입 이전 호출부 호환용(수량 1). */
+  public InventoryItemForm(
+      String name, InventoryItemType type, String category, String serialNo,
+      LocalDate expiresAt, LocalDate purchaseDate, LocalDate warrantyEnds, LocalDate leaseEnds,
+      String note) {
+    this(name, type, category, serialNo, expiresAt, purchaseDate, warrantyEnds, leaseEnds, note, null);
+  }
+
+  /** 비었으면 1. 화면에서 안 채워도 기존 동작(1개)이 그대로 유지된다. */
+  public int quantityOrOne() {
+    return quantity == null || quantity < 1 ? 1 : quantity;
   }
 }

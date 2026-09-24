@@ -34,6 +34,7 @@
       </div>
       <div class="asset-toolbar">
         <input type="text" th:field="*{serialNo}" maxlength="100" placeholder="시리얼/자산번호 (선택)">
+        <input type="number" th:field="*{quantity}" min="1" placeholder="수량 (선택, 기본 1)">
         <input type="text" th:field="*{note}" maxlength="500" placeholder="비고 (선택)">
       </div>
       <div class="asset-toolbar">
@@ -64,7 +65,7 @@
       <div class="table-row" th:each="item : ${items}">
         <div>
           <strong th:text="${item.name}">이름</strong>
-          <small th:if="${item.category != null}" th:text="${item.category} + (${item.serialNo != null} ? ' · ' + ${item.serialNo} : '')" style="display:block;color:#7a869a">카테고리</small>
+          <small th:if="${item.category != null}" th:text="${item.category} + (${item.serialNo != null} ? ' · ' + ${item.serialNo} : '') + (${item.quantity} > 1 ? ' · ' + ${item.quantity} + '개' : '')" style="display:block;color:#7a869a">카테고리</small>
           <small th:if="${item.ownerGroupId != null}" th:text="'소유팀: ' + ${groupNames.getOrDefault(item.ownerGroupId, '(삭제된 그룹)')}" style="display:block;color:#4c83e0">소유팀</small>
         </div>
         <span th:text="${item.type.label}">실물</span>
@@ -73,6 +74,9 @@
         <span th:text="${item.expiresAt != null ? item.expiresAt : '—'}">만료</span>
         <span class="table-actions">
           <a class="button" th:href="@{'/inventory/' + ${item.id} + '/edit'}">수정</a>
+          <!-- 보관 이력·구성품은 편집 폼 안에만 링크가 있어 사실상 찾을 수 없었다. 목록에서 바로. -->
+          <a class="button" th:href="@{'/inventory/' + ${item.id} + '/custody'}"
+             title="누구에게 있었는지 · 안에 든 부품">보관·구성품</a>
           <details style="display:inline-block">
             <summary class="button" style="list-style:none;cursor:pointer">소유팀</summary>
             <div style="margin-top:.5rem;text-align:left;min-width:220px">

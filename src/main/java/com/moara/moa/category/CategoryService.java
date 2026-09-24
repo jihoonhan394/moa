@@ -76,6 +76,20 @@ public class CategoryService {
     return out;
   }
 
+  /**
+   * 자산 카테고리 트리.
+   *
+   * <p><b>{@code @Transactional}이 반드시 붙어 있어야 한다.</b> 클래스 기본값이
+   * {@code readOnly = true}라서, 이게 없으면 읽기 전용 트랜잭션 안에서
+   * {@link #tree}가 <i>자기 호출</i>로 불린다 — 프록시를 거치지 않으니 {@code tree}에 붙은
+   * {@code @Transactional}이 먹지 않고, Hibernate가 flush를 하지 않아
+   * {@code ensureDefaults}의 기본 카테고리 저장이 <b>조용히 사라진다</b>.
+   *
+   * <p>실제로 그 상태였다: 자산 카테고리가 0건이라 자산을 등록할 수 없었고, 화면에는
+   * 최상위 추가 버튼도 없어 복구할 방법이 없었다. 서버·공유자산 카테고리는 컨트롤러가
+   * {@code tree(...)}를 직접(프록시로) 불러서 멀쩡했기 때문에 자산만 증상이 났다.
+   */
+  @Transactional
   public List<CategoryNode> assetTree(UUID tenantId) {
     return tree(tenantId, CategoryDomain.ASSET);
   }

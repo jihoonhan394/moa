@@ -41,6 +41,29 @@ class CategoryServiceTest {
     assertEquals(first.size(), second.size());
   }
 
+  /**
+   * 회귀(실사용에서 발견): {@code assetTree}는 클래스 기본 {@code readOnly = true} 안에서
+   * {@code tree}를 <b>자기 호출</b>하고 있었다. 프록시를 거치지 않아 {@code tree}의
+   * {@code @Transactional}이 먹지 않았고, 읽기 전용 트랜잭션은 flush를 하지 않으므로
+   * 기본 카테고리 저장이 조용히 사라졌다 — 자산 카테고리가 0건이라 <b>자산 등록 자체가
+   * 불가능</b>했다.
+   *
+   * <p>바로 위 시드 테스트는 {@code tree(...)}를 직접 불러서 이 경로를 비켜 갔다.
+   * 화면이 실제로 쓰는 진입점으로 한 번 더 확인한다.
+   */
+  @Test
+  void assetTreeSeedsThroughItsOwnEntryPoint() {
+    Tenant tenant = newTenant("AssetEntry");
+
+    List<CategoryService.CategoryNode> nodes = categoryService.assetTree(tenant.getId());
+
+    assertTrue(nodes.stream().anyMatch(n -> n.parentId() == null && n.name().equals("실물")),
+        "자산 카테고리 루트가 저장되지 않았다 — 화면에서 자산을 등록할 수 없게 된다");
+    assertTrue(nodes.stream().anyMatch(n -> n.name().equals("컴퓨터")));
+    // 다시 불러도 같은 결과(멱등) — 매 요청마다 다시 시드하면 중복이 쌓인다.
+    assertEquals(nodes.size(), categoryService.assetTree(tenant.getId()).size());
+  }
+
   @Test
   void treeBuildsPathWithPathSeparator() {
     Tenant tenant = newTenant("Path");

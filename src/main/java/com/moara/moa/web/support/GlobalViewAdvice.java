@@ -3,7 +3,9 @@ package com.moara.moa.web.support;
 import com.moara.moa.group.AccessGroupService;
 import com.moara.moa.notification.Notification;
 import com.moara.moa.notification.NotificationService;
+import com.moara.moa.security.MoaUserDetails;
 import com.moara.moa.security.TenantContext;
+import com.moara.moa.user.UserRole;
 import com.moara.moa.tenant.FeatureModule;
 import com.moara.moa.tenant.TenantService;
 import java.util.List;
@@ -43,6 +45,43 @@ public class GlobalViewAdvice {
   @ModelAttribute("recentNotifications")
   public List<Notification> recentNotifications() {
     return notificationService.recent(tenantContext.currentTenantId(), tenantContext.currentUserId());
+  }
+
+  /**
+   * 사이드바 하단 표시 이름. 전에는 "관리자"가 하드코딩돼 있어 <b>일반 사용자에게도 관리자로
+   * 보였다</b> — 자기 권한을 오해하게 만드는 표시다.
+   */
+  @ModelAttribute("currentUserLabel")
+  public String currentUserLabel() {
+    MoaUserDetails user = tenantContext.currentUser();
+    return user == null ? "-" : user.getUsername();
+  }
+
+  /** 역할 요약(가장 높은 것 하나). 여러 역할을 겸해도 한 줄에 들어가야 한다. */
+  @ModelAttribute("currentRoleLabel")
+  public String currentRoleLabel() {
+    MoaUserDetails user = tenantContext.currentUser();
+    if (user == null) {
+      return "";
+    }
+    if (user.hasRole(UserRole.SYSTEM_ADMIN)) {
+      return "플랫폼 운영자";
+    }
+    if (user.hasRole(UserRole.TENANT_ADMIN)) {
+      return "기관 관리자";
+    }
+    boolean infra = user.hasRole(UserRole.INFRA_MANAGER);
+    boolean asset = user.hasRole(UserRole.ASSET_MANAGER);
+    if (infra && asset) {
+      return "인프라·자산 관리자";
+    }
+    if (infra) {
+      return "인프라 관리자";
+    }
+    if (asset) {
+      return "자산 관리자";
+    }
+    return "사용자";
   }
 
   @ModelAttribute("isAdmin")

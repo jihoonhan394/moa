@@ -50,7 +50,7 @@ public class CredentialController {
   public String list(Model model) {
     populate(model);
     if (!model.containsAttribute("credentialForm")) {
-      model.addAttribute("credentialForm", new CredentialForm("", CredentialType.PASSWORD, "", ""));
+      model.addAttribute("credentialForm", new CredentialForm("", CredentialType.PASSWORD, "", "", ""));
     }
     return "credentials/list";
   }

@@ -98,7 +98,7 @@ public class InventoryController {
     model.addAttribute("inventoryForm", new InventoryItemForm(
         item.getName(), item.getType(), item.getCategory(), item.getSerialNo(),
         item.getExpiresAt(), item.getPurchaseDate(), item.getWarrantyEnds(), item.getLeaseEnds(),
-        item.getNote()));
+        item.getNote(), item.getQuantity()));
     model.addAttribute("assetCategories", assetCategoryNodes());
     return "inventory/form";
   }
@@ -244,7 +244,8 @@ public class InventoryController {
 
   private static InventoryItemForm withType(InventoryItemForm form, InventoryItemType type) {
     return new InventoryItemForm(form.name(), type, form.category(), form.serialNo(),
-        form.expiresAt(), form.purchaseDate(), form.warrantyEnds(), form.leaseEnds(), form.note());
+        form.expiresAt(), form.purchaseDate(), form.warrantyEnds(), form.leaseEnds(), form.note(),
+        form.quantity());
   }
 
   private void audit(String action, UUID targetId, String message) {

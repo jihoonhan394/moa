@@ -3,6 +3,8 @@ package com.moara.moa.expiration;
 import com.moara.moa.asset.Asset;
 import com.moara.moa.asset.AssetService;
 import com.moara.moa.inventory.InventoryItem;
+import com.moara.moa.inventory.InventoryCustody;
+import com.moara.moa.inventory.InventoryCustodyService;
 import com.moara.moa.inventory.InventoryItemService;
 import com.moara.moa.inventory.InventoryItemStatus;
 import com.moara.moa.permission.Permission;
@@ -47,17 +49,20 @@ public class ExpirationService {
   private final TenantService tenantService;
   private final ResourceTrackerService trackerService;
   private final AssetService assetService;
+  private final InventoryCustodyService custodyService;
 
   public ExpirationService(
       InventoryItemService inventoryService, PermissionSetService permissionService,
       ManagedUserService userService, TenantService tenantService,
-      ResourceTrackerService trackerService, AssetService assetService) {
+      ResourceTrackerService trackerService, AssetService assetService,
+      InventoryCustodyService custodyService) {
     this.inventoryService = inventoryService;
     this.permissionService = permissionService;
     this.userService = userService;
     this.tenantService = tenantService;
     this.trackerService = trackerService;
     this.assetService = assetService;
+    this.custodyService = custodyService;
   }
 
   public List<ExpirationRow> findAll(UUID tenantId) {
@@ -121,6 +126,23 @@ public class ExpirationService {
           asset ? ExpirationSourceType.ASSET : ExpirationSourceType.INVENTORY, tracker.getTargetId(),
           // 트래커는 편집 폼이 아니라 만기·점검 패널로 — 완료 처리·SSL 재탐지가 거기 있다.
           (asset ? "/assets/" : "/inventory/") + tracker.getTargetId() + "/trackers"));
+    }
+
+    // 5) 사외 반출(고객처 납품·업체 수리)의 반납 예정. 만료 대시보드에 얹으면 알림 배치와
+    //    메일 발송이 그대로 따라온다 — 납품 나간 장비가 안 돌아오는 것을 잡는 게 목적이다.
+    for (InventoryCustody custody : custodyService.open(tenantId)) {
+      if (custody.getExpectedReturnOn() == null || custody.getHolderType().isInHouse()) {
+        continue; // 사내 보관은 '반납'이라는 개념이 없고, 예정일이 없으면 초과도 없다
+      }
+      String itemName = inventoryNames.getOrDefault(custody.getItemId(), "(삭제된 항목)");
+      String holder = custody.getHolderName() == null
+          ? custody.getHolderType().getLabel() : custody.getHolderName();
+      String detail = holder
+          + (custody.getReason() == null ? "" : " · " + custody.getReason())
+          + " · " + custody.getStartedOn() + " 반출";
+      rows.add(row("반출 반납", itemName, detail, custody.getExpectedReturnOn(), today,
+          ExpirationSourceType.INVENTORY, custody.getItemId(),
+          "/inventory/" + custody.getItemId() + "/custody"));
     }
 
     rows.sort(Comparator.comparing(ExpirationRow::expiresOn));

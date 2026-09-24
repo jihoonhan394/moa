@@ -31,6 +31,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class InventoryCustodyController {
   private final InventoryItemService inventoryService;
   private final InventoryCustodyService custodyService;
+  private final InventoryPartService partService;
   private final ManagedUserService userService;
   private final AccessGroupService groupService;
   private final AuditLogService auditLogService;
@@ -38,10 +39,12 @@ public class InventoryCustodyController {
 
   public InventoryCustodyController(
       InventoryItemService inventoryService, InventoryCustodyService custodyService,
-      ManagedUserService userService, AccessGroupService groupService,
-      AuditLogService auditLogService, TenantContext tenantContext) {
+      InventoryPartService partService, ManagedUserService userService,
+      AccessGroupService groupService, AuditLogService auditLogService,
+      TenantContext tenantContext) {
     this.inventoryService = inventoryService;
     this.custodyService = custodyService;
+    this.partService = partService;
     this.userService = userService;
     this.groupService = groupService;
     this.auditLogService = auditLogService;
@@ -59,30 +62,46 @@ public class InventoryCustodyController {
     model.addAttribute("tenantUsers", userService.findByTenant(tenantId));
     model.addAttribute("groups", groupService.findAll(tenantId));
     model.addAttribute("today", LocalDate.now());
+    model.addAttribute("parts", partService.partsOf(tenantId, id));
+    model.addAttribute("attachable", partService.attachableTo(tenantId, id));
+    model.addAttribute("parent", item.getParentItemId() == null
+        ? null : inventoryService.findById(tenantId, item.getParentItemId()));
     model.addAttribute("page", "inventory");
     return "inventory/custody";
   }
 
   /**
-   * 보관 이동 기록. 사내 이동(창고·사용자·부서)만 받는다 — 고객처 납품은 2b, 부품 장착은 2c다.
-   * 화면 밖 경로로 그 값들이 들어와도 서비스가 아니라 <b>여기서</b> 막는다. 아직 화면·규칙이
-   * 준비되지 않은 상태로 장부에 들어가면 이력이 오염되기 때문이다.
+   * 보관 이동 기록. 사내 이동(창고·사용자·부서)과 사외 반출(고객처 납품·업체 수리)을 받는다.
+   * 부품 장착(PARENT_ITEM)은 구성품 화면이 따로 다루므로 여기서 막는다 — 장비를 "보관자"로
+   * 직접 고르게 하면 순환·깊이 검증을 우회할 수 있다.
    */
   @PostMapping("/inventory/{id}/custody")
   public String move(
       @PathVariable UUID id, @RequestParam InventoryHolderType holderType,
       @RequestParam(required = false) UUID holderId,
+      @RequestParam(required = false) String holderName,
+      @RequestParam(required = false)
+      @org.springframework.format.annotation.DateTimeFormat(iso =
+          org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate expectedReturnOn,
       @RequestParam(required = false) String reason,
       @RequestParam(required = false) String note,
       RedirectAttributes redirect) {
     UUID tenantId = tenantContext.currentTenantId();
     inventoryService.findById(tenantId, id); // 소유권 검증
-    if (!isInternalMove(holderType)) {
-      redirect.addFlashAttribute("custodyError", "아직 사내 이동(창고·사용자·부서)만 기록할 수 있습니다.");
+    if (holderType == InventoryHolderType.PARENT_ITEM) {
+      redirect.addFlashAttribute("custodyError", "부품 장착은 구성품 화면에서 기록하세요.");
       return "redirect:/inventory/" + id + "/custody";
     }
     if (holderType.isInternalTarget() && holderId == null) {
       redirect.addFlashAttribute("custodyError", "대상(사용자 또는 부서)을 선택하세요.");
+      return "redirect:/inventory/" + id + "/custody";
+    }
+    if (isOutbound(holderType) && (holderName == null || holderName.isBlank())) {
+      redirect.addFlashAttribute("custodyError", "받는 곳(고객처·업체) 이름을 적어 주세요.");
+      return "redirect:/inventory/" + id + "/custody";
+    }
+    if (expectedReturnOn != null && expectedReturnOn.isBefore(LocalDate.now())) {
+      redirect.addFlashAttribute("custodyError", "반납 예정일이 오늘보다 앞설 수 없습니다.");
       return "redirect:/inventory/" + id + "/custody";
     }
     // 사용자 배정은 인벤토리 상태(assignedUserId)와 함께 움직여야 하므로 품목 서비스를 거친다.
@@ -93,7 +112,7 @@ public class InventoryCustodyController {
       inventoryService.reclaim(tenantId, id, tenantContext.currentUserId(),
           reason == null || reason.isBlank() ? "창고 입고" : reason);
     } else {
-      custodyService.transfer(tenantId, id, holderType, holderId, null, null,
+      custodyService.transfer(tenantId, id, holderType, holderId, holderName, expectedReturnOn,
           reason, note, tenantContext.currentUserId());
     }
     audit(id, holderType, holderId);
@@ -101,10 +120,49 @@ public class InventoryCustodyController {
     return "redirect:/inventory/" + id + "/custody";
   }
 
-  private boolean isInternalMove(InventoryHolderType type) {
-    return type == InventoryHolderType.WAREHOUSE
-        || type == InventoryHolderType.USER
-        || type == InventoryHolderType.GROUP;
+  /** 사외 반출 — 물건이 회사 밖으로 나간다. 받는 곳 이름이 반드시 필요하다. */
+  /** 부품 장착. 수량을 비우면 행 전체가 움직인다. */
+  @PostMapping("/inventory/{id}/parts")
+  public String attachPart(
+      @PathVariable UUID id, @RequestParam UUID partId,
+      @RequestParam(required = false, defaultValue = "0") int quantity,
+      RedirectAttributes redirect) {
+    UUID tenantId = tenantContext.currentTenantId();
+    try {
+      partService.attach(tenantId, partId, id, quantity, tenantContext.currentUserId());
+      auditPart("INVENTORY_PART_ATTACH", id, partId);
+      redirect.addFlashAttribute("custodyMessage", "부품을 장착했습니다.");
+    } catch (IllegalArgumentException rejected) {
+      redirect.addFlashAttribute("custodyError", rejected.getMessage());
+    }
+    return "redirect:/inventory/" + id + "/custody";
+  }
+
+  @PostMapping("/inventory/{id}/parts/{partId}/detach")
+  public String detachPart(
+      @PathVariable UUID id, @PathVariable UUID partId, RedirectAttributes redirect) {
+    UUID tenantId = tenantContext.currentTenantId();
+    try {
+      partService.detach(tenantId, partId, tenantContext.currentUserId());
+      auditPart("INVENTORY_PART_DETACH", id, partId);
+      redirect.addFlashAttribute("custodyMessage", "부품을 분리해 창고로 되돌렸습니다.");
+    } catch (IllegalArgumentException rejected) {
+      redirect.addFlashAttribute("custodyError", rejected.getMessage());
+    }
+    return "redirect:/inventory/" + id + "/custody";
+  }
+
+  private void auditPart(String action, UUID parentId, UUID partId) {
+    UUID actorId = tenantContext.currentUserId();
+    if (actorId != null) {
+      auditLogService.recordTenantAction(
+          tenantContext.currentTenantId(), actorId, action, "InventoryItem", parentId,
+          AuditResult.SUCCESS, "부품=" + partId);
+    }
+  }
+
+  private boolean isOutbound(InventoryHolderType type) {
+    return type == InventoryHolderType.CUSTOMER || type == InventoryHolderType.VENDOR;
   }
 
   /** 표시용 행: 보관자 ID를 이름으로 풀고, 반납 초과 여부를 미리 계산한다. */

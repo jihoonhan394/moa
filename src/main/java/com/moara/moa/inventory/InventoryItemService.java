@@ -16,11 +16,14 @@ public class InventoryItemService {
   private final InventoryItemRepository repository;
 
   private final InventoryCustodyService custodyService;
+  private final InventoryPartService partService;
 
   public InventoryItemService(
-      InventoryItemRepository repository, InventoryCustodyService custodyService) {
+      InventoryItemRepository repository, InventoryCustodyService custodyService,
+      InventoryPartService partService) {
     this.repository = repository;
     this.custodyService = custodyService;
+    this.partService = partService;
   }
 
   public List<InventoryItem> findAll(UUID tenantId) {
@@ -88,8 +91,13 @@ public class InventoryItemService {
     return retire(tenantId, id, null);
   }
 
+  /**
+   * 폐기. 장착돼 있던 부품은 <b>같이 버리지 않고 떼어내 창고로</b> 돌린다 — 멀쩡한 RAM이
+   * 장부에서 사라지면, 실물은 있는데 대장에만 없는 상태가 되어 실사에서 가장 곤란하다.
+   */
   @Transactional
   public InventoryItem retire(UUID tenantId, UUID id, UUID actorId) {
+    partService.detachAllFrom(tenantId, id, actorId);
     InventoryItem item = findById(tenantId, id);
     item.retire(OffsetDateTime.now());
     InventoryItem saved = repository.save(item);
@@ -135,11 +143,20 @@ public class InventoryItemService {
     return assigned.size();
   }
 
+  /**
+   * 이름 중복은 <b>상위 자산끼리만</b> 막는다. 부품은 같은 이름이 여러 장비에 들어가는 것이
+   * 정상이고("RAM 32GB"), 부분 이동으로 행이 갈라질 때도 같은 이름이 생긴다.
+   *
+   * <p>V66에서 DB 제약을 걷어내고 판정이 여기로 왔다 — "부품일 때만 제외"에는 부분 유니크
+   * 인덱스가 필요한데 H2가 지원하지 않기 때문이다(로컬·테스트가 H2다).
+   */
   private void requireUniqueName(UUID tenantId, String name, UUID excludeId) {
-    repository.findByTenantIdAndName(tenantId, name).ifPresent(existing -> {
-      if (!existing.getId().equals(excludeId)) {
-        throw new DuplicateInventoryItemException(name);
-      }
-    });
+    repository.findByTenantIdAndName(tenantId, name).stream()
+        .filter(existing -> !existing.isPart())
+        .filter(existing -> !existing.getId().equals(excludeId))
+        .findFirst()
+        .ifPresent(existing -> {
+          throw new DuplicateInventoryItemException(name);
+        });
   }
 }

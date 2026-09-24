@@ -43,6 +43,7 @@ public class CredentialService {
     Credential credential = new Credential(
         UUID.randomUUID(), tenantId, form.name(), form.type(), form.username(),
         secretVault.encrypt(form.secret(), tenantId), now);
+    credential.applyMeta(form.name(), form.type(), form.username(), form.url(), now);
     return credentialRepository.save(credential);
   }
 
@@ -65,7 +66,7 @@ public class CredentialService {
           throw new DuplicateCredentialException(form.name());
         });
     OffsetDateTime now = OffsetDateTime.now(clock);
-    credential.applyMeta(form.name(), form.type(), form.username(), now);
+    credential.applyMeta(form.name(), form.type(), form.username(), form.url(), now);
     if (form.secret() != null && !form.secret().isBlank()) {
       credential.replaceSecret(secretVault.encrypt(form.secret(), tenantId), now);
     }

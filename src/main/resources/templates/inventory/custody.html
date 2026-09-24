@@ -2,17 +2,20 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MOA - 보관 이력</title>
+  <title>MOA - 보관·구성품</title>
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 <div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
   <header class="topbar">
     <div>
-      <p class="eyebrow">인벤토리 / 보관 이력</p>
+      <p class="eyebrow">인벤토리 / 보관·구성품</p>
       <h1 th:text="${item.name}">자산</h1>
-      <p class="subcopy">이 자산이 <b>언제부터 누구에게 있었는지</b>를 구간으로 기록합니다.
-        배정·회수·폐기는 자동으로 남고, 부서 보관처럼 그 외 이동은 아래에서 직접 기록합니다.</p>
+      <p class="subcopy">이 자산이 <b>언제부터 누구에게 있었는지</b>와 <b>안에 무엇이 들어 있는지</b>를 봅니다.
+        배정·회수·폐기는 자동으로 기록되고, 납품·수리·부품 장착은 아래에서 직접 기록합니다.</p>
+      <p th:if="${parent != null}" class="subcopy">
+        이 자산은 <b th:text="${parent.name}">상위 장비</b>에 장착돼 있습니다 —
+        <a th:href="@{'/inventory/' + ${parent.id} + '/custody'}">상위 장비 보기</a></p>
     </div>
     <a class="button" th:href="@{/inventory}">← 목록</a>
   </header>
@@ -39,14 +42,16 @@
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">기록</p><h2>보관 이동</h2></div></div>
     <form method="post" th:action="@{'/inventory/' + ${item.id} + '/custody'}" class="inline-form">
-      <label>보관자
+      <label>어디로
         <select name="holderType" required>
-          <option value="WAREHOUSE">창고</option>
-          <option value="USER">사용자</option>
-          <option value="GROUP">부서</option>
+          <option value="WAREHOUSE">창고에 둠</option>
+          <option value="USER">사용자에게 지급</option>
+          <option value="GROUP">부서에 배치</option>
+          <option value="CUSTOMER">고객처에 납품</option>
+          <option value="VENDOR">업체에 수리·임대</option>
         </select>
       </label>
-      <label>대상 (사용자·부서일 때)
+      <label>대상 <small>(사용자·부서일 때)</small>
         <select name="holderId">
           <option value="">— 선택 —</option>
           <optgroup label="사용자">
@@ -57,11 +62,63 @@
           </optgroup>
         </select>
       </label>
+      <label>받는 곳 <small>(고객처·업체일 때)</small>
+        <input type="text" name="holderName" maxlength="200" placeholder="예: 모아라 본사 / 캐논 서비스센터">
+      </label>
+      <label>반납 예정일 <small>(사외 반출일 때)</small>
+        <input type="date" name="expectedReturnOn">
+      </label>
       <label>사유 <input type="text" name="reason" maxlength="100" placeholder="예: 창고 입고"></label>
       <label>메모 <input type="text" name="note" maxlength="500"></label>
       <button class="button primary" type="submit">기록</button>
     </form>
-    <p class="subcopy" style="margin-top:.4rem">고객처 납품·업체 수리 같은 <b>사외 반출</b>과 부품 장착은 다음 단계에서 열립니다.</p>
+    <p class="subcopy" style="margin-top:.4rem">
+      <b>반납 예정일을 적어 두면</b> 그날이 지나도 안 돌아왔을 때 만료 관리 화면에 뜨고 알림·메일이 갑니다.
+      돌아오면 "창고에 둠"으로 다시 기록하세요.</p>
+  </section>
+
+  <!-- 구성품: 이 장비 안에 들어 있는 자산(RAM·SSD·OS 라이선스 등).
+       별도 테이블이 아니라 자산에 '상위 장비'를 지정한 것이라, 부품도 자기 보관 이력을 갖는다. -->
+  <section class="panel">
+    <div class="panel-head">
+      <div><p class="eyebrow">안에 든 것</p><h2>구성품</h2></div>
+      <span class="pill" th:text="${#lists.size(parts)} + '개'">0개</span>
+    </div>
+    <p th:if="${#lists.isEmpty(parts)}" class="subcopy">장착된 부품이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(parts)}" class="data-table table-scroll">
+      <div class="table-row table-head"><span>부품</span><span>분류</span><span>수량</span><span>시리얼</span><span></span></div>
+      <div class="table-row" th:each="p : ${parts}">
+        <strong th:text="${p.name}">부품</strong>
+        <span th:text="${p.category} ?: '-'" style="color:#7a869a">분류</span>
+        <span th:text="${p.quantity}">1</span>
+        <span th:text="${p.serialNo} ?: '-'" style="color:#7a869a">시리얼</span>
+        <span class="table-actions">
+          <a class="button" th:href="@{'/inventory/' + ${p.id} + '/custody'}">이력</a>
+          <form method="post" th:action="@{'/inventory/' + ${item.id} + '/parts/' + ${p.id} + '/detach'}"
+                style="display:inline">
+            <button class="button" type="submit">분리</button>
+          </form>
+        </span>
+      </div>
+    </div>
+
+    <form method="post" th:action="@{'/inventory/' + ${item.id} + '/parts'}" class="inline-form"
+          style="margin-top:.8rem">
+      <label>장착할 자산
+        <select name="partId" required>
+          <option value="">— 선택 —</option>
+          <option th:each="a : ${attachable}" th:value="${a.id}"
+                  th:text="${a.name} + (${a.quantity} > 1 ? ' (' + ${a.quantity} + '개)' : '')">자산</option>
+        </select>
+      </label>
+      <label>수량 <small>(비우면 전부)</small>
+        <input type="number" name="quantity" min="1" placeholder="전부">
+      </label>
+      <button class="button primary" type="submit">장착</button>
+    </form>
+    <p class="subcopy" style="margin-top:.4rem">
+      RAM 2개 중 1개만 옮기려면 수량에 <b>1</b>을 적으세요. 시리얼이 있는 부품은 쪼갤 수 없어 항상 전부 움직입니다.
+      이 장비를 폐기하면 부품은 <b>같이 버려지지 않고</b> 창고로 돌아갑니다.</p>
   </section>
 
   <section class="panel">
@@ -72,7 +129,7 @@
     <p th:if="${#lists.isEmpty(rows)}" class="subcopy">기록된 구간이 없습니다.</p>
     <div th:unless="${#lists.isEmpty(rows)}" class="data-table table-scroll">
       <div class="table-row table-head">
-        <span>보관자</span><span>종류</span><span>시작</span><span>종료</span><span>사유</span><span>기록자</span>
+        <span>보관자</span><span>종류</span><span>시작</span><span>종료</span><span>반납 예정</span><span>사유</span><span>기록자</span>
       </div>
       <div class="table-row" th:each="r : ${rows}">
         <strong th:text="${r.holderLabel}">보관자</strong>
@@ -80,6 +137,10 @@
         <span th:text="${r.startedOn}">시작</span>
         <span th:if="${r.endedOn != null}" th:text="${r.endedOn}">종료</span>
         <b th:if="${r.endedOn == null}" class="good">보관 중</b>
+        <span th:if="${r.expectedReturnOn == null}" style="color:#7a869a">-</span>
+        <b th:if="${r.expectedReturnOn != null}"
+           th:classappend="${r.overdue} ? 'bad' : 'warn'"
+           th:text="${r.expectedReturnOn} + (${r.overdue} ? ' (초과)' : '')">예정일</b>
         <span th:text="${r.reason} ?: '-'" style="color:#7a869a">사유</span>
         <span th:text="${r.actor}" style="color:#7a869a">기록자</span>
       </div>

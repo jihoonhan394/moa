@@ -59,6 +59,17 @@ public class InventoryItem {
   @Column(name = "owner_group_id")
   private UUID ownerGroupId;
 
+  /**
+   * 장착된 상위 장비. 활성 PARENT_ITEM 보관 구간의 파생 캐시다 — 이력은 장부가, 현재 상태는
+   * 이 컬럼이 담당한다. null이면 그 자체로 하나의 자산이다.
+   */
+  @Column(name = "parent_item_id")
+  private UUID parentItemId;
+
+  /** 같은 부품 여러 개를 한 행으로(RAM 32GB 2개). 시리얼이 있으면 쪼갤 수 없어 1로 고정된다. */
+  @Column(nullable = false)
+  private int quantity = 1;
+
   @Column(name = "created_at")
   private OffsetDateTime createdAt;
 
@@ -86,6 +97,8 @@ public class InventoryItem {
     this.warrantyEnds = form.warrantyEnds();
     this.leaseEnds = form.leaseEnds();
     this.note = blankToNull(form.note());
+    // 시리얼이 있으면 개체 하나를 가리키므로 수량은 항상 1이다.
+    this.quantity = blankToNull(form.serialNo()) != null ? 1 : form.quantityOrOne();
     this.updatedAt = now;
   }
 
@@ -111,6 +124,28 @@ public class InventoryItem {
   }
 
   /** 소유팀 배정/해제(자산 관리자). null=해제(자산관리자 전용으로). */
+  /**
+   * 상위 장비에 장착하거나({@code parentItemId != null}) 떼어낸다. 부품으로 들어가면 개별
+   * 배정을 쓰지 않는다 — 부모가 누구에게 갔는지가 곧 부품의 위치이고, 따로 관리하면
+   * "노트북은 김개발에게, 그 안의 RAM은 창고에" 같은 모순이 장부에 남는다.
+   */
+  public void attachTo(UUID parentItemId, OffsetDateTime now) {
+    this.parentItemId = parentItemId;
+    if (parentItemId != null) {
+      this.assignedUserId = null;
+      this.status = InventoryItemStatus.ASSIGNED;
+    } else if (this.status == InventoryItemStatus.ASSIGNED && this.assignedUserId == null) {
+      this.status = InventoryItemStatus.AVAILABLE;
+    }
+    this.updatedAt = now;
+  }
+
+  /** 수량 변경(부분 이동으로 갈라질 때). 0 이하로는 내려가지 않는다. */
+  public void changeQuantity(int quantity, OffsetDateTime now) {
+    this.quantity = Math.max(1, quantity);
+    this.updatedAt = now;
+  }
+
   public void assignOwnerGroup(UUID ownerGroupId, OffsetDateTime now) {
     this.ownerGroupId = ownerGroupId;
     this.updatedAt = now;
@@ -134,6 +169,9 @@ public class InventoryItem {
   public LocalDate getLeaseEnds() { return leaseEnds; }
   public String getNote() { return note; }
   public UUID getOwnerGroupId() { return ownerGroupId; }
+  public UUID getParentItemId() { return parentItemId; }
+  public int getQuantity() { return quantity; }
+  public boolean isPart() { return parentItemId != null; }
   public OffsetDateTime getCreatedAt() { return createdAt; }
   public OffsetDateTime getUpdatedAt() { return updatedAt; }
 }

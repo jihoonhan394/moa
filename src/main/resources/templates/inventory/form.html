@@ -25,6 +25,9 @@
       <p th:if="${#fields.hasErrors('category')}" class="error-message" th:errors="*{category}"></p>
       <p class="subcopy" style="margin:0"><a th:href="@{/inventory/categories}">카테고리 관리 →</a></p>
       <label>시리얼/자산번호</label><input type="text" th:field="*{serialNo}" maxlength="100">
+      <label>수량 (선택, 기본 1)</label><input type="number" th:field="*{quantity}" min="1" placeholder="1">
+      <p class="subcopy" style="margin:0">RAM·케이블처럼 <b>같은 물건 여러 개</b>를 한 건으로 등록할 때 씁니다.
+        나중에 일부만 다른 장비로 옮길 수 있습니다. 시리얼을 넣으면 개체 하나를 가리키므로 수량은 1로 고정됩니다.</p>
       <label>만료일 (SW 라이선스, 선택)</label><input type="date" th:field="*{expiresAt}">
       <label>구매일 (선택)</label><input type="date" th:field="*{purchaseDate}">
       <label>보증 만료일 (선택)</label><input type="date" th:field="*{warrantyEnds}">

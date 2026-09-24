@@ -50,6 +50,13 @@ public class Credential {
   @Column(name = "wiki_space_id")
   private UUID wikiSpaceId;
 
+  /**
+   * 이 계정으로 들어가는 관리 페이지 주소(공유기 설정, 프린터 콘솔 등). 비워 둘 수 있다.
+   * 주소와 로그인 정보가 한곳에 있어야 공유받은 사람이 바로 쓸 수 있다.
+   */
+  @Column(length = 500)
+  private String url;
+
   protected Credential() {}
 
   public Credential(
@@ -58,16 +65,38 @@ public class Credential {
     this.id = id;
     this.tenantId = tenantId;
     this.createdAt = now;
-    applyMeta(name, type, username, now);
+    applyMeta(name, type, username, null, now);
     replaceSecret(secret, now);
   }
 
-  /** 메타데이터(이름/유형/계정) 갱신. 비밀은 건드리지 않는다. */
-  public void applyMeta(String name, CredentialType type, String username, OffsetDateTime now) {
+  /** 메타데이터(이름/유형/계정/주소) 갱신. 비밀은 건드리지 않는다. */
+  public void applyMeta(
+      String name, CredentialType type, String username, String url, OffsetDateTime now) {
     this.name = name.trim();
     this.type = type;
     this.username = username.trim();
+    this.url = normalizeUrl(url);
     this.updatedAt = now;
+  }
+
+  /**
+   * 주소를 다듬는다. 스킴이 없으면 {@code https://}를 붙이고, <b>http(s)가 아닌 스킴은 버린다</b>
+   * — {@code javascript:} 같은 값이 링크로 렌더되면 클릭 한 번으로 스크립트가 도는 통로가 된다
+   * (본문은 새니타이즈하면서 링크로 뚫리는 일을 막는다).
+   */
+  private static String normalizeUrl(String raw) {
+    if (raw == null || raw.isBlank()) {
+      return null;
+    }
+    String trimmed = raw.trim();
+    String lower = trimmed.toLowerCase(java.util.Locale.ROOT);
+    if (lower.startsWith("http://") || lower.startsWith("https://")) {
+      return trimmed;
+    }
+    if (lower.contains("://") || lower.contains(":")) {
+      return null; // 알 수 없는 스킴은 버린다
+    }
+    return "https://" + trimmed;
   }
 
   /** 비밀 교체(재암호화 결과로). */
@@ -87,6 +116,7 @@ public class Credential {
   public UUID getId() { return id; }
   public UUID getTenantId() { return tenantId; }
   public UUID getWikiSpaceId() { return wikiSpaceId; }
+  public String getUrl() { return url; }
   public String getName() { return name; }
   public CredentialType getType() { return type; }
   public String getUsername() { return username; }

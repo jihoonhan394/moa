@@ -107,7 +107,7 @@
     </th:block>
 
   </nav>
-  <div class="operator"><span class="sidebar-text">로그인 사용자</span><strong class="sidebar-text">관리자</strong><span class="nav-icon operator-icon">●</span></div>
+  <div class="operator"><span class="sidebar-text" th:text="${currentRoleLabel}">역할</span><strong class="sidebar-text" th:text="${currentUserLabel}">사용자</strong><span class="nav-icon operator-icon">●</span></div>
   <form th:action="@{/logout}" method="post" class="logout-form" style="margin:0.5rem 0.75rem;">
     <button type="submit" class="logout-btn danger-action" title="로그아웃"
             style="width:100%;display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.75rem;border-radius:8px;font:inherit;font-weight:800;cursor:pointer;">
