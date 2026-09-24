@@ -35,6 +35,11 @@
       <div class="asset-toolbar">
         <input type="text" th:field="*{serialNo}" maxlength="100" placeholder="시리얼/자산번호 (선택)">
         <input type="number" th:field="*{quantity}" min="1" placeholder="수량 (선택, 기본 1)">
+        <select name="parentItemId" aria-label="장착할 장비(선택)">
+          <option value="">부품이 아님 (단독 자산)</option>
+          <option th:each="t : ${attachTargets}" th:value="${t.id}"
+                  th:text="'▸ ' + ${t.name} + ' 에 장착'">장비</option>
+        </select>
         <input type="text" th:field="*{note}" maxlength="500" placeholder="비고 (선택)">
       </div>
       <div class="asset-toolbar">
@@ -58,14 +63,24 @@
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">등록된 항목</p><h2>자산 목록</h2></div>
-      <span class="pill" th:text="${#lists.size(items)} + '개'">0개</span></div>
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <span class="pill" th:text="${#lists.size(items)} + '개'">0개</span>
+        <!-- 폐기품은 기본으로 가린다. 지우는 게 아니라 가리는 것이라 언제든 켤 수 있다. -->
+        <a th:if="${!showRetired and retiredCount > 0}" class="small-link"
+           th:href="@{/inventory(showRetired=true)}"
+           th:text="'폐기 ' + ${retiredCount} + '건 보기'">폐기 보기</a>
+        <a th:if="${showRetired}" class="small-link" th:href="@{/inventory}">폐기 숨기기</a>
+      </div></div>
     <p th:if="${#lists.isEmpty(items)}" class="subcopy">등록된 항목이 없습니다. 위에서 등록하세요.</p>
     <div th:unless="${#lists.isEmpty(items)}" class="data-table table-scroll">
       <div class="table-row table-head"><span>이름</span><span>유형</span><span>상태</span><span>배정</span><span>만료</span><span>관리</span></div>
       <div class="table-row" th:each="item : ${items}">
         <div>
           <strong th:text="${item.name}">이름</strong>
-          <small th:if="${item.category != null}" th:text="${item.category} + (${item.serialNo != null} ? ' · ' + ${item.serialNo} : '') + (${item.quantity} > 1 ? ' · ' + ${item.quantity} + '개' : '')" style="display:block;color:#7a869a">카테고리</small>
+          <!-- 수량은 부분 이동의 전제라 이름 옆에서 바로 보여야 한다. -->
+          <span th:if="${item.quantity > 1}" class="pill"
+                th:text="${item.quantity} + '개'" title="같은 물건 여러 개">2개</span>
+          <small th:if="${item.category != null}" th:text="${item.category} + (${item.serialNo != null} ? ' · ' + ${item.serialNo} : '')" style="display:block;color:#7a869a">카테고리</small>
           <small th:if="${item.ownerGroupId != null}" th:text="'소유팀: ' + ${groupNames.getOrDefault(item.ownerGroupId, '(삭제된 그룹)')}" style="display:block;color:#4c83e0">소유팀</small>
         </div>
         <span th:text="${item.type.label}">실물</span>
@@ -77,6 +92,8 @@
           <!-- 보관 이력·구성품은 편집 폼 안에만 링크가 있어 사실상 찾을 수 없었다. 목록에서 바로. -->
           <a class="button" th:href="@{'/inventory/' + ${item.id} + '/custody'}"
              title="누구에게 있었는지 · 안에 든 부품">보관·구성품</a>
+          <span th:if="${awaitingConfirmIds.contains(item.id)}" class="pill warn"
+                title="배정했지만 받은 사람이 아직 확인하지 않았습니다">확인 대기</span>
           <details style="display:inline-block">
             <summary class="button" style="list-style:none;cursor:pointer">소유팀</summary>
             <div style="margin-top:.5rem;text-align:left;min-width:220px">

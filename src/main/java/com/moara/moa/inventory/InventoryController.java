@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -34,18 +35,24 @@ public class InventoryController {
   private final ManagedUserService userService;
   private final com.moara.moa.group.AccessGroupService groupService;
   private final CategoryService categoryService;
+  private final InventoryCustodyService custodyService;
+  private final InventoryPartService partService;
   private final AuditLogService auditLogService;
   private final TenantContext tenantContext;
 
   public InventoryController(
       InventoryItemService inventoryService, InventoryImportService importService,
       ManagedUserService userService, com.moara.moa.group.AccessGroupService groupService,
-      CategoryService categoryService, AuditLogService auditLogService, TenantContext tenantContext) {
+      CategoryService categoryService, InventoryCustodyService custodyService,
+      InventoryPartService partService, AuditLogService auditLogService,
+      TenantContext tenantContext) {
     this.inventoryService = inventoryService;
     this.importService = importService;
     this.userService = userService;
     this.groupService = groupService;
     this.categoryService = categoryService;
+    this.custodyService = custodyService;
+    this.partService = partService;
     this.auditLogService = auditLogService;
     this.tenantContext = tenantContext;
   }
@@ -54,19 +61,27 @@ public class InventoryController {
     return value == null || value.isBlank() ? null : UUID.fromString(value.trim());
   }
 
+  /**
+   * 자산 목록. 기본은 <b>폐기품을 숨긴다</b> — 대장은 시간이 갈수록 폐기품이 쌓이는데,
+   * 지금 쓰는 자산을 찾으러 온 사람에게 그것들이 섞여 보이면 목록이 쓸모를 잃는다.
+   * 폐기 이력이 필요할 때만 켜서 본다(지우는 것이 아니라 가리는 것이다).
+   */
   @GetMapping("/inventory")
-  public String list(Model model) {
+  public String list(
+      @RequestParam(name = "showRetired", required = false, defaultValue = "false")
+      boolean showRetired, Model model) {
     if (!model.containsAttribute("inventoryForm")) {
       model.addAttribute("inventoryForm", new InventoryItemForm(null, null, null, null, null, null));
     }
-    populate(model);
+    populate(model, showRetired);
     return "inventory/list";
   }
 
   @PostMapping("/inventory")
   public String create(
       @Valid @ModelAttribute("inventoryForm") InventoryItemForm form, BindingResult binding,
-      @RequestParam(required = false) String ownerGroupId, Model model) {
+      @RequestParam(required = false) String ownerGroupId,
+      @RequestParam(required = false) String parentItemId, Model model) {
     InventoryItemType type = deriveType(form.category());
     if (type == null) {
       binding.rejectValue("category", "category.required", "카테고리를 선택하세요(실물/SW 아래 경로).");
@@ -83,6 +98,18 @@ public class InventoryController {
         inventoryService.assignOwnerGroup(tenantContext.currentTenantId(), created.getId(), owner);
       }
       audit("INVENTORY_CREATE", created.getId(), created.getName());
+      // 등록하면서 바로 장착. 없으면 ①등록 ②장비 열기 ③장착 세 단계를 거쳐야 한다.
+      UUID parent = parseUuid(parentItemId);
+      if (parent != null) {
+        try {
+          partService.attach(tenantContext.currentTenantId(), created.getId(), parent,
+              created.getQuantity(), tenantContext.currentUserId());
+          audit("INVENTORY_PART_ATTACH", parent, "등록 시 장착 — " + created.getName());
+        } catch (IllegalArgumentException rejected) {
+          // 등록 자체는 끝났으므로 되돌리지 않는다. 장착만 실패했다고 알린다.
+          audit("INVENTORY_PART_ATTACH", parent, "등록 시 장착 실패 — " + rejected.getMessage());
+        }
+      }
       return "redirect:/inventory";
     } catch (DuplicateInventoryItemException exception) {
       binding.reject("inventory.duplicate", "이미 사용 중인 항목 이름입니다.");
@@ -211,8 +238,26 @@ public class InventoryController {
   }
 
   private void populate(Model model) {
+    populate(model, false);
+  }
+
+  private void populate(Model model, boolean showRetired) {
     UUID tenantId = tenantContext.currentTenantId();
-    model.addAttribute("items", inventoryService.findAll(tenantId));
+    List<InventoryItem> all = inventoryService.findAll(tenantId);
+    long retired = all.stream()
+        .filter(i -> i.getStatus() == InventoryItemStatus.RETIRED).count();
+    model.addAttribute("items", showRetired ? all
+        : all.stream().filter(i -> i.getStatus() != InventoryItemStatus.RETIRED).toList());
+    model.addAttribute("showRetired", showRetired);
+    // 등록 화면에서 "어느 장비에 넣을지" 고를 수 있게(장착 안 하면 비워 둔다).
+    model.addAttribute("attachTargets", all.stream()
+        .filter(i -> i.getStatus() != InventoryItemStatus.RETIRED)
+        .filter(i -> !i.isPart())
+        .toList());
+    model.addAttribute("retiredCount", retired);
+    // 배정했는데 받은 사람이 아직 "받았다"를 안 누른 것. 담당자가 챙길 수 있게 목록에 배지로.
+    model.addAttribute("awaitingConfirmIds", custodyService.awaitingConfirmation(tenantId).stream()
+        .map(InventoryCustody::getItemId).collect(java.util.stream.Collectors.toSet()));
     model.addAttribute("assetCategories", assetCategoryNodes());
     java.util.List<ManagedUser> tenantUsers = userService.findByTenant(tenantId);
     model.addAttribute("tenantUsers", tenantUsers);

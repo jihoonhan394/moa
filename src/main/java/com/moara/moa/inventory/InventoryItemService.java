@@ -1,5 +1,6 @@
 package com.moara.moa.inventory;
 
+import com.moara.moa.notification.NotificationService;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -17,13 +18,15 @@ public class InventoryItemService {
 
   private final InventoryCustodyService custodyService;
   private final InventoryPartService partService;
+  private final NotificationService notificationService;
 
   public InventoryItemService(
       InventoryItemRepository repository, InventoryCustodyService custodyService,
-      InventoryPartService partService) {
+      InventoryPartService partService, NotificationService notificationService) {
     this.repository = repository;
     this.custodyService = custodyService;
     this.partService = partService;
+    this.notificationService = notificationService;
   }
 
   public List<InventoryItem> findAll(UUID tenantId) {
@@ -69,6 +72,12 @@ public class InventoryItemService {
     item.assignTo(userId, OffsetDateTime.now());
     InventoryItem saved = repository.save(item);
     custodyService.toUser(tenantId, id, userId, "배정", actorId);
+    // 받은 사람에게 알린다. 알림이 없으면 인수 확인을 누를 자리를 모른다 — 확인을
+    // 요구하면서 알리지 않으면 영원히 "확인 대기"로 남는다.
+    notificationService.notify(tenantId, userId,
+        "자산을 받으셨습니다 — " + saved.getName(),
+        "내 자산에서 내용을 확인하고 '받았습니다'를 눌러 주세요.",
+        "/my/assets/" + id);
     return saved;
   }
 

@@ -1,5 +1,7 @@
 package com.moara.moa.inventory;
 
+import com.moara.moa.audit.AuditLogService;
+import com.moara.moa.audit.AuditResult;
 import com.moara.moa.group.AccessGroup;
 import com.moara.moa.group.AccessGroupService;
 import com.moara.moa.security.TenantContext;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * 내게 배정된 자산의 상세·보관 이력(읽기 전용).
@@ -34,12 +38,15 @@ public class MyInventoryController {
   private final InventoryPartService partService;
   private final AccessGroupService groupService;
   private final ManagedUserService userService;
+  private final AuditLogService auditLogService;
   private final TenantContext tenantContext;
 
   public MyInventoryController(
       InventoryItemService inventoryService, InventoryCustodyService custodyService,
       InventoryPartService partService, AccessGroupService groupService,
-      ManagedUserService userService, TenantContext tenantContext) {
+      ManagedUserService userService, AuditLogService auditLogService,
+      TenantContext tenantContext) {
+    this.auditLogService = auditLogService;
     this.inventoryService = inventoryService;
     this.custodyService = custodyService;
     this.partService = partService;
@@ -59,8 +66,33 @@ public class MyInventoryController {
     model.addAttribute("rows", historyRows(tenantId, id));
     model.addAttribute("parts", partService.partsOf(tenantId, id));
     model.addAttribute("mine", userId.equals(item.getAssignedUserId()));
+    InventoryCustody active = custodyService.current(tenantId, id).orElse(null);
+    model.addAttribute("awaitingConfirm",
+        active != null && active.awaitsConfirmation() && userId.equals(active.getHolderId()));
+    model.addAttribute("confirmedAt", active == null ? null : active.getConfirmedAt());
     model.addAttribute("page", "my-workspace");
     return "my/asset";
+  }
+
+  /**
+   * 인수 확인. 본인만 누를 수 있다는 판정은 서비스가 하고, 여기서는 결과만 안내한다.
+   * 확인은 <b>되돌리지 않는다</b> — 취소가 되면 "받았다"는 기록의 무게가 사라진다.
+   * 잘못 눌렀다면 자산 담당자가 배정을 되돌리는 것이 맞는 경로다.
+   */
+  @PostMapping("/my/assets/{id}/confirm")
+  public String confirm(@PathVariable UUID id, RedirectAttributes redirect) {
+    UUID tenantId = tenantContext.currentTenantId();
+    UUID userId = tenantContext.currentUserId();
+    InventoryItem item = inventoryService.findById(tenantId, id);
+    requireMine(tenantId, userId, item);
+    if (custodyService.confirmReceipt(tenantId, id, userId)) {
+      auditLogService.recordTenantAction(tenantId, userId, "INVENTORY_RECEIPT_CONFIRM",
+          "InventoryItem", id, AuditResult.SUCCESS, "인수 확인 — " + item.getName());
+      redirect.addFlashAttribute("assetMessage", "받으신 것으로 기록했습니다.");
+    } else {
+      redirect.addFlashAttribute("assetMessage", "이미 확인했거나 확인 대상이 아닙니다.");
+    }
+    return "redirect:/my/assets/" + id;
   }
 
   /**

@@ -32,6 +32,9 @@
     <p th:unless="${current == null}" class="subcopy">
       <b th:text="${current.holderType.label}">보관자</b>
       · <span th:text="${current.startedOn}">시작일</span>부터
+      <b th:if="${current.awaitsConfirmation()}" class="warn">· 인수 확인 대기</b>
+      <span th:if="${current.confirmedAt != null}" class="good">
+        · 인수 확인 <span th:text="${#temporals.format(current.confirmedAt, 'yyyy-MM-dd')}">날짜</span></span>
       <span th:if="${current.expectedReturnOn != null}">
         · 반납 예정 <b th:text="${current.expectedReturnOn}">예정일</b>
         <b th:if="${current.isReturnOverdue(today)}" class="bad">(반납 초과)</b>

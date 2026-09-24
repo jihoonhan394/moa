@@ -55,6 +55,32 @@ public class InventoryCustodyService {
         .toList();
   }
 
+  /**
+   * 받은 사람이 인수를 확인한다. <b>확인할 수 있는 사람은 그 구간의 보관자 본인뿐이다</b> —
+   * 남이 대신 눌러 주면 장부가 다시 한쪽 기록이 되어 확인의 의미가 사라진다.
+   *
+   * @return 이번 호출로 확인됐으면 true (이미 확인했거나 대상이 아니면 false)
+   */
+  @Transactional
+  public boolean confirmReceipt(UUID tenantId, UUID itemId, UUID userId) {
+    Optional<InventoryCustody> active = current(tenantId, itemId);
+    if (active.isEmpty()) {
+      return false;
+    }
+    InventoryCustody custody = active.get();
+    if (!custody.awaitsConfirmation() || !userId.equals(custody.getHolderId())) {
+      return false;
+    }
+    custody.confirm(OffsetDateTime.now());
+    repository.save(custody);
+    return true;
+  }
+
+  /** 아직 인수 확인이 안 된 배정. 관리자 화면의 "확인 대기"와 리마인드가 이 조회를 쓴다. */
+  public List<InventoryCustody> awaitingConfirmation(UUID tenantId) {
+    return open(tenantId).stream().filter(InventoryCustody::awaitsConfirmation).toList();
+  }
+
   /** 반납 예정일이 지났는데 아직 안 돌아온 것. 납품 나간 장비를 잃어버리지 않기 위한 조회다. */
   public List<InventoryCustody> returnOverdue(UUID tenantId, LocalDate today) {
     return open(tenantId).stream().filter(c -> c.isReturnOverdue(today)).toList();

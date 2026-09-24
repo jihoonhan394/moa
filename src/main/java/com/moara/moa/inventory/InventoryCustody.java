@@ -72,6 +72,13 @@ public class InventoryCustody {
   @Column(name = "created_at", nullable = false)
   private OffsetDateTime createdAt;
 
+  /**
+   * 받은 사람이 인수를 확인한 시각. 사용자 구간에만 의미가 있고, 창고·고객처 구간은 확인할
+   * 사람이 없어 null로 남는다. 이 칸이 있어야 장부가 <b>양쪽의 기록</b>이 된다.
+   */
+  @Column(name = "confirmed_at")
+  private OffsetDateTime confirmedAt;
+
   protected InventoryCustody() {
   }
 
@@ -103,6 +110,21 @@ public class InventoryCustody {
 
   public boolean isOpen() {
     return endedOn == null;
+  }
+
+  /**
+   * 인수 확인. 이미 확인했으면 덮어쓰지 않는다 — 처음 확인한 시각이 사실이고, 나중 값으로
+   * 밀리면 "언제 받았나"의 답이 바뀐다.
+   */
+  public void confirm(OffsetDateTime at) {
+    if (confirmedAt == null) {
+      this.confirmedAt = at;
+    }
+  }
+
+  /** 확인이 필요한데 아직 안 한 구간인지. 사용자에게 간 열린 구간만 해당한다. */
+  public boolean awaitsConfirmation() {
+    return holderType == InventoryHolderType.USER && isOpen() && confirmedAt == null;
   }
 
   /** 반납 예정일이 지났는데 아직 돌아오지 않았는지. 예정일이 없으면 초과라는 개념도 없다. */
@@ -141,4 +163,6 @@ public class InventoryCustody {
   public UUID getCreatedBy() { return createdBy; }
 
   public OffsetDateTime getCreatedAt() { return createdAt; }
+
+  public OffsetDateTime getConfirmedAt() { return confirmedAt; }
 }
