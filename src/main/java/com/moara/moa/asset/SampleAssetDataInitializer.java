@@ -4,7 +4,12 @@ import com.moara.moa.group.AccessGroup;
 import com.moara.moa.group.AccessGroupForm;
 import com.moara.moa.group.AccessGroupRepository;
 import com.moara.moa.group.AccessGroupService;
+import com.moara.moa.expiration.ExpirationService;
 import com.moara.moa.group.AccessGroupStatus;
+import com.moara.moa.inventory.InventoryItemForm;
+import com.moara.moa.inventory.InventoryItemRepository;
+import com.moara.moa.inventory.InventoryItemService;
+import com.moara.moa.inventory.InventoryItemType;
 import com.moara.moa.permission.PermissionForm;
 import com.moara.moa.permission.PermissionProtocol;
 import com.moara.moa.permission.PermissionSetService;
@@ -16,6 +21,7 @@ import com.moara.moa.user.ManagedUserService;
 import com.moara.moa.user.UserForm;
 import com.moara.moa.user.UserRole;
 import com.moara.moa.user.UserStatus;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +55,8 @@ public class SampleAssetDataInitializer {
       AccessGroupRepository groupRepository,
       AccessGroupService groupService,
       PermissionSetService permissionSetService,
+      InventoryItemRepository inventoryRepository,
+      InventoryItemService inventoryService,
       @Value("${MOA_SAMPLE_USER_PASSWORD:}") String samplePassword) {
     return arguments -> {
       if (assetRepository.count() == 0) {
@@ -57,18 +65,54 @@ public class SampleAssetDataInitializer {
       if (userRepository.count() == 0) {
         sampleUsers().forEach(user -> userService.create(new UserForm(
             user.username(), user.name(), user.email(), resolvePassword(samplePassword), user.status())));
-        // 데모 테넌트에 기관 관리자를 하나 둔다(dev.kim). 이 사용자만 AI 설정·사용자/그룹 관리에 접근 가능.
+        // 데모 테넌트의 관리자(dev.kim)에게 관리 역할을 모두 부여한다 — 비전 §3의 "작은 회사는 한 계정에
+        // 다 체크" 시나리오. TENANT_ADMIN만 주면 /assets·/inventory·/credentials·/solutions·
+        // /maintenance·/onboarding이 전부 403이라(각각 INFRA_MANAGER/ASSET_MANAGER 전용) 데모에서
+        // 제품의 핵심인 PAM·자산을 아예 볼 수 없다.
         // 실 운영에선 이미 사용자가 있어 이 블록이 실행되지 않으므로(count>0) 안전하다.
         userService.findByTenant(TENANT).stream()
             .filter(u -> "dev.kim".equals(u.getUsername()))
             .findFirst()
-            .ifPresent(admin ->
-                userService.assignRoles(admin.getTenantId(), admin.getId(), Set.of(UserRole.TENANT_ADMIN)));
+            .ifPresent(admin -> userService.assignRoles(admin.getTenantId(), admin.getId(),
+                Set.of(UserRole.TENANT_ADMIN, UserRole.INFRA_MANAGER, UserRole.ASSET_MANAGER)));
       }
       if (groupRepository.count() == 0) {
         seedGroups(groupService, permissionSetService, assetService, userService);
       }
+      if (inventoryRepository.count() == 0) {
+        seedInventory(inventoryService);
+      }
     };
+  }
+
+  /**
+   * 만료 대시보드와 임박 알림 배치를 바로 시연할 수 있도록 만기일이 섞인 인벤토리를 시드한다.
+   * 알림 배치는 잔여일이 D-14/7/3/1/0과 <b>정확히 일치</b>할 때만 발화하므로 그 날짜에 맞춘 항목을
+   * 넣고, 이미 지난 건과 여유 있는 건도 함께 둬서 화면의 만료/임박 구분이 보이게 한다.
+   */
+  private void seedInventory(InventoryItemService inventoryService) {
+    LocalDate today = LocalDate.now(ExpirationService.ZONE);
+    // 라이선스 만료(SW) — 알림 임계일에 정확히 걸리는 항목들.
+    inventoryService.create(TENANT, license("디자인 라이선스 (만료 임박)", "SW / 디자인 / 포토샵",
+        "ADOBE-2026-001", today.plusDays(7)));
+    inventoryService.create(TENANT, license("오피스 라이선스 (오늘 만료)", "SW / 오피스",
+        "MSO-2026-002", today));
+    inventoryService.create(TENANT, license("개발도구 라이선스 (만료 지남)", "SW / 개발도구",
+        "JB-2025-003", today.minusDays(5)));
+    inventoryService.create(TENANT, license("일러스트 라이선스 (여유)", "SW / 디자인 / 일러스트",
+        "ADOBE-2026-004", today.plusDays(120)));
+    // 실물 — 보증/리스 만기로 잡히는 항목.
+    inventoryService.create(TENANT, new InventoryItemForm(
+        "MacBook Pro 14 (보증 임박)", InventoryItemType.PHYSICAL, "실물 / 사무기기 / 컴퓨터",
+        "MBP14-0001", null, today.minusYears(2), today.plusDays(14), null, "데모용 보증 만기 샘플"));
+    inventoryService.create(TENANT, new InventoryItemForm(
+        "복합기 (리스 만기)", InventoryItemType.PHYSICAL, "실물 / 사무기기 / 프린터",
+        "MFP-0002", null, today.minusYears(3), null, today.plusDays(3), "데모용 리스 만기 샘플"));
+  }
+
+  private InventoryItemForm license(String name, String category, String serial, LocalDate expiresAt) {
+    return new InventoryItemForm(
+        name, InventoryItemType.SOFTWARE, category, serial, expiresAt, null, null, null, null);
   }
 
   private void seedGroups(
