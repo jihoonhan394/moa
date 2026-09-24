@@ -19,7 +19,7 @@ class TenantServiceTest {
     Tenant tenant = tenantService.getDefaultTenant();
 
     assertEquals(Tenant.DEFAULT_TENANT_ID, tenant.getId());
-    assertEquals("MTCM", tenant.getCode());
+    assertEquals("MOARA", tenant.getCode());
     assertEquals(TenantStatus.ACTIVE, tenant.getStatus());
   }
 

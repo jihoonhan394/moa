@@ -23,8 +23,8 @@ public class Tenant {
   public static final UUID DEFAULT_TENANT_ID =
       UUID.fromString("00000000-0000-0000-0000-000000000001");
 
-  /** 기본 테넌트 식별 코드. V17에서 MOA→MTCM으로 변경(데모 기관 코드). */
-  public static final String DEFAULT_TENANT_CODE = "MTCM";
+  /** 기본 테넌트 식별 코드(로그인 1단계 진입 키). V17에서 MOA→MTCM, V64에서 회사명 변경에 맞춰 MTCM→MOARA. */
+  public static final String DEFAULT_TENANT_CODE = "MOARA";
 
   @Id private UUID id;
 
