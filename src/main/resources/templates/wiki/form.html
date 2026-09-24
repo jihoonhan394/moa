@@ -44,6 +44,7 @@
     <form method="post"
           th:action="${mode == 'new'} ? @{'/wiki/spaces/' + ${space.id} + '/pages'} : @{'/wiki/' + ${pageId}}"
           th:object="${wikiForm}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:1100px;">
+      <p th:each="err : ${#fields.globalErrors()}" class="error-message" th:text="${err}">오류</p>
       <label>제목</label>
       <input type="text" th:field="*{title}" maxlength="200" placeholder="문서 제목" required>
       <p th:if="${#fields.hasErrors('title')}" class="error-message" th:errors="*{title}"></p>

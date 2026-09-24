@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.moara'
-version = '0.7.10-SNAPSHOT'
+version = '0.7.11-SNAPSHOT'
 
 java {
 	toolchain {

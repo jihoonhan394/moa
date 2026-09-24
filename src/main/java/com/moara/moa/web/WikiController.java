@@ -384,6 +384,7 @@ public class WikiController {
       model.addAttribute("wikiForm", new WikiPageForm(topic, draft));
       model.addAttribute("mode", "new");
       model.addAttribute("aiConfigured", true);
+      model.addAttribute("templates", templateService.findBySpace(tid(), spaceId));
       model.addAttribute("page", "wiki");
       return "wiki/form";
     } catch (AiException exception) {
@@ -398,8 +399,12 @@ public class WikiController {
       BindingResult binding, Model model) {
     requireEdit(spaceId);
     if (binding.hasErrors()) {
+      // 폼 재표시에도 정상 경로와 같은 모델을 채운다 — aiConfigured/templates가 없으면
+      // 템플릿이 SpringEL 평가에 실패해 검증 오류 대신 깨진 화면이 나간다.
       model.addAttribute("space", spaceService.findById(tid(), spaceId));
       model.addAttribute("mode", "new");
+      model.addAttribute("aiConfigured", aiService.isConfigured(tid()));
+      model.addAttribute("templates", templateService.findBySpace(tid(), spaceId));
       model.addAttribute("page", "wiki");
       return "wiki/form";
     }
@@ -711,9 +716,12 @@ public class WikiController {
     WikiPage wikiPage = pageService.findById(tid(), id);
     requireEdit(wikiPage.getSpaceId());
     if (binding.hasErrors()) {
+      // createPage와 같은 이유로 aiConfigured/templates를 함께 채운다.
       model.addAttribute("space", spaceService.findById(tid(), wikiPage.getSpaceId()));
       model.addAttribute("pageId", id);
       model.addAttribute("mode", "edit");
+      model.addAttribute("aiConfigured", aiService.isConfigured(tid()));
+      model.addAttribute("templates", templateService.findBySpace(tid(), wikiPage.getSpaceId()));
       model.addAttribute("page", "wiki");
       return "wiki/form";
     }

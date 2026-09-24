@@ -10,6 +10,9 @@ import com.moara.moa.inventory.InventoryItemForm;
 import com.moara.moa.inventory.InventoryItemRepository;
 import com.moara.moa.inventory.InventoryItemService;
 import com.moara.moa.inventory.InventoryItemType;
+import com.moara.moa.onboarding.OnboardingItemType;
+import com.moara.moa.onboarding.OnboardingService;
+import com.moara.moa.onboarding.OnboardingTemplateRepository;
 import com.moara.moa.permission.PermissionForm;
 import com.moara.moa.permission.PermissionProtocol;
 import com.moara.moa.permission.PermissionSetService;
@@ -44,6 +47,9 @@ import org.springframework.core.annotation.Order;
 @ConditionalOnProperty(name = "moa.sample-data.enabled", havingValue = "true")
 public class SampleAssetDataInitializer {
   private static final UUID TENANT = Tenant.DEFAULT_TENANT_ID;
+  /** V33이 시드하는 기본 기관의 '전사 위키' 공간 id(고정). */
+  private static final UUID DEFAULT_WIKI_SPACE =
+      UUID.fromString("00000000-0000-0000-0000-0000000000a1");
 
   @Bean
   @Order(1) // 솔루션 시드(@Order(2))보다 먼저 자산/사용자/그룹을 만든다
@@ -57,6 +63,8 @@ public class SampleAssetDataInitializer {
       PermissionSetService permissionSetService,
       InventoryItemRepository inventoryRepository,
       InventoryItemService inventoryService,
+      OnboardingTemplateRepository onboardingTemplateRepository,
+      OnboardingService onboardingService,
       @Value("${MOA_SAMPLE_USER_PASSWORD:}") String samplePassword) {
     return arguments -> {
       if (assetRepository.count() == 0) {
@@ -78,6 +86,10 @@ public class SampleAssetDataInitializer {
       }
       if (groupRepository.count() == 0) {
         seedGroups(groupService, permissionSetService, assetService, userService);
+        seedTeamLeader(groupService, userService);
+      }
+      if (onboardingTemplateRepository.count() == 0) {
+        seedOnboardingTemplate(onboardingService);
       }
       if (inventoryRepository.count() == 0) {
         seedInventory(inventoryService);
@@ -90,6 +102,37 @@ public class SampleAssetDataInitializer {
    * 알림 배치는 잔여일이 D-14/7/3/1/0과 <b>정확히 일치</b>할 때만 발화하므로 그 날짜에 맞춘 항목을
    * 넣고, 이미 지난 건과 여유 있는 건도 함께 둬서 화면의 만료/임박 구분이 보이게 한다.
    */
+  /**
+   * 개발팀에 부서장을 하나 둔다. 리더가 없으면 {@code /team}이 "부서장으로 지정된 그룹이 없습니다"만
+   * 띄워 팀 관리 화면을 시연·확인할 수 없다.
+   */
+  private void seedTeamLeader(AccessGroupService groupService, ManagedUserService userService) {
+    UUID leaderId = userService.findByTenant(TENANT).stream()
+        .filter(u -> "dev.choi".equals(u.getUsername()))
+        .map(ManagedUser::getId)
+        .findFirst().orElse(null);
+    if (leaderId == null) {
+      return;
+    }
+    groupService.findAll(TENANT).stream()
+        .filter(g -> "개발팀".equals(g.getName()))
+        .findFirst()
+        .ifPresent(group -> groupService.setLeader(TENANT, group.getId(), leaderId, true));
+  }
+
+  /**
+   * 입사 온보딩 템플릿 하나를 시드한다. 템플릿이 없으면 입사 자동화(솔루션·위키 즉시 부여 +
+   * 할 일 배정)를 보여줄 수 없어 매번 수동 생성해야 했다.
+   * 위키 공간 id는 V33이 고정 시드한 '전사 위키'.
+   */
+  private void seedOnboardingTemplate(OnboardingService onboardingService) {
+    UUID templateId = onboardingService.createTemplate(TENANT, "신규 입사자").getId();
+    onboardingService.addItem(
+        TENANT, templateId, OnboardingItemType.GRANT_WIKI_SPACE, DEFAULT_WIKI_SPACE, null);
+    onboardingService.addItem(TENANT, templateId, OnboardingItemType.TASK, null, "보안 교육 수강");
+    onboardingService.addItem(TENANT, templateId, OnboardingItemType.TASK, null, "장비 수령 확인");
+  }
+
   private void seedInventory(InventoryItemService inventoryService) {
     LocalDate today = LocalDate.now(ExpirationService.ZONE);
     // 라이선스 만료(SW) — 알림 임계일에 정확히 걸리는 항목들.
