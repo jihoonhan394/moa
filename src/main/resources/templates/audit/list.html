@@ -16,6 +16,33 @@
   </header>
 
   <nav th:replace="~{fragments/subnav :: audit('audit')}"></nav>
+
+  <!--
+    어제 요약. 감사 로그의 실제 문제는 "쌓이기만 하고 아무도 읽지 않는다"는 것이라 맨 위에 둔다.
+    무엇이 이상한지는 코드가 판정하고(아래 '확인된 사실'), AI는 그걸 문장으로 바꿀 뿐이다 —
+    AI가 없거나 실패해도 사실 목록은 그대로 보인다.
+  -->
+  <section class="panel">
+    <div class="panel-head">
+      <div><p class="eyebrow">어제 요약</p><h2 th:text="${digest.on()}">날짜</h2></div>
+      <span class="pill" th:text="${digest.total()} + '건'">0건</span>
+    </div>
+    <!-- 기록이 없어도 섹션을 숨기지 않는다. 사라지면 기능이 있는지도 모르고,
+         무엇보다 "조용함"과 "고장남"이 구분되지 않는다. -->
+    <p th:if="${digest.total() == 0}" class="subcopy">
+      이 날 기록된 관리 행위가 없습니다.</p>
+    <p th:if="${digest.summary() != null}" class="subcopy"
+       style="white-space:pre-line" th:text="${digest.summary()}">요약</p>
+    <div th:if="${digest.total() > 0}" class="data-table" style="margin-top:.5rem">
+      <div class="table-row table-head"><span>확인된 사실</span></div>
+      <div class="table-row" th:each="f : ${digest.facts()}">
+        <span th:text="${f}">사실</span>
+      </div>
+    </div>
+    <p th:if="${digest.total() > 0}" class="subcopy" style="margin-top:.4rem">
+      위 <b>사실</b>은 시스템이 직접 센 값입니다. 요약 문장은 그 사실만 근거로 만들어집니다 —
+      사실에 없는 내용은 요약에도 나오지 않습니다.</p>
+  </section>
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">이력</p><h2>관리 행위 기록</h2></div><span class="pill" th:text="${#lists.size(logs)} + '건'">0건</span></div>
     <p th:if="${#lists.isEmpty(logs)}" class="subcopy">기록된 감사 로그가 없습니다.</p>

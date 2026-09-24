@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOA - 열 연결 확인</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">자산 관리 / 대량 등록</p>
+      <h1>열 연결 확인</h1>
+      <p class="subcopy">올리신 파일의 열을 MOA 항목에 연결했습니다.
+        <b>맞는지 확인하고 아래 버튼을 누르면</b> 등록됩니다 — 확인 전에는 아무것도 저장되지 않습니다.</p>
+    </div>
+    <a class="button" th:href="@{/inventory/import}">← 다시 올리기</a>
+  </header>
+
+  <p th:if="${error}" class="subcopy bad" th:text="${error}"></p>
+
+  <form method="post" th:action="@{/inventory/import/confirm}">
+    <input type="hidden" name="rawCsv" th:value="${rawCsv}">
+    <input type="hidden" name="hasHeader" th:value="${hasHeader}">
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><p class="eyebrow">연결</p><h2>어느 열이 무엇인가요?</h2></div>
+        <span class="pill" th:text="${rowCount} + '행'">0행</span>
+      </div>
+      <p th:unless="${hasHeader}" class="subcopy">
+        첫 줄이 <b>제목 줄이 아니라 데이터</b>로 보여 그대로 등록 대상에 넣었습니다.</p>
+      <div class="data-table">
+        <div class="table-row table-head">
+          <span>MOA 항목</span><span>연결된 열</span><span>근거</span>
+        </div>
+        <div class="table-row" th:each="m : ${mappings}">
+          <div>
+            <strong th:text="${m.target()}">항목</strong>
+            <small th:if="${m.target() == '이름'}" style="display:block;color:#c0392b">필수</small>
+          </div>
+          <select th:name="'map_' + ${m.target()}">
+            <option value="">— 없음 —</option>
+            <option th:each="h,s : ${headers}" th:value="${s.index}"
+                    th:selected="${m.sourceIndex() != null and m.sourceIndex() == s.index}"
+                    th:text="${h}">열</option>
+          </select>
+          <!-- 무엇이 맞혔는지 밝힌다. AI가 짚은 칸은 특히 한 번 더 보게 된다. -->
+          <span th:if="${m.basis() == null}" style="color:#7a869a">-</span>
+          <span th:if="${m.basis() == '이름'}" style="color:#7a869a">열 이름</span>
+          <span th:if="${m.basis() == 'AI'}" class="pill" title="AI가 제안했습니다 — 꼭 확인하세요">AI 제안</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><p class="eyebrow">미리보기</p><h2>올리신 파일 앞부분</h2></div></div>
+      <div class="data-table table-scroll">
+        <div class="table-row table-head">
+          <span th:each="h : ${headers}" th:text="${h}">열</span>
+        </div>
+        <div class="table-row" th:each="row : ${samples}">
+          <span th:each="c : ${row}" th:text="${c}" style="color:#7a869a">값</span>
+        </div>
+      </div>
+      <p class="subcopy" style="margin-top:.5rem">
+        연결이 맞지 않으면 위에서 바꾸세요. 연결하지 않은 열은 <b>등록되지 않고 버려집니다</b>.</p>
+    </section>
+
+    <section class="panel">
+      <button class="button primary" type="submit">이대로 등록</button>
+      <span class="subcopy" style="margin-left:.5rem">
+        이름이 겹치거나 날짜 형식이 틀린 행은 건너뛰고, 어느 행이 왜 실패했는지 알려 드립니다.</span>
+    </section>
+  </form>
+</main></div>
+</body>
+</html>

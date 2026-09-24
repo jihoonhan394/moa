@@ -18,4 +18,11 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
       UUID tenantId, String targetType, UUID targetId);
 
   List<AuditLog> findTop100ByTenantIdAndActionOrderByCreatedAtDesc(UUID tenantId, String action);
+
+  /**
+   * 하루치 조회(일 요약용). 전체를 읽어 메모리에서 거르면 로그가 쌓일수록 느려진다 —
+   * 감사 로그는 지우지 않으므로 계속 는다.
+   */
+  List<AuditLog> findAllByTenantIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByCreatedAtDesc(
+      UUID tenantId, java.time.OffsetDateTime from, java.time.OffsetDateTime to);
 }

@@ -20,12 +20,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class AuditLogController {
   private final AuditLogService auditLogService;
   private final ManagedUserService userService;
+  private final AuditDigestService digestService;
   private final TenantContext tenantContext;
 
   public AuditLogController(
-      AuditLogService auditLogService, ManagedUserService userService, TenantContext tenantContext) {
+      AuditLogService auditLogService, ManagedUserService userService, TenantContext tenantContext, AuditDigestService digestService) {
     this.auditLogService = auditLogService;
     this.userService = userService;
+    this.digestService = digestService;
     this.tenantContext = tenantContext;
   }
 
@@ -40,6 +42,8 @@ public class AuditLogController {
         .toList();
 
     model.addAttribute("logs", logs);
+    // 어제 요약. 로그는 쌓이기만 하고 아무도 읽지 않는 것이 실제 문제라, 화면 맨 위에 둔다.
+    model.addAttribute("digest", digestService.yesterday(tenantId));
     model.addAttribute("page", "audit");
     model.addAttribute("pageTitle", "감사 로그");
     model.addAttribute("projectName", "MOA");

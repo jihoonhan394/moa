@@ -37,6 +37,7 @@ public class InventoryController {
   private final CategoryService categoryService;
   private final InventoryCustodyService custodyService;
   private final InventoryPartService partService;
+  private final CsvColumnMapper csvColumnMapper;
   private final AuditLogService auditLogService;
   private final TenantContext tenantContext;
 
@@ -44,8 +45,8 @@ public class InventoryController {
       InventoryItemService inventoryService, InventoryImportService importService,
       ManagedUserService userService, com.moara.moa.group.AccessGroupService groupService,
       CategoryService categoryService, InventoryCustodyService custodyService,
-      InventoryPartService partService, AuditLogService auditLogService,
-      TenantContext tenantContext) {
+      InventoryPartService partService, CsvColumnMapper csvColumnMapper,
+      AuditLogService auditLogService, TenantContext tenantContext) {
     this.inventoryService = inventoryService;
     this.importService = importService;
     this.userService = userService;
@@ -53,6 +54,7 @@ public class InventoryController {
     this.categoryService = categoryService;
     this.custodyService = custodyService;
     this.partService = partService;
+    this.csvColumnMapper = csvColumnMapper;
     this.auditLogService = auditLogService;
     this.tenantContext = tenantContext;
   }
@@ -227,12 +229,64 @@ public class InventoryController {
       model.addAttribute("error", "CSV 내용을 붙여넣거나 파일을 선택하세요.");
       return importForm(model);
     }
-    InventoryImportResult result = importService.importCsv(tenantContext.currentTenantId(), csv);
+    // 열 순서가 우리 형식과 다를 수 있으므로 바로 태우지 않고 매핑을 확인받는다.
+    // "이대로 맞다"고 사람이 눌러야 등록된다 — AI든 규칙이든 제안일 뿐이다.
+    List<List<String>> rows = CsvColumnMapper.parseRows(csv);
+    if (rows.isEmpty()) {
+      model.addAttribute("error", "읽을 수 있는 행이 없습니다.");
+      return importForm(model);
+    }
+    boolean hasHeader = CsvColumnMapper.looksLikeHeader(rows.get(0));
+    List<String> headers = hasHeader ? rows.get(0)
+        : java.util.stream.IntStream.range(0, rows.get(0).size())
+            .mapToObj(i -> (i + 1) + "번째 열").toList();
+    List<List<String>> samples = rows.subList(hasHeader ? 1 : 0, Math.min(rows.size(), hasHeader ? 4 : 3));
+    model.addAttribute("mappings",
+        csvColumnMapper.propose(tenantContext.currentTenantId(), headers, samples));
+    model.addAttribute("headers", headers);
+    model.addAttribute("samples", samples);
+    model.addAttribute("hasHeader", hasHeader);
+    model.addAttribute("rawCsv", csv);
+    model.addAttribute("rowCount", rows.size() - (hasHeader ? 1 : 0));
+    model.addAttribute("page", "inventory");
+    model.addAttribute("pageTitle", "자산 대량 등록");
+    model.addAttribute("projectName", "MOA");
+    return "inventory/import-mapping";
+  }
+
+  /**
+   * 매핑을 확정하고 실제로 등록한다. 값은 손대지 않고 <b>자리만 옮겨</b> 기존 임포트에 태운다
+   * — 검증·중복 판정은 그대로 한 곳에 있다.
+   */
+  @PostMapping("/inventory/import/confirm")
+  public String importConfirm(
+      @RequestParam String rawCsv, @RequestParam(defaultValue = "false") boolean hasHeader,
+      @RequestParam Map<String, String> params, Model model) {
+    Map<String, Integer> mapping = new java.util.LinkedHashMap<>();
+    for (String target : CsvColumnMapper.targets()) {
+      String raw = params.get("map_" + target);
+      if (raw != null && !raw.isBlank()) {
+        try {
+          mapping.put(target, Integer.parseInt(raw));
+        } catch (NumberFormatException ignored) {
+          // 값이 깨졌으면 그 열은 비운 것으로 본다
+        }
+      }
+    }
+    if (!mapping.containsKey("이름")) {
+      model.addAttribute("error", "'이름' 열은 반드시 지정해야 합니다.");
+      return importForm(model);
+    }
+    List<List<String>> rows = CsvColumnMapper.parseRows(rawCsv);
+    List<List<String>> data = hasHeader && !rows.isEmpty() ? rows.subList(1, rows.size()) : rows;
+    String normalized = csvColumnMapper.rearrange(data, mapping);
+    InventoryImportResult result =
+        importService.importCsv(tenantContext.currentTenantId(), normalized);
     audit("INVENTORY_IMPORT", null,
         "created=" + result.created() + " failed=" + result.errors().size());
     model.addAttribute("result", result);
     model.addAttribute("page", "inventory");
-    model.addAttribute("pageTitle", "인벤토리 대량 등록");
+    model.addAttribute("pageTitle", "자산 대량 등록");
     model.addAttribute("projectName", "MOA");
     return "inventory/import";
   }
