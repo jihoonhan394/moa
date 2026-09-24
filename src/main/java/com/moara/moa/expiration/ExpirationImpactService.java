@@ -91,8 +91,9 @@ public class ExpirationImpactService {
   }
 
   private void subscriptionFacts(UUID tenantId, List<String> facts) {
+    // 이메일이 등록된 활성 구성원 수. 관리자도 포함된다(구독 만료는 관리자에게도 영향).
     int activeUsers = userService.activeUserEmails(tenantId).size();
-    facts.add("영향 범위: 기관 전체 (활성 사용자 약 " + activeUsers + "명)");
+    facts.add("영향 범위: 기관 전체 (이메일이 등록된 활성 구성원 " + activeUsers + "명)");
     facts.add("만료 시 로그인/서비스 접근이 중단될 수 있습니다.");
   }
 

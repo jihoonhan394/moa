@@ -253,13 +253,19 @@ public class ManagedUserService {
   }
 
   /**
-   * 기관 발송 대상 이메일: 해당 기관의 이메일이 등록된 <b>활성 일반 사용자(USER)</b> 이메일 목록.
+   * 기관 발송 대상 이메일: 해당 기관의 이메일이 등록된 <b>활성 구성원 전체</b>.
    * 공지 이메일 브로드캐스트와 기관 메일 '전체 발송'의 공용 수신자 규칙(중복 방지 위해 한 곳에서 관리).
+   *
+   * <p>과거에는 {@code hasRole(USER)}로 걸렀으나, {@link #assignable}이 "관리 역할이 있으면 USER를
+   * 제거"하므로 <b>관리자가 자기 기관 공지·전체 메일을 못 받는</b> 결과가 됐다(회피 불가 — USER를 수동으로
+   * 줘도 저장 시 제거됨). 역할은 권한 구분이지 "사람 분류"가 아니므로, 수신자는 기관 구성원 전체로 본다.
+   * 플랫폼 운영자(SYSTEM_ADMIN)는 기관 소속이 아니라 {@code findByTenant}에 애초에 포함되지 않지만,
+   * 방어적으로 한 번 더 제외한다.
    */
   public List<String> activeUserEmails(UUID tenantId) {
     List<String> emails = new ArrayList<>();
     for (ManagedUser user : findByTenant(tenantId)) {
-      if (user.hasRole(UserRole.USER)
+      if (!user.hasRole(UserRole.SYSTEM_ADMIN)
           && user.getStatus() == UserStatus.ACTIVE
           && user.getEmail() != null && !user.getEmail().isBlank()) {
         emails.add(user.getEmail());

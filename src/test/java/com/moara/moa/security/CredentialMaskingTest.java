@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.moara.moa.mail.MailSettingForm;
 import com.moara.moa.user.OperatorForm;
 import com.moara.moa.user.SignupForm;
+import com.moara.moa.credential.CredentialForm;
+import com.moara.moa.credential.CredentialType;
 import com.moara.moa.user.UserForm;
 import com.moara.moa.user.UserStatus;
 import org.junit.jupiter.api.Test;
@@ -41,5 +43,11 @@ class CredentialMaskingTest {
   void operatorFormMasksPassword() {
     String s = new OperatorForm("op", "운영자", "op@example.com", "010-1234-5678", SECRET).toString();
     assertFalse(s.contains(SECRET), "운영자 비밀번호가 toString에 노출됨");
+  }
+
+  @Test
+  void credentialFormDoesNotLeakSecret() {
+    String s = new CredentialForm("srv-01", CredentialType.PASSWORD, "root", SECRET).toString();
+    assertFalse(s.contains(SECRET), "자격증명 secret이 toString에 노출됨");
   }
 }

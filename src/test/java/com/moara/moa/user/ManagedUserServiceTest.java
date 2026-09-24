@@ -1,8 +1,10 @@
 package com.moara.moa.user;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.moara.moa.tenant.Tenant;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,5 +37,24 @@ class ManagedUserServiceTest {
 
     assertEquals(Tenant.DEFAULT_TENANT_ID, created.getTenantId());
     assertEquals(java.util.Set.of(UserRole.USER), created.getRoles());
+  }
+
+  /**
+   * 브로드캐스트 수신자에 관리자도 포함되어야 한다. assignable()이 "관리 역할이 있으면 USER 제거"를
+   * 강제하므로, 과거처럼 hasRole(USER)로 거르면 관리자가 자기 기관 공지·전체 메일을 영영 못 받는다.
+   */
+  @Test
+  void broadcastRecipientsIncludeAdmins() {
+    String admin = "adm" + System.nanoTime();
+    ManagedUser created = userService.create(Tenant.DEFAULT_TENANT_ID, new UserForm(
+        admin, "관리자", admin + "@example.com", "safe-password-123", UserStatus.ACTIVE));
+    userService.assignRoles(Tenant.DEFAULT_TENANT_ID, created.getId(), Set.of(UserRole.TENANT_ADMIN));
+
+    // 관리 역할 부여로 USER 롤이 제거됐는지 먼저 확인(전제 검증)
+    assertEquals(Set.of(UserRole.TENANT_ADMIN),
+        userService.findById(Tenant.DEFAULT_TENANT_ID, created.getId()).getRoles());
+
+    assertTrue(userService.activeUserEmails(Tenant.DEFAULT_TENANT_ID).contains(admin + "@example.com"),
+        "관리자가 브로드캐스트 수신자에서 누락됨");
   }
 }

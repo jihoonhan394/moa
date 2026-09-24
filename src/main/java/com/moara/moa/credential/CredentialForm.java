@@ -12,4 +12,15 @@ public record CredentialForm(
     @NotBlank @Size(max = 100) String name,
     @NotNull CredentialType type,
     @NotBlank @Size(max = 255) String username,
-    String secret) {}
+    String secret) {
+
+  /**
+   * record 기본 toString은 모든 필드를 그대로 찍으므로 secret이 로그·예외 메시지에 평문으로
+   * 남는다(CWE-532). 다른 비밀번호 폼과 동일하게 마스킹한다.
+   */
+  @Override
+  public String toString() {
+    return "CredentialForm[name=" + name + ", type=" + type + ", username=" + username
+        + ", secret=" + (secret == null || secret.isBlank() ? "<none>" : "***") + "]";
+  }
+}
