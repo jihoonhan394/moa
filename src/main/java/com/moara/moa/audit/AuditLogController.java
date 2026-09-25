@@ -48,11 +48,23 @@ public class AuditLogController {
   }
 
   private AuditView toView(AuditLog log, Map<UUID, String> actorNames) {
-    String actor = actorNames.getOrDefault(log.getActorUserId(), log.getActorUserId().toString());
+    String actor = actorLabel(log.getActorUserId(), actorNames);
     String target = log.getTargetType() == null ? "-"
         : log.getTargetType() + (log.getTargetId() != null ? " (" + log.getTargetId() + ")" : "");
     return new AuditView(
         log.getCreatedAt(), actor, log.getAction(), target, log.getResult(), log.getMessage());
+  }
+
+  /**
+   * 행위자가 <b>없을 수 있다</b> — 없는 계정으로의 로그인 실패가 그렇고(V72), 그것이 가장
+   * 보고 싶은 신호다. 전에는 여기서 바로 {@code toString()}을 불러, 그런 기록이 처음
+   * 들어오는 순간 감사 화면 전체가 NPE로 죽었을 것이다.
+   */
+  private static String actorLabel(UUID actorId, Map<UUID, String> actorNames) {
+    if (actorId == null) {
+      return "(등록되지 않은 계정)";
+    }
+    return actorNames.getOrDefault(actorId, actorId.toString());
   }
 
   public record AuditView(

@@ -29,7 +29,15 @@ public class AuditLog {
   @Column(name = "target_tenant_id")
   private UUID targetTenantId;
 
-  @Column(name = "actor_user_id", nullable = false)
+  /**
+   * 행위를 한 사람. <b>없을 수 있다</b> — 실패한 로그인 중 상당수는 "없는 계정"으로의 시도이고
+   * (사용자명을 훑는 공격이 그 형태다), 그것이야말로 가장 보고 싶은 신호다. 행위자를 요구하면
+   * 그 시도는 남길 자리가 없어 감사에서 통째로 빠진다.
+   *
+   * <p>성공한 특권 행위는 여전히 행위자가 있어야 한다 — 그 판단은
+   * {@code TenantAuditRecorder}에 있다.
+   */
+  @Column(name = "actor_user_id")
   private UUID actorUserId;
 
   @Column(nullable = false, length = 100)

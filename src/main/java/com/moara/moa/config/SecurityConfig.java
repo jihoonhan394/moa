@@ -1,5 +1,6 @@
 package com.moara.moa.config;
 
+import com.moara.moa.security.MoaAuthenticationFailureHandler;
 import com.moara.moa.security.MoaAuthenticationSuccessHandler;
 import com.moara.moa.security.PlatformEntryFilter;
 import com.moara.moa.security.TenantAuthenticationDetailsSource;
@@ -21,7 +22,8 @@ public class SecurityConfig {
       TenantAuthenticationProvider tenantAuthenticationProvider,
       TenantAuthenticationDetailsSource tenantAuthenticationDetailsSource,
       PlatformEntryFilter platformEntryFilter,
-      MoaAuthenticationSuccessHandler successHandler)
+      MoaAuthenticationSuccessHandler successHandler,
+      MoaAuthenticationFailureHandler failureHandler)
       throws Exception {
     // 인증은 기관(테넌트) 컨텍스트를 반영하는 TenantAuthenticationProvider가 처리한다.
     // (아이디만으로 조회하는 기본 DaoAuthenticationProvider는 이 빈이 있으면 자동구성에서 물러난다.)
@@ -75,7 +77,8 @@ public class SecurityConfig {
             .loginProcessingUrl("/login")
             .authenticationDetailsSource(tenantAuthenticationDetailsSource)
             .successHandler(successHandler)
-            .failureUrl("/login?error")
+            // 실패를 세고 감사에 남긴 뒤 같은 곳으로 돌려보낸다(/login?error).
+            .failureHandler(failureHandler)
             .permitAll())
         .logout(logout -> logout.logoutSuccessUrl("/enter?logout").invalidateHttpSession(true))
         .build();

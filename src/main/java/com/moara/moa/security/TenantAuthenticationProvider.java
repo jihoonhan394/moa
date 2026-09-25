@@ -29,14 +29,17 @@ public class TenantAuthenticationProvider implements AuthenticationProvider {
   private final MoaUserDetailsService userDetailsService;
   private final PasswordEncoder passwordEncoder;
   private final TenantRepository tenantRepository;
+  private final LoginThrottle throttle;
 
   public TenantAuthenticationProvider(
       MoaUserDetailsService userDetailsService,
       PasswordEncoder passwordEncoder,
-      TenantRepository tenantRepository) {
+      TenantRepository tenantRepository,
+      LoginThrottle throttle) {
     this.userDetailsService = userDetailsService;
     this.passwordEncoder = passwordEncoder;
     this.tenantRepository = tenantRepository;
+    this.throttle = throttle;
   }
 
   @Override
@@ -47,15 +50,21 @@ public class TenantAuthenticationProvider implements AuthenticationProvider {
 
     UUID tenantId = null;
     boolean platform = false;
+    String clientIp = "unknown";
     if (authentication.getDetails() instanceof TenantAuthenticationDetails details) {
       tenantId = details.getTenantId();
       platform = details.isPlatform();
+      clientIp = details.getClientIp();
     }
     if (!platform && tenantId == null) {
       // 기관 선택 없이 로그인 시도 → 진입 단계를 거치지 않은 요청. 인증 거부.
       log.warn("[LOGIN] no tenant selected: user={}", mask(username));
       throw new BadCredentialsException("No tenant selected");
     }
+
+    // 비밀번호를 대조하기 전에 본다. 잠긴 뒤에도 매번 대조하면 느린 해시(BCrypt)를 계속
+    // 돌리게 되어, 잠금이 오히려 공격자가 서버를 괴롭히는 도구가 된다.
+    throttle.checkNotLocked(tenantId, username, clientIp);
 
     MoaUserDetails user;
     try {
@@ -80,6 +89,10 @@ public class TenantAuthenticationProvider implements AuthenticationProvider {
         throw new LockedException("기관 구독이 만료되었거나 비활성 상태입니다.");
       }
     }
+    // 여기까지 왔으면 이 계정의 지난 실패는 없던 일이 된다. 출발지 카운터는 남긴다 —
+    // 지우면 공격자가 자기 계정에 한 번 로그인하는 것만으로 자기 IP 기록을 씻을 수 있다.
+    throttle.clearAccount(tenantId, username);
+
     UsernamePasswordAuthenticationToken result =
         UsernamePasswordAuthenticationToken.authenticated(user, null, user.getAuthorities());
     result.setDetails(authentication.getDetails());
