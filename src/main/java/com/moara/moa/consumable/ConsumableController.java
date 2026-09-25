@@ -1,7 +1,6 @@
 package com.moara.moa.consumable;
 
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.group.AccessGroup;
 import com.moara.moa.group.AccessGroupService;
 import com.moara.moa.security.TenantContext;
@@ -36,19 +35,19 @@ public class ConsumableController {
   private final ConsumableRequestService requestService;
   private final AccessGroupService groupService;
   private final ManagedUserService userService;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
 
   public ConsumableController(
       ConsumableService consumableService, ConsumableRequestService requestService,
       AccessGroupService groupService,
-      ManagedUserService userService, AuditLogService auditLogService,
+      ManagedUserService userService, TenantAuditRecorder auditRecorder,
       TenantContext tenantContext) {
     this.consumableService = consumableService;
     this.requestService = requestService;
     this.groupService = groupService;
     this.userService = userService;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
   }
 
@@ -223,12 +222,8 @@ public class ConsumableController {
     }
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "ConsumableItem", targetId,
-          AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("ConsumableItem", action, targetId, message);
   }
 }

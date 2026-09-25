@@ -1,7 +1,6 @@
 package com.moara.moa.reservation;
 
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.security.TenantContext;
 import jakarta.validation.Valid;
 import java.util.HashMap;
@@ -21,13 +20,13 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 public class ReservationController {
   private final ReservationService reservationService;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
 
   public ReservationController(
-      ReservationService reservationService, AuditLogService auditLogService, TenantContext tenantContext) {
+      ReservationService reservationService, TenantAuditRecorder auditRecorder, TenantContext tenantContext) {
     this.reservationService = reservationService;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
   }
 
@@ -85,12 +84,8 @@ public class ReservationController {
     return "redirect:/reservations";
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "Reservation", targetId,
-          AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("Reservation", action, targetId, message);
   }
 }

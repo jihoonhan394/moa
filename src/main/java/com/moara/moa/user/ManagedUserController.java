@@ -1,7 +1,6 @@
 package com.moara.moa.user;
 
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.security.TenantContext;
 import jakarta.validation.Valid;
 import java.util.HashSet;
@@ -22,17 +21,17 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class ManagedUserController {
   private final ManagedUserService userService;
   private final UserLifecycleService lifecycleService;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final com.moara.moa.tenant.TenantService tenantService;
   private final TenantContext tenantContext;
 
   public ManagedUserController(
       ManagedUserService userService, UserLifecycleService lifecycleService,
-      AuditLogService auditLogService, com.moara.moa.tenant.TenantService tenantService,
+      TenantAuditRecorder auditRecorder, com.moara.moa.tenant.TenantService tenantService,
       TenantContext tenantContext) {
     this.userService = userService;
     this.lifecycleService = lifecycleService;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.tenantService = tenantService;
     this.tenantContext = tenantContext;
   }
@@ -223,19 +222,11 @@ public class ManagedUserController {
 
   /** 실패한 특권 행위도 기록한다(성공만 남기면 사고 분석이 불가능하다). */
   private void auditFailure(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "ManagedUser", targetId,
-          AuditResult.FAILURE, message);
-    }
+    auditRecorder.recordFailure("ManagedUser", action, targetId, message);
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "ManagedUser", targetId, AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("ManagedUser", action, targetId, message);
   }
 }

@@ -1,7 +1,6 @@
 package com.moara.moa.onboarding;
 
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.security.TenantContext;
 import com.moara.moa.solution.ManagedSolutionService;
 import com.moara.moa.wiki.WikiSpaceService;
@@ -24,17 +23,17 @@ public class OnboardingController {
   private final ManagedSolutionService solutionService;
   private final WikiSpaceService wikiSpaceService;
   private final TenantContext tenantContext;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
 
   public OnboardingController(
       OnboardingService onboardingService, ManagedSolutionService solutionService,
       WikiSpaceService wikiSpaceService, TenantContext tenantContext,
-      AuditLogService auditLogService) {
+      TenantAuditRecorder auditRecorder) {
     this.onboardingService = onboardingService;
     this.solutionService = solutionService;
     this.wikiSpaceService = wikiSpaceService;
     this.tenantContext = tenantContext;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
   }
 
   @GetMapping("/onboarding")
@@ -85,12 +84,8 @@ public class OnboardingController {
     return "redirect:/onboarding";
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "OnboardingTemplate", targetId,
-          AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("OnboardingTemplate", action, targetId, message);
   }
 }

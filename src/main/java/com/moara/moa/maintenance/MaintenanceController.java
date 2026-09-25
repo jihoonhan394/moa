@@ -1,8 +1,7 @@
 package com.moara.moa.maintenance;
 
 import com.moara.moa.asset.AssetService;
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.security.TenantContext;
 import com.moara.moa.solution.ManagedSolutionService;
 import com.moara.moa.user.ManagedUser;
@@ -34,18 +33,18 @@ public class MaintenanceController {
   private final ManagedSolutionService solutionService;
   private final ManagedUserService userService;
   private final TenantContext tenantContext;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
 
   public MaintenanceController(
       MaintenanceService maintenanceService, AssetService assetService,
       ManagedSolutionService solutionService, ManagedUserService userService,
-      TenantContext tenantContext, AuditLogService auditLogService) {
+      TenantContext tenantContext, TenantAuditRecorder auditRecorder) {
     this.maintenanceService = maintenanceService;
     this.assetService = assetService;
     this.solutionService = solutionService;
     this.userService = userService;
     this.tenantContext = tenantContext;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
   }
 
   @GetMapping("/maintenance")
@@ -171,12 +170,8 @@ public class MaintenanceController {
     return names;
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "Maintenance", targetId,
-          AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("Maintenance", action, targetId, message);
   }
 }

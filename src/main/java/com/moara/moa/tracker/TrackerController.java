@@ -2,8 +2,8 @@ package com.moara.moa.tracker;
 
 import com.moara.moa.asset.Asset;
 import com.moara.moa.asset.AssetService;
-import com.moara.moa.audit.AuditLogService;
 import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.inventory.InventoryItem;
 import com.moara.moa.inventory.InventoryItemService;
 import com.moara.moa.security.TenantContext;
@@ -28,18 +28,18 @@ public class TrackerController {
   private final AssetService assetService;
   private final SslProbeService sslProbeService;
   private final TenantContext tenantContext;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
 
   public TrackerController(
       ResourceTrackerService trackerService, InventoryItemService inventoryService,
       AssetService assetService, SslProbeService sslProbeService, TenantContext tenantContext,
-      AuditLogService auditLogService) {
+      TenantAuditRecorder auditRecorder) {
     this.trackerService = trackerService;
     this.inventoryService = inventoryService;
     this.assetService = assetService;
     this.sslProbeService = sslProbeService;
     this.tenantContext = tenantContext;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
   }
 
   // ── 인벤토리 대상 ────────────────────────────────────────────────
@@ -157,12 +157,9 @@ public class TrackerController {
     audit(action, targetId, AuditResult.SUCCESS, message);
   }
 
+  /** 성공·실패를 함께 남긴다 — SSL 재탐지처럼 실패가 의미 있는 행위가 있다. */
   private void audit(String action, UUID targetId, AuditResult result, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "ResourceTracker", targetId, result, message);
-    }
+    auditRecorder.record("ResourceTracker", action, targetId, result, message);
   }
 
   private void populate(

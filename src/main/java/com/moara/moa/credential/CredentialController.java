@@ -1,7 +1,6 @@
 package com.moara.moa.credential;
 
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.security.TenantContext;
 import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
@@ -31,18 +30,18 @@ public class CredentialController {
   private final CredentialShareService shareService;
   private final ManagedUserService userService;
   private final WikiSpaceService wikiSpaceService;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
 
   public CredentialController(
       CredentialService credentialService, CredentialShareService shareService,
       ManagedUserService userService, WikiSpaceService wikiSpaceService,
-      AuditLogService auditLogService, TenantContext tenantContext) {
+      TenantAuditRecorder auditRecorder, TenantContext tenantContext) {
     this.credentialService = credentialService;
     this.shareService = shareService;
     this.userService = userService;
     this.wikiSpaceService = wikiSpaceService;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
   }
 
@@ -137,11 +136,8 @@ public class CredentialController {
     model.addAttribute("projectName", "MOA");
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "Credential", targetId, AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("Credential", action, targetId, message);
   }
 }

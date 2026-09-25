@@ -1,7 +1,6 @@
 package com.moara.moa.solution;
 
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.security.TenantContext;
 import jakarta.validation.Valid;
 import java.util.HashMap;
@@ -27,16 +26,16 @@ public class SolutionSequenceController {
   private final SolutionSequenceService sequenceService;
   private final SolutionSequenceRunService runService;
   private final ManagedSolutionService solutionService;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
 
   public SolutionSequenceController(
       SolutionSequenceService sequenceService, SolutionSequenceRunService runService,
-      ManagedSolutionService solutionService, AuditLogService auditLogService, TenantContext tenantContext) {
+      ManagedSolutionService solutionService, TenantAuditRecorder auditRecorder, TenantContext tenantContext) {
     this.sequenceService = sequenceService;
     this.runService = runService;
     this.solutionService = solutionService;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
   }
 
@@ -153,12 +152,8 @@ public class SolutionSequenceController {
     redirect.addFlashAttribute("runSequenceId", id);
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "SolutionSequence", targetId,
-          AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("SolutionSequence", action, targetId, message);
   }
 }

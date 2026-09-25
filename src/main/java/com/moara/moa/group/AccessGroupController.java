@@ -1,7 +1,6 @@
 package com.moara.moa.group;
 
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.security.TenantContext;
 import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
@@ -28,17 +27,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class AccessGroupController {
   private final AccessGroupService groupService;
   private final ManagedUserService userService;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
 
   public AccessGroupController(
       AccessGroupService groupService,
       ManagedUserService userService,
-      AuditLogService auditLogService,
+      TenantAuditRecorder auditRecorder,
       TenantContext tenantContext) {
     this.groupService = groupService;
     this.userService = userService;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
   }
 
@@ -178,12 +177,9 @@ public class AccessGroupController {
     }
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "AccessGroup", targetId, AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("AccessGroup", action, targetId, message);
   }
 
   private MemberView toMemberView(UserGroupMember member, Map<UUID, ManagedUser> tenantUsers) {

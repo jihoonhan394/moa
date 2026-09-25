@@ -3,8 +3,7 @@ package com.moara.moa.solution;
 import com.moara.moa.asset.Asset;
 import com.moara.moa.asset.AssetService;
 import com.moara.moa.asset.AssetType;
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.credential.CredentialService;
 import com.moara.moa.group.AccessGroup;
 import com.moara.moa.group.AccessGroupService;
@@ -36,19 +35,19 @@ public class TeamSolutionController {
   private final AssetService assetService;
   private final CredentialService credentialService;
   private final AccessGroupService groupService;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
 
   public TeamSolutionController(
       ManagedSolutionService solutionService, SolutionControlService controlService,
       AssetService assetService, CredentialService credentialService, AccessGroupService groupService,
-      AuditLogService auditLogService, TenantContext tenantContext) {
+      TenantAuditRecorder auditRecorder, TenantContext tenantContext) {
     this.solutionService = solutionService;
     this.controlService = controlService;
     this.assetService = assetService;
     this.credentialService = credentialService;
     this.groupService = groupService;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
   }
 
@@ -215,12 +214,8 @@ public class TeamSolutionController {
     return value == null || value.isBlank() ? null : UUID.fromString(value.trim());
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "ManagedSolution", targetId,
-          AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("ManagedSolution", action, targetId, message);
   }
 }

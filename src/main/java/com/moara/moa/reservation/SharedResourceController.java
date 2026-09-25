@@ -1,7 +1,6 @@
 package com.moara.moa.reservation;
 
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.category.CategoryDomain;
 import com.moara.moa.category.CategoryService;
 import com.moara.moa.security.TenantContext;
@@ -20,15 +19,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 public class SharedResourceController {
   private final SharedResourceService resourceService;
   private final CategoryService categoryService;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
 
   public SharedResourceController(
       SharedResourceService resourceService, CategoryService categoryService,
-      AuditLogService auditLogService, TenantContext tenantContext) {
+      TenantAuditRecorder auditRecorder, TenantContext tenantContext) {
     this.resourceService = resourceService;
     this.categoryService = categoryService;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
   }
 
@@ -114,12 +113,8 @@ public class SharedResourceController {
     return categoryService.names(tenantContext.currentTenantId(), CategoryDomain.SHARED_RESOURCE);
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "SharedResource", targetId,
-          AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("SharedResource", action, targetId, message);
   }
 }

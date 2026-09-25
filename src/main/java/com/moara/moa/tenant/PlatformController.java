@@ -2,7 +2,7 @@ package com.moara.moa.tenant;
 
 import com.moara.moa.asset.AssetService;
 import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.security.TenantContext;
 import com.moara.moa.user.DuplicateManagedUserException;
 import com.moara.moa.user.ManagedUser;
@@ -37,6 +37,7 @@ public class PlatformController {
   private final ManagedUserService userService;
   private final AssetService assetService;
   private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
   private final JdbcTemplate jdbcTemplate;
 
@@ -44,13 +45,14 @@ public class PlatformController {
       TenantService tenantService,
       ManagedUserService userService,
       AssetService assetService,
-      AuditLogService auditLogService,
+      AuditLogService auditLogService, TenantAuditRecorder auditRecorder,
       TenantContext tenantContext,
       JdbcTemplate jdbcTemplate) {
     this.tenantService = tenantService;
     this.userService = userService;
     this.assetService = assetService;
     this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
     this.jdbcTemplate = jdbcTemplate;
   }
@@ -164,11 +166,8 @@ public class PlatformController {
     }
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordGlobalAction(
-          actorId, null, action, "Operator", targetId, AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("Operator", action, targetId, message);
   }
 }

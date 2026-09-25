@@ -1,7 +1,6 @@
 package com.moara.moa.deputy;
 
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.group.AccessGroupService;
 import com.moara.moa.security.TenantContext;
 import com.moara.moa.user.ManagedUser;
@@ -31,16 +30,16 @@ public class TeamDeputyController {
   private final DeputyService deputyService;
   private final AccessGroupService groupService;
   private final ManagedUserService userService;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
 
   public TeamDeputyController(
       DeputyService deputyService, AccessGroupService groupService, ManagedUserService userService,
-      AuditLogService auditLogService, TenantContext tenantContext) {
+      TenantAuditRecorder auditRecorder, TenantContext tenantContext) {
     this.deputyService = deputyService;
     this.groupService = groupService;
     this.userService = userService;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
   }
 
@@ -116,12 +115,8 @@ public class TeamDeputyController {
     return "redirect:/team/deputies";
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "DeputyDelegation", targetId,
-          AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("DeputyDelegation", action, targetId, message);
   }
 }

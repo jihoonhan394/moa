@@ -1,7 +1,6 @@
 package com.moara.moa.wiki;
 
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -39,15 +38,15 @@ public class WikiAttachmentController {
 
   private final WikiPageService pageService;
   private final WikiAttachmentService attachmentService;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final WikiAccessGuard guard;
 
   public WikiAttachmentController(
       WikiPageService pageService, WikiAttachmentService attachmentService,
-      AuditLogService auditLogService, WikiAccessGuard guard) {
+      TenantAuditRecorder auditRecorder, WikiAccessGuard guard) {
     this.pageService = pageService;
     this.attachmentService = attachmentService;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.guard = guard;
   }
 
@@ -139,11 +138,8 @@ public class WikiAttachmentController {
     }
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = guard.userId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          guard.tenantId(), actorId, action, "Wiki", targetId, AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("Wiki", action, targetId, message);
   }
 }

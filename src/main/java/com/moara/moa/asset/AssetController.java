@@ -1,7 +1,7 @@
 package com.moara.moa.asset;
 
 import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.category.CategoryDomain;
 import com.moara.moa.category.CategoryService;
 import com.moara.moa.group.AccessGroup;
@@ -31,17 +31,19 @@ public class AssetController {
 
   private final AssetService assetService;
   private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final ManagedUserService userService;
   private final AccessGroupService groupService;
   private final CategoryService categoryService;
   private final TenantContext tenantContext;
 
   public AssetController(
-      AssetService assetService, AuditLogService auditLogService,
+      AssetService assetService, AuditLogService auditLogService, TenantAuditRecorder auditRecorder,
       ManagedUserService userService, AccessGroupService groupService,
       CategoryService categoryService, TenantContext tenantContext) {
     this.assetService = assetService;
     this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.userService = userService;
     this.groupService = groupService;
     this.categoryService = categoryService;
@@ -285,13 +287,9 @@ public class AssetController {
     model.addAttribute("groupNames", groupNames);
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, TARGET_TYPE, targetId,
-          AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record(TARGET_TYPE, action, targetId, message);
   }
 
   /** 수정 전/후를 필드 단위로 비교해 사람이 읽을 변경 요약을 만든다(민감정보 없음). 최대 1000자로 자른다. */

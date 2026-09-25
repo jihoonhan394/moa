@@ -1,7 +1,6 @@
 package com.moara.moa.inventory;
 
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.category.CategoryDomain;
 import com.moara.moa.category.CategoryService;
 import com.moara.moa.security.TenantContext;
@@ -38,7 +37,7 @@ public class InventoryController {
   private final InventoryCustodyService custodyService;
   private final InventoryPartService partService;
   private final CsvColumnMapper csvColumnMapper;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
 
   public InventoryController(
@@ -46,7 +45,7 @@ public class InventoryController {
       ManagedUserService userService, com.moara.moa.group.AccessGroupService groupService,
       CategoryService categoryService, InventoryCustodyService custodyService,
       InventoryPartService partService, CsvColumnMapper csvColumnMapper,
-      AuditLogService auditLogService, TenantContext tenantContext) {
+      TenantAuditRecorder auditRecorder, TenantContext tenantContext) {
     this.inventoryService = inventoryService;
     this.importService = importService;
     this.userService = userService;
@@ -55,7 +54,7 @@ public class InventoryController {
     this.custodyService = custodyService;
     this.partService = partService;
     this.csvColumnMapper = csvColumnMapper;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
   }
 
@@ -357,12 +356,8 @@ public class InventoryController {
         form.quantity());
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "InventoryItem", targetId,
-          AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("InventoryItem", action, targetId, message);
   }
 }

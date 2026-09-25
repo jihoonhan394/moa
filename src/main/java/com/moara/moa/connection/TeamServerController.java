@@ -6,8 +6,7 @@ import com.moara.moa.asset.AssetProtocol;
 import com.moara.moa.asset.AssetService;
 import com.moara.moa.asset.AssetStatus;
 import com.moara.moa.asset.AssetType;
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.group.AccessGroup;
 import com.moara.moa.group.AccessGroupService;
 import com.moara.moa.security.TenantContext;
@@ -34,15 +33,15 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class TeamServerController {
   private final AssetService assetService;
   private final AccessGroupService groupService;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
 
   public TeamServerController(
       AssetService assetService, AccessGroupService groupService,
-      AuditLogService auditLogService, TenantContext tenantContext) {
+      TenantAuditRecorder auditRecorder, TenantContext tenantContext) {
     this.assetService = assetService;
     this.groupService = groupService;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
   }
 
@@ -141,11 +140,8 @@ public class TeamServerController {
         .anyMatch(g -> g.getId().equals(groupId));
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = tenantContext.currentUserId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          tenantContext.currentTenantId(), actorId, action, "Asset", targetId, AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("Asset", action, targetId, message);
   }
 }

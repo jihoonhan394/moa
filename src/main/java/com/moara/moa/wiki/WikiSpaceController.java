@@ -1,7 +1,6 @@
 package com.moara.moa.wiki;
 
-import com.moara.moa.audit.AuditLogService;
-import com.moara.moa.audit.AuditResult;
+import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.group.AccessGroup;
 import com.moara.moa.group.AccessGroupService;
 import com.moara.moa.user.ManagedUserService;
@@ -35,19 +34,19 @@ public class WikiSpaceController {
   private final WikiTemplateService templateService;
   private final ManagedUserService userService;
   private final AccessGroupService groupService;
-  private final AuditLogService auditLogService;
+  private final TenantAuditRecorder auditRecorder;
   private final WikiAccessGuard guard;
 
   public WikiSpaceController(
       WikiSpaceService spaceService, WikiPageService pageService,
       WikiTemplateService templateService, ManagedUserService userService,
-      AccessGroupService groupService, AuditLogService auditLogService, WikiAccessGuard guard) {
+      AccessGroupService groupService, TenantAuditRecorder auditRecorder, WikiAccessGuard guard) {
     this.spaceService = spaceService;
     this.pageService = pageService;
     this.templateService = templateService;
     this.userService = userService;
     this.groupService = groupService;
-    this.auditLogService = auditLogService;
+    this.auditRecorder = auditRecorder;
     this.guard = guard;
   }
 
@@ -245,11 +244,8 @@ public class WikiSpaceController {
     return chain;
   }
 
+  /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */
   private void audit(String action, UUID targetId, String message) {
-    UUID actorId = guard.userId();
-    if (actorId != null) {
-      auditLogService.recordTenantAction(
-          guard.tenantId(), actorId, action, "Wiki", targetId, AuditResult.SUCCESS, message);
-    }
+    auditRecorder.record("Wiki", action, targetId, message);
   }
 }
