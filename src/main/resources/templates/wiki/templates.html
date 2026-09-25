@@ -36,7 +36,7 @@
       <label>서식 이름</label>
       <input type="text" th:field="*{name}" maxlength="200" placeholder="예: 회의록 / 결정 기록 / 주간보고" required>
       <p th:if="${#fields.hasErrors('name')}" class="error-message" th:errors="*{name}"></p>
-      <label>서식 내용 <small style="color:#7a869a">(마크다운. 빈칸 자리표시 등 자유롭게)</small></label>
+      <label>서식 내용 <small class="t-muted">(마크다운. 빈칸 자리표시 등 자유롭게)</small></label>
       <textarea th:field="*{content}" rows="16" maxlength="50000" placeholder="# 제목&#10;&#10;## 개요&#10;- &#10;&#10;## 상세&#10;" required
                 style="width:100%;font-family:inherit;line-height:1.5"></textarea>
       <p th:if="${#fields.hasErrors('content')}" class="error-message" th:errors="*{content}"></p>

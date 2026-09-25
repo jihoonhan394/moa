@@ -24,7 +24,7 @@
     </div>
   </header>
 
-  <p th:if="${wikiError}" class="modal-note" style="color:#c0392b" th:text="${wikiError}">오류</p>
+  <p th:if="${wikiError}" class="modal-note t-bad" th:text="${wikiError}">오류</p>
 
   <!-- 열람자 배지: 이 공간을 누가 볼 수 있는지 항상 노출 -->
   <section class="panel" th:if="${!#lists.isEmpty(viewers)}">
@@ -65,7 +65,7 @@
     </form>
     <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/delete'}" style="margin-top:.6rem"
           onsubmit="return confirm('이 폴더를 삭제할까요? (문서가 있으면 삭제되지 않습니다)')">
-      <button class="button" type="submit" style="color:#c0392b">공간 삭제</button>
+      <button class="button t-bad" type="submit">공간 삭제</button>
     </form>
   </section>
 </main></div>

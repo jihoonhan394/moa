@@ -16,7 +16,7 @@
   </header>
 
   <p th:if="${reservationMessage}" class="modal-note" th:text="${reservationMessage}">결과</p>
-  <p th:if="${reservationError}" class="modal-note" style="color:#c0392b" th:text="${reservationError}">오류</p>
+  <p th:if="${reservationError}" class="modal-note t-bad" th:text="${reservationError}">오류</p>
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">예약하기</p><h2>새 예약</h2></div></div>

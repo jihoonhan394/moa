@@ -100,8 +100,8 @@
       <div class="table-row" th:each="sol : ${solutions}">
         <strong><a th:href="@{'/solutions/' + ${sol.id}}" th:text="${sol.name}">이름</a></strong>
         <span th:text="${sol.type}">유형</span>
-        <span th:text="${sol.category != null ? sol.category : '—'}" style="color:#7a869a">카테고리</span>
-        <span th:text="${sol.ownerGroupId != null ? groupNames.getOrDefault(sol.ownerGroupId, '(삭제된 그룹)') : '—'}" style="color:#7a869a">소유팀</span>
+        <span th:text="${sol.category != null ? sol.category : '—'}" class="t-muted">카테고리</span>
+        <span th:text="${sol.ownerGroupId != null ? groupNames.getOrDefault(sol.ownerGroupId, '(삭제된 그룹)') : '—'}" class="t-muted">소유팀</span>
         <span class="table-actions">
           <a class="button" th:href="@{'/solutions/' + ${sol.id}}" title="운영 콘솔(매뉴얼·업체·이력)">콘솔</a>
           <a class="button" th:href="@{'/solutions/' + ${sol.id} + '/edit'}" title="등록값 수정(자격증명·명령 등)">수정</a>

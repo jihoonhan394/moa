@@ -97,9 +97,9 @@
       <div class="table-row table-head"><span>부품</span><span>분류</span><span>수량</span><span>시리얼</span><span></span></div>
       <div class="table-row" th:each="p : ${parts}">
         <strong th:text="${p.name}">부품</strong>
-        <span th:text="${p.category} ?: '-'" style="color:#7a869a">분류</span>
+        <span th:text="${p.category} ?: '-'" class="t-muted">분류</span>
         <span th:text="${p.quantity}">1</span>
-        <span th:text="${p.serialNo} ?: '-'" style="color:#7a869a">시리얼</span>
+        <span th:text="${p.serialNo} ?: '-'" class="t-muted">시리얼</span>
         <span class="table-actions">
           <a class="button" th:href="@{'/inventory/' + ${p.id} + '/custody'}">이력</a>
           <form method="post" th:action="@{'/inventory/' + ${item.id} + '/parts/' + ${p.id} + '/detach'}"
@@ -145,12 +145,12 @@
         <span th:text="${r.startedOn}">시작</span>
         <span th:if="${r.endedOn != null}" th:text="${r.endedOn}">종료</span>
         <b th:if="${r.endedOn == null}" class="good">보관 중</b>
-        <span th:if="${r.expectedReturnOn == null}" style="color:#7a869a">-</span>
+        <span th:if="${r.expectedReturnOn == null}" class="t-muted">-</span>
         <b th:if="${r.expectedReturnOn != null}"
            th:classappend="${r.overdue} ? 'bad' : 'warn'"
            th:text="${r.expectedReturnOn} + (${r.overdue} ? ' (초과)' : '')">예정일</b>
-        <span th:text="${r.reason} ?: '-'" style="color:#7a869a">사유</span>
-        <span th:text="${r.actor}" style="color:#7a869a">기록자</span>
+        <span th:text="${r.reason} ?: '-'" class="t-muted">사유</span>
+        <span th:text="${r.actor}" class="t-muted">기록자</span>
       </div>
     </div>
   </section>

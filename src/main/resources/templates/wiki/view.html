@@ -29,12 +29,12 @@
       <a class="button" th:if="${canEdit}" th:href="@{'/wiki/' + ${wikiPage.id} + '/edit'}">수정</a>
       <form th:if="${canDelete}" method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/delete'}"
             onsubmit="return confirm('이 문서를 삭제할까요?')">
-        <button class="button" type="submit" style="color:#c0392b">삭제</button>
+        <button class="button t-bad" type="submit">삭제</button>
       </form>
     </div>
   </header>
 
-  <p th:if="${wikiError}" class="modal-note" style="color:#c0392b" th:text="${wikiError}">오류</p>
+  <p th:if="${wikiError}" class="modal-note t-bad" th:text="${wikiError}">오류</p>
 
   <!-- 라벨 -->
   <section class="panel">
@@ -97,7 +97,7 @@
         <form th:if="${canEdit}" method="post"
               th:action="@{'/wiki/attachments/' + ${a.id} + '/delete'}" style="margin:0"
               onsubmit="return confirm('이 첨부를 삭제할까요?')">
-          <button class="button" type="submit" style="color:#c0392b">삭제</button>
+          <button class="button t-bad" type="submit">삭제</button>
         </form>
       </div>
     </div>
@@ -115,7 +115,7 @@
             <span th:text="${#temporals.format(c.createdAt, 'yyyy-MM-dd HH:mm')}">시각</span>
             <form th:if="${(c.authorUserId != null and c.authorUserId == myUserId) or canManage}" method="post"
                   th:action="@{'/wiki/' + ${wikiPage.id} + '/comments/' + ${c.id} + '/delete'}" style="display:inline;margin-left:.4rem">
-              <button type="submit" style="background:none;border:none;cursor:pointer;color:#c0392b">삭제</button>
+              <button type="submit" style="background:none;border:none;cursor:pointer;color:var(--red)">삭제</button>
             </form>
           </span>
         </div>

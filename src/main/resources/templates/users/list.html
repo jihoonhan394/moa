@@ -14,7 +14,7 @@
       <a class="button primary" th:href="@{/users/new}">사용자 등록</a>
     </header>
     <p th:if="${userMessage}" class="modal-note" th:text="${userMessage}">결과</p>
-    <p th:if="${userError}" class="modal-note" style="color:#c0392b" th:text="${userError}">오류</p>
+    <p th:if="${userError}" class="modal-note t-bad" th:text="${userError}">오류</p>
     <section class="panel">
       <div class="panel-head"><div><p class="eyebrow">사용자 목록</p><h2>등록된 사용자</h2></div><span class="pill" th:text="${#lists.size(users)} + '명'">0명</span></div>
       <p th:if="${#lists.isEmpty(users)}" class="subcopy">등록된 사용자가 없습니다. 우측 상단에서 사용자를 등록하세요.</p>
@@ -23,7 +23,7 @@
         <div class="table-row" th:each="user : ${users}">
           <div>
             <strong th:text="${user.name}">이름</strong>
-            <small th:text="${user.roleSummary}" style="display:block;color:#7a869a">일반 사용자</small>
+            <small th:text="${user.roleSummary}" class="t-sub">일반 사용자</small>
           </div>
           <span th:text="${user.username}">아이디</span>
           <span th:text="${user.email != null ? user.email : '-'}">이메일</span>
@@ -45,7 +45,7 @@
               </form>
               <form th:if="${user.status.name() == 'ACTIVE' or user.status.name() == 'DISABLED'}" method="post" th:action="@{'/users/' + ${user.id} + '/offboard'}" style="display:inline"
                     onsubmit="return confirm('퇴사 처리하면 이 사용자의 모든 접근(그룹·권한·솔루션)이 회수되고 되돌릴 수 없습니다. 진행할까요?')">
-                <button class="button" type="submit" style="color:#c0392b">퇴사</button>
+                <button class="button t-bad" type="submit">퇴사</button>
               </form>
             </th:block>
           </span>

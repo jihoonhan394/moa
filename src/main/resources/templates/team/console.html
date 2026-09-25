@@ -22,8 +22,8 @@
     </div>
   </header>
 
-  <p th:if="${teamOk != null}" class="subcopy" style="color:#2e7d32" th:text="${teamOk}">완료</p>
-  <p th:if="${teamError != null}" class="subcopy" style="color:#c0392b" th:text="${teamError}">오류</p>
+  <p th:if="${teamOk != null}" class="subcopy" style="color:var(--green)" th:text="${teamOk}">완료</p>
+  <p th:if="${teamError != null}" class="subcopy t-bad" th:text="${teamError}">오류</p>
 
   <section class="panel" th:if="${!isAdmin and #lists.isEmpty(ledGroups)}">
     <p class="subcopy">현재 부서장으로 지정된 그룹이 없습니다. 기관 관리자에게 그룹 상세에서 <b>부서장 지정</b>을 요청하세요.</p>
@@ -63,7 +63,7 @@
         <div class="table-row" th:each="m : ${members}">
           <div>
             <strong th:text="${m.user.name}">이름</strong>
-            <small th:text="'@' + ${m.user.username}" style="display:block;color:#7a869a">아이디</small>
+            <small th:text="'@' + ${m.user.username}" class="t-sub">아이디</small>
             <span th:each="r : ${m.roles}" th:if="${r.name() != 'USER'}" class="pill" style="margin-top:.2rem" th:text="${r.label}">역할</span>
           </div>
           <span th:text="${#lists.isEmpty(m.solutions)} ? '—' : ${#strings.listJoin(m.solutions, ', ')}">솔루션</span>

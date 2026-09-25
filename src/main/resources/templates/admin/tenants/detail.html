@@ -24,7 +24,7 @@
     <dl class="detail-list">
       <div><dt>상태</dt><dd><span class="state" th:classappend="${tenant.isAccessible(today)} ? 'online' : 'offline'"></span>
         <span th:text="${tenant.status}">ACTIVE</span>
-        <span th:if="${tenant.isExpired(today)}" style="color:#c0392b"> · 구독 만료</span></dd></div>
+        <span th:if="${tenant.isExpired(today)}" class="t-bad"> · 구독 만료</span></dd></div>
       <div><dt>사용자 수</dt><dd th:text="${userTotal}">0</dd></div>
       <div><dt>생성일</dt><dd th:text="${tenant.createdAt}">-</dd></div>
     </dl>
@@ -64,11 +64,11 @@
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">대표 관리자</p><h2>기관 운영자(TENANT_ADMIN)</h2></div><span class="pill" th:text="${#lists.size(tenantAdmins)} + '명'">0명</span></div>
-    <p th:if="${adminError}" th:text="${adminError}" class="subcopy" style="color:#c0392b">오류</p>
+    <p th:if="${adminError}" th:text="${adminError}" class="subcopy t-bad">오류</p>
     <div th:if="${!#lists.isEmpty(tenantAdmins)}" class="data-table compact" style="margin-bottom:1rem">
       <div class="table-row table-head"><span>관리자</span><span>상태</span><span></span></div>
       <div class="table-row" th:each="admin : ${tenantAdmins}">
-        <div><strong th:text="${admin.username}">아이디</strong><small th:text="${admin.name}" style="display:block;color:#7a869a">이름</small></div>
+        <div><strong th:text="${admin.username}">아이디</strong><small th:text="${admin.name}" class="t-sub">이름</small></div>
         <span><span class="state" th:classappend="${admin.status.name() == 'ACTIVE'} ? 'online' : 'offline'"></span><span th:text="${admin.status}">ACTIVE</span></span>
         <span class="row-actions" style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:start">
           <form th:if="${admin.status.name() == 'ACTIVE'}" method="post"
@@ -91,7 +91,7 @@
           </details>
           <form method="post" th:action="@{'/admin/tenants/' + ${tenant.id} + '/admins/' + ${admin.id} + '/delete'}"
                 style="margin:0" onsubmit="return confirm('이 관리자를 삭제할까요? 활동 이력이 있으면 삭제 대신 비활성을 사용하세요.')">
-            <button class="button" type="submit" style="color:#c0392b">삭제</button></form>
+            <button class="button t-bad" type="submit">삭제</button></form>
         </span>
       </div>
     </div>

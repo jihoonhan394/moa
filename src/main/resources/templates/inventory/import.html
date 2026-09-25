@@ -30,7 +30,7 @@
       <div class="table-row" style="grid-template-columns:70px 1fr 2fr" th:each="e : ${result.errors}">
         <span th:text="${e.line}">1</span>
         <span class="bad" th:text="${e.message}">사유</span>
-        <span style="color:#7a869a;font-family:monospace;font-size:.8rem" th:text="${e.raw}">원본</span>
+        <span style="color:var(--muted);font-family:monospace;font-size:.8rem" th:text="${e.raw}">원본</span>
       </div>
     </div>
     <div style="margin-top:.8rem;display:flex;gap:.5rem">

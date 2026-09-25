@@ -43,10 +43,10 @@
         <input type="text" th:field="*{note}" maxlength="500" placeholder="비고 (선택)">
       </div>
       <div class="asset-toolbar">
-        <label style="display:grid;gap:.15rem;font-size:.78rem;color:#7a869a">구매일<input type="date" th:field="*{purchaseDate}"></label>
-        <label style="display:grid;gap:.15rem;font-size:.78rem;color:#7a869a">SW 라이선스 만료<input type="date" th:field="*{expiresAt}"></label>
-        <label style="display:grid;gap:.15rem;font-size:.78rem;color:#7a869a">보증 만료<input type="date" th:field="*{warrantyEnds}"></label>
-        <label style="display:grid;gap:.15rem;font-size:.78rem;color:#7a869a">리스/렌탈 만료<input type="date" th:field="*{leaseEnds}"></label>
+        <label style="display:grid;gap:.15rem;font-size:.78rem;color:var(--muted)">구매일<input type="date" th:field="*{purchaseDate}"></label>
+        <label style="display:grid;gap:.15rem;font-size:.78rem;color:var(--muted)">SW 라이선스 만료<input type="date" th:field="*{expiresAt}"></label>
+        <label style="display:grid;gap:.15rem;font-size:.78rem;color:var(--muted)">보증 만료<input type="date" th:field="*{warrantyEnds}"></label>
+        <label style="display:grid;gap:.15rem;font-size:.78rem;color:var(--muted)">리스/렌탈 만료<input type="date" th:field="*{leaseEnds}"></label>
       </div>
       <p class="subcopy" style="margin:0">보증·리스·라이선스 만료는 <b>만료 관리</b> 대시보드에 자동 표시되고 임박 시 알림이 갑니다.</p>
       <div class="asset-toolbar">
@@ -80,8 +80,8 @@
           <!-- 수량은 부분 이동의 전제라 이름 옆에서 바로 보여야 한다. -->
           <span th:if="${item.quantity > 1}" class="pill"
                 th:text="${item.quantity} + '개'" title="같은 물건 여러 개">2개</span>
-          <small th:if="${item.category != null}" th:text="${item.category} + (${item.serialNo != null} ? ' · ' + ${item.serialNo} : '')" style="display:block;color:#7a869a">카테고리</small>
-          <small th:if="${item.ownerGroupId != null}" th:text="'소유팀: ' + ${groupNames.getOrDefault(item.ownerGroupId, '(삭제된 그룹)')}" style="display:block;color:#4c83e0">소유팀</small>
+          <small th:if="${item.category != null}" th:text="${item.category} + (${item.serialNo != null} ? ' · ' + ${item.serialNo} : '')" class="t-sub">카테고리</small>
+          <small th:if="${item.ownerGroupId != null}" th:text="'소유팀: ' + ${groupNames.getOrDefault(item.ownerGroupId, '(삭제된 그룹)')}" style="display:block;color:var(--accent-2)">소유팀</small>
         </div>
         <span th:text="${item.type.label}">실물</span>
         <b th:classappend="${item.status.name() == 'AVAILABLE'} ? 'good' : (${item.status.name() == 'RETIRED'} ? 'bad' : 'warn')" th:text="${item.status.label}">가용</b>

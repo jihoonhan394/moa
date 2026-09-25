@@ -37,7 +37,7 @@
         <div class="table-row" th:each="m : ${mappings}">
           <div>
             <strong th:text="${m.target()}">항목</strong>
-            <small th:if="${m.target() == '이름'}" style="display:block;color:#c0392b">필수</small>
+            <small th:if="${m.target() == '이름'}" class="t-sub t-bad">필수</small>
           </div>
           <select th:name="'map_' + ${m.target()}">
             <option value="">— 없음 —</option>
@@ -46,8 +46,8 @@
                     th:text="${h}">열</option>
           </select>
           <!-- 무엇이 맞혔는지 밝힌다. AI가 짚은 칸은 특히 한 번 더 보게 된다. -->
-          <span th:if="${m.basis() == null}" style="color:#7a869a">-</span>
-          <span th:if="${m.basis() == '이름'}" style="color:#7a869a">열 이름</span>
+          <span th:if="${m.basis() == null}" class="t-muted">-</span>
+          <span th:if="${m.basis() == '이름'}" class="t-muted">열 이름</span>
           <span th:if="${m.basis() == 'AI'}" class="pill" title="AI가 제안했습니다 — 꼭 확인하세요">AI 제안</span>
         </div>
       </div>
@@ -60,7 +60,7 @@
           <span th:each="h : ${headers}" th:text="${h}">열</span>
         </div>
         <div class="table-row" th:each="row : ${samples}">
-          <span th:each="c : ${row}" th:text="${c}" style="color:#7a869a">값</span>
+          <span th:each="c : ${row}" th:text="${c}" class="t-muted">값</span>
         </div>
       </div>
       <p class="subcopy" style="margin-top:.5rem">

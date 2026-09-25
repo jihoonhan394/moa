@@ -22,7 +22,7 @@
         <div>
           <a th:if="${n.link != null}" th:href="${n.link}" th:text="${n.title}">제목</a>
           <span th:if="${n.link == null}" th:text="${n.title}">제목</span>
-          <small th:if="${n.body != null}" th:text="${n.body}" style="display:block;color:#7a869a;font-weight:400">내용</small>
+          <small th:if="${n.body != null}" th:text="${n.body}" style="display:block;color:var(--muted);font-weight:400">내용</small>
         </div>
         <span th:text="${#temporals.format(n.createdAt, 'yyyy-MM-dd HH:mm')}">시각</span>
       </div>

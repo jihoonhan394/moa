@@ -53,7 +53,7 @@
         <span th:text="${log.actor}">행위자</span>
         <div>
           <strong th:text="${log.action}">ACTION</strong>
-          <small th:if="${log.message != null}" th:text="${log.message}" style="display:block;color:#7a869a">상세</small>
+          <small th:if="${log.message != null}" th:text="${log.message}" class="t-sub">상세</small>
         </div>
         <span th:text="${log.target}">대상</span>
         <b th:classappend="${log.result.name() == 'SUCCESS'} ? 'good' : 'warn'" th:text="${log.result}">SUCCESS</b>

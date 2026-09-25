@@ -56,23 +56,21 @@
         <div>
           <strong th:text="${i.name}">이름</strong>
           <small th:if="${!i.active}" class="pill" style="margin-left:.3rem">사용 중지</small>
-          <small th:if="${i.category != null}" th:text="${i.category}"
-                 style="display:block;color:#7a869a">분류</small>
+          <small th:if="${i.category != null}" th:text="${i.category}" class="t-sub">분류</small>
         </div>
-        <span th:text="${i.ownerGroupId != null} ? ${groupNames.getOrDefault(i.ownerGroupId, '-')} : '-'"
-              style="color:#7a869a">담당팀</span>
+        <span th:text="${i.ownerGroupId != null} ? ${groupNames.getOrDefault(i.ownerGroupId, '-')} : '-'" class="t-muted">담당팀</span>
         <!-- 근거가 무엇인지 함께 보여 준다. 숫자만 있으면 믿을지 말지 판단할 수 없다. -->
-        <span th:if="${f.cycleDays() == null}" style="color:#7a869a">-</span>
+        <span th:if="${f.cycleDays() == null}" class="t-muted">-</span>
         <span th:unless="${f.cycleDays() == null}">
           <b th:text="${f.cycleDays()} + '일'">25일</b>
-          <small th:switch="${f.basis().name()}" style="display:block;color:#7a869a">
+          <small th:switch="${f.basis().name()}" class="t-sub">
             <span th:case="'MEASURED'">실측</span>
             <span th:case="'IRREGULAR'">불규칙</span>
             <span th:case="'CONFIGURED'">설정값</span>
           </small>
         </span>
-        <span th:text="${f.lastOrderedOn()} ?: '-'" style="color:#7a869a">마지막</span>
-        <span th:if="${f.dueOn() == null}" style="color:#7a869a">-</span>
+        <span th:text="${f.lastOrderedOn()} ?: '-'" class="t-muted">마지막</span>
+        <span th:if="${f.dueOn() == null}" class="t-muted">-</span>
         <b th:unless="${f.dueOn() == null}"
            th:classappend="${f.isDue(today)} ? 'warn' : 'good'"
            th:text="${f.dueOn()} + (${f.isDue(today)} ? ' (지남)' : '')">예상일</b>

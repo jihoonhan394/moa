@@ -21,8 +21,8 @@
       <input type="text" th:field="*{name}" placeholder="기관명 (예: 카카오)" required>
       <input type="text" th:field="*{code}" placeholder="기관 코드 (예: KAKAO)" required style="text-transform:uppercase">
       <button class="button primary" type="submit">기관 등록</button>
-      <p class="subcopy" th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="color:#c0392b">이름 오류</p>
-      <p class="subcopy" th:if="${#fields.hasErrors('code')}" th:errors="*{code}" style="color:#c0392b">코드 오류</p>
+      <p class="subcopy t-bad" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">이름 오류</p>
+      <p class="subcopy t-bad" th:if="${#fields.hasErrors('code')}" th:errors="*{code}">코드 오류</p>
     </form>
   </section>
 
@@ -34,13 +34,13 @@
       <div class="table-row" th:each="tenant : ${tenants}">
         <div>
           <strong><a th:href="@{'/admin/tenants/' + ${tenant.id}}" th:text="${tenant.code}">MTCM</a></strong>
-          <small th:text="${tenant.name}" style="display:block;color:#7a869a">기관명</small>
+          <small th:text="${tenant.name}" class="t-sub">기관명</small>
         </div>
         <span>
           <span class="state" th:classappend="${tenant.status.name() == 'ACTIVE'} ? 'online' : 'offline'"></span>
           <span th:text="${tenant.status}">ACTIVE</span>
-          <span th:if="${tenant.isExpired(today)}" style="color:#c0392b;font-weight:600"> · 만료</span>
-          <span th:if="${tenant.isExpiringSoon(today)}" style="color:#e67e22;font-weight:600"
+          <span th:if="${tenant.isExpired(today)}" style="color:var(--red);font-weight:600"> · 만료</span>
+          <span th:if="${tenant.isExpiringSoon(today)}" style="color:var(--warn);font-weight:600"
                 th:text="' · 만기임박(' + ${tenant.subscriptionEnd} + ')'"> · 만기임박</span>
         </span>
         <span class="table-actions">

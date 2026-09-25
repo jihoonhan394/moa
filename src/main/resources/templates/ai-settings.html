@@ -22,10 +22,10 @@
         <option th:each="p : ${providers}" th:value="${p}" th:text="${p.label}">DeepSeek</option>
       </select>
 
-      <label>모델 <small style="color:#7a869a">(비우면 제공자 기본값)</small></label>
+      <label>모델 <small class="t-muted">(비우면 제공자 기본값)</small></label>
       <input type="text" th:field="*{model}" maxlength="100" placeholder="예: deepseek-chat / gpt-4o-mini / claude-3-5-sonnet-latest / gemini-1.5-flash">
 
-      <label>Base URL <small style="color:#7a869a">(비우면 기본값. 폐쇄망 로컬 LLM은 여기에 OpenAI 호환 주소)</small></label>
+      <label>Base URL <small class="t-muted">(비우면 기본값. 폐쇄망 로컬 LLM은 여기에 OpenAI 호환 주소)</small></label>
       <input type="text" th:field="*{baseUrl}" maxlength="255" placeholder="예: https://api.deepseek.com / http://내부LLM:8000">
 
       <label>API 키</label>

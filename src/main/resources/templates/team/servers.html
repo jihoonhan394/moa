@@ -56,8 +56,8 @@
         <div class="table-row" th:each="s : ${servers}">
           <strong th:text="${s.name}">이름</strong>
           <span th:text="${s.protocol}">SSH</span>
-          <span th:text="${s.host} + ':' + ${s.port}" style="color:#7a869a">host:port</span>
-          <span th:text="${groupNames.getOrDefault(s.ownerGroupId, '-')}" style="color:#7a869a">부서</span>
+          <span th:text="${s.host} + ':' + ${s.port}" class="t-muted">host:port</span>
+          <span th:text="${groupNames.getOrDefault(s.ownerGroupId, '-')}" class="t-muted">부서</span>
           <span class="table-actions">
             <details style="display:inline-block">
               <summary class="button" style="list-style:none;cursor:pointer">수정</summary>

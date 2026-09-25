@@ -16,8 +16,8 @@
     </div>
   </header>
 
-  <p th:if="${message}" class="subcopy" style="color:#2d7a3a" th:text="${message}"></p>
-  <p th:if="${error}" class="subcopy" style="color:#c0392b" th:text="${error}"></p>
+  <p th:if="${message}" class="subcopy" style="color:var(--green)" th:text="${message}"></p>
+  <p th:if="${error}" class="subcopy t-bad" th:text="${error}"></p>
 
   <!-- 승인 대기 -->
   <section class="panel">
@@ -31,7 +31,7 @@
         <strong th:text="${p.requesterName}">요청자</strong>
         <span th:text="${p.assetName}">서버</span>
         <span th:text="${p.reason}">사유</span>
-        <span th:text="${p.period}" style="color:#7a869a">기간</span>
+        <span th:text="${p.period}" class="t-muted">기간</span>
         <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center">
           <form method="post" th:action="@{'/access-approvals/' + ${p.id} + '/approve'}"
                 style="display:flex;gap:.3rem;align-items:center;flex-wrap:wrap">
@@ -61,7 +61,7 @@
       <div class="table-row" th:each="g : ${grants}" style="grid-template-columns:1fr 1.1fr 1.4fr 1.4fr">
         <strong th:text="${g.requesterName}">요청자</strong>
         <span th:text="${g.assetName}">서버</span>
-        <span th:text="${g.until}" style="color:#7a869a">만료</span>
+        <span th:text="${g.until}" class="t-muted">만료</span>
         <form method="post" th:action="@{'/access-approvals/' + ${g.id} + '/revoke'}" style="display:flex;gap:.3rem"
               onsubmit="return confirm('임시 접근 권한을 회수할까요? 진행 중 세션도 종료 처리됩니다.');">
           <input name="comment" type="text" maxlength="1000" placeholder="회수 사유(선택)" style="width:150px">

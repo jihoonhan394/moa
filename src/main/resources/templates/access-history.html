@@ -29,8 +29,8 @@
         <span th:text="${#temporals.format(l.at, 'yyyy-MM-dd HH:mm')}">시각</span>
         <strong th:text="${l.user}">사용자</strong>
         <span th:text="${l.role}"
-              th:style="${l.role != '일반 사용자' and l.role != '-'} ? 'color:#1559d6;font-weight:800' : 'color:#7a869a'">역할</span>
-        <span th:text="${l.ip}" style="color:#7a869a;font-family:monospace">IP</span>
+              th:style="${l.role != '일반 사용자' and l.role != '-'} ? 'color:var(--accent);font-weight:800' : 'color:var(--muted)'">역할</span>
+        <span th:text="${l.ip}" style="color:var(--muted);font-family:monospace">IP</span>
       </div>
     </div>
   </section>
@@ -52,8 +52,8 @@
         <span th:text="${s.protocol}">SSH</span>
         <b th:classappend="${s.status.name() == 'CONNECTED' or s.status.name() == 'CLOSED'} ? 'good' : (${s.status.name() == 'FAILED'} ? 'warn' : '')"
            th:text="${s.status}">상태</b>
-        <span th:text="${s.clientIp != null ? s.clientIp : '-'}" style="color:#7a869a">IP</span>
-        <span th:text="${s.failureCode != null ? s.failureCode : '-'}" style="color:#7a869a">실패</span>
+        <span th:text="${s.clientIp != null ? s.clientIp : '-'}" class="t-muted">IP</span>
+        <span th:text="${s.failureCode != null ? s.failureCode : '-'}" class="t-muted">실패</span>
       </div>
     </div>
   </section>

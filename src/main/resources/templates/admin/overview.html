@@ -56,12 +56,12 @@
           <div class="table-row table-head"><span>기관</span><span>상태</span><span></span></div>
           <div class="table-row" th:each="tenant : ${recentTenants}">
             <div><strong th:text="${tenant.code}">CODE</strong>
-              <small th:text="${tenant.name}" style="display:block;color:#7a869a">기관명</small></div>
+              <small th:text="${tenant.name}" class="t-sub">기관명</small></div>
             <span>
               <span class="state" th:classappend="${tenant.status.name() == 'ACTIVE'} ? 'online' : 'offline'"></span>
               <span th:text="${tenant.status}">ACTIVE</span>
-              <span th:if="${tenant.isExpired(today)}" style="color:#c0392b;font-weight:600"> · 만료</span>
-              <span th:if="${tenant.isExpiringSoon(today)}" style="color:#e67e22;font-weight:600"> · 만기임박</span>
+              <span th:if="${tenant.isExpired(today)}" style="color:var(--red);font-weight:600"> · 만료</span>
+              <span th:if="${tenant.isExpiringSoon(today)}" style="color:var(--warn);font-weight:600"> · 만기임박</span>
             </span>
             <span class="table-actions"><a class="button" th:href="@{'/admin/tenants/' + ${tenant.id}}">상세</a></span>
           </div>

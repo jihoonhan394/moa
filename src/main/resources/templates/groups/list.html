@@ -15,8 +15,8 @@
     </div>
   </header>
 
-  <p th:if="${moveError != null}" class="subcopy" style="color:#c0392b" th:text="${moveError}">이동 오류</p>
-  <p th:if="${groupError != null}" class="subcopy" style="color:#c0392b" th:text="${groupError}">오류</p>
+  <p th:if="${moveError != null}" class="subcopy t-bad" th:text="${moveError}">이동 오류</p>
+  <p th:if="${groupError != null}" class="subcopy t-bad" th:text="${groupError}">오류</p>
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">새 그룹/부서</p><h2>그룹(부서) 추가</h2></div></div>
@@ -38,7 +38,7 @@
         <input type="text" th:field="*{description}" placeholder="예: 국내 영업">
       </label>
       <button class="button primary" type="submit" style="height:fit-content">추가</button>
-      <p class="subcopy" th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="color:#c0392b;flex-basis:100%">이름 오류</p>
+      <p class="subcopy t-bad" th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="flex-basis:100%">이름 오류</p>
     </form>
     <p class="subcopy" style="margin-top:.6rem">💡 <b>상위 부서</b>를 '최상위'로 두면 독립 부서, 특정 부서를 고르면 <b>그 아래 하위 조직</b>으로 생깁니다. (또는 부서 상세에서 '하위 그룹 추가')</p>
   </section>
@@ -50,10 +50,10 @@
       <div class="table-row table-head"><span>조직 (트리)</span><span>인원</span><span>상태</span><span>관리</span></div>
       <div class="table-row" th:each="node : ${tree}">
         <div th:style="'padding-left:' + ${node.depth * 22} + 'px'">
-          <span th:if="${node.depth > 0}" style="color:#adb5bd">└&nbsp;</span>
+          <span th:if="${node.depth > 0}" style="color:var(--muted)">└&nbsp;</span>
           <strong><a th:href="@{'/groups/' + ${node.group.id}}" th:text="${node.group.name}">그룹명</a></strong>
           <span th:if="${node.hasChildren}" class="pill" style="margin-left:.35rem" title="하위 조직 있음">▾ 하위</span>
-          <small th:if="${node.group.description != null}" th:text="${node.group.description}" style="display:block;color:#7a869a">설명</small>
+          <small th:if="${node.group.description != null}" th:text="${node.group.description}" class="t-sub">설명</small>
         </div>
         <span th:text="${node.memberCount} + '명'">0명</span>
         <span>

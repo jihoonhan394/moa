@@ -17,7 +17,7 @@
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">새 운영자</p><h2>운영자 계정 생성</h2></div></div>
-    <p th:if="${selfDisableError}" th:text="${selfDisableError}" class="subcopy" style="color:#c0392b">오류</p>
+    <p th:if="${selfDisableError}" th:text="${selfDisableError}" class="subcopy t-bad">오류</p>
     <form method="post" th:action="@{/admin/operators}" th:object="${operatorForm}" class="asset-toolbar">
       <input type="text" th:field="*{username}" placeholder="아이디" required autocomplete="off">
       <input type="text" th:field="*{name}" placeholder="이름" required>
@@ -26,11 +26,11 @@
       <input type="password" th:field="*{password}" placeholder="비밀번호 (8자 이상)" required autocomplete="new-password">
       <input type="password" name="passwordConfirm" placeholder="비밀번호 확인" required autocomplete="new-password">
       <button class="button primary" type="submit">운영자 생성</button>
-      <p class="subcopy" th:if="${#fields.hasErrors('username')}" th:errors="*{username}" style="color:#c0392b">아이디 오류</p>
-      <p class="subcopy" th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="color:#c0392b">이름 오류</p>
-      <p class="subcopy" th:if="${#fields.hasErrors('email')}" th:errors="*{email}" style="color:#c0392b">이메일 오류</p>
-      <p class="subcopy" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}" style="color:#c0392b">전화번호 오류</p>
-      <p class="subcopy" th:if="${#fields.hasErrors('password')}" th:errors="*{password}" style="color:#c0392b">비밀번호 오류</p>
+      <p class="subcopy t-bad" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">아이디 오류</p>
+      <p class="subcopy t-bad" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">이름 오류</p>
+      <p class="subcopy t-bad" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">이메일 오류</p>
+      <p class="subcopy t-bad" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">전화번호 오류</p>
+      <p class="subcopy t-bad" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">비밀번호 오류</p>
     </form>
   </section>
 
@@ -42,7 +42,7 @@
       <div class="table-row" th:each="op : ${operators}">
         <div>
           <strong th:text="${op.username}">아이디</strong>
-          <small th:text="${op.name}" style="display:block;color:#7a869a">이름</small>
+          <small th:text="${op.name}" class="t-sub">이름</small>
         </div>
         <span>
           <span class="state" th:classappend="${op.status.name() == 'ACTIVE'} ? 'online' : 'offline'"></span>

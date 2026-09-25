@@ -20,7 +20,7 @@
     <div class="top-actions"><a class="button" th:href="@{/solutions}">목록으로</a></div>
   </header>
 
-  <p th:if="${controlMessage != null}" class="subcopy" style="color:#2e7d32" th:text="${controlMessage}">메시지</p>
+  <p th:if="${controlMessage != null}" class="subcopy" style="color:var(--green)" th:text="${controlMessage}">메시지</p>
 
   <!-- 제어 -->
   <section class="panel">
@@ -39,7 +39,7 @@
     <div th:if="${solution.vendorName != null}" class="subcopy">
       유지보수 업체: <b th:text="${solution.vendorName}">업체</b>
       <span th:if="${solution.vendorContact != null}" th:text="' · ' + ${solution.vendorContact}">연락처</span>
-      <span th:if="${solution.vendorNote != null}" th:text="' · ' + ${solution.vendorNote}" style="color:#7a869a">메모</span>
+      <span th:if="${solution.vendorNote != null}" th:text="' · ' + ${solution.vendorNote}" class="t-muted">메모</span>
     </div>
 
     <form method="post" th:action="@{'/solutions/' + ${solution.id} + '/ops'}" th:object="${opsForm}" class="stack-form" style="margin-top:.75rem">
@@ -80,7 +80,7 @@
       </form>
     </div>
     <p th:if="${solution.logCommand == null}" class="subcopy">먼저 위 '운영 정보'에서 로그 수집 명령을 설정하세요.</p>
-    <p th:if="${logError != null}" class="subcopy" style="color:#c0392b" th:text="${logError}">오류</p>
+    <p th:if="${logError != null}" class="subcopy t-bad" th:text="${logError}">오류</p>
     <div th:if="${logAnalysis != null}">
       <p class="subcopy" th:if="${logAnalysis.note != null}" th:text="${logAnalysis.note}">비고</p>
       <div th:if="${logAnalysis.aiSummary != null}">
@@ -108,7 +108,7 @@
         <span th:text="${w.title}">제목</span>
         <span th:text="${w.startsAt != null} ? ${#temporals.format(w.startsAt, 'yyyy-MM-dd HH:mm')} : '-'">시작</span>
         <span th:text="${w.endsAt != null} ? ${#temporals.format(w.endsAt, 'yyyy-MM-dd HH:mm')} : '-'">종료</span>
-        <span th:text="${w.reason} ?: '-'" style="color:#7a869a">사유</span>
+        <span th:text="${w.reason} ?: '-'" class="t-muted">사유</span>
       </div>
     </div>
   </section>

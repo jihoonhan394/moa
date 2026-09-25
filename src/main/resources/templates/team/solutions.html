@@ -81,8 +81,8 @@
         <div class="table-row table-head"><span>이름</span><span>서버</span><span>소유부서</span><span>제어</span></div>
         <div class="table-row" th:each="sol : ${solutions}">
           <strong th:text="${sol.name}">이름</strong>
-          <span th:text="${assetNames.getOrDefault(sol.assetId, '-')}" style="color:#7a869a">서버</span>
-          <span th:text="${groupNames.getOrDefault(sol.ownerGroupId, '-')}" style="color:#7a869a">부서</span>
+          <span th:text="${assetNames.getOrDefault(sol.assetId, '-')}" class="t-muted">서버</span>
+          <span th:text="${groupNames.getOrDefault(sol.ownerGroupId, '-')}" class="t-muted">부서</span>
           <span class="table-actions">
             <form th:each="act : ${actions}" method="post" th:action="@{'/team/solutions/' + ${sol.id} + '/control'}" style="display:inline">
               <input type="hidden" name="action" th:value="${act}">

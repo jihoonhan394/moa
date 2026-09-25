@@ -11,7 +11,7 @@
     <p class="eyebrow">MOA 인프라 관리 콘솔</p>
     <h1>기관 선택</h1>
     <p class="subcopy">소속 기관 코드를 입력하고, 다음 단계에서 해당 기관 계정으로 로그인하세요.</p>
-    <p th:if="${error}" th:text="${error}" class="subcopy" style="color:#c0392b">오류</p>
+    <p th:if="${error}" th:text="${error}" class="subcopy t-bad">오류</p>
     <form method="post" th:action="@{/enter}">
       <label for="code">기관 코드</label>
       <input id="code" name="code" th:value="${code}" placeholder="예: MTCM" required autofocus

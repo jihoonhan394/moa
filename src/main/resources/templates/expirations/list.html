@@ -35,7 +35,7 @@
       <div class="table-row" th:each="r : ${rows}">
         <span th:text="${r.category}">종류</span>
         <strong th:text="${r.label}">대상</strong>
-        <span th:text="${r.detail}" style="color:#7a869a">상세</span>
+        <span th:text="${r.detail}" class="t-muted">상세</span>
         <span th:text="${r.expiresOn}">만료일</span>
         <b th:classappend="${r.daysLeft < 0} ? 'bad' : (${r.daysLeft <= 14} ? 'warn' : 'good')"
            th:text="${r.daysLeft < 0} ? ('만료 ' + (${r.daysLeft} * -1) + '일 지남') : (${r.daysLeft == 0} ? '오늘' : ('D-' + ${r.daysLeft}))">D-3</b>

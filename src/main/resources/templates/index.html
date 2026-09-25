@@ -96,7 +96,7 @@
           <div class="table-row table-head"><span>사용자</span><span>자산</span><span>상태</span></div>
           <div class="table-row" th:each="s : ${recentSessions}">
             <div><strong th:text="${s.user}">사용자</strong>
-              <small th:text="${s.protocol} + ' · ' + ${s.at}" style="display:block;color:#7a869a">SSH</small></div>
+              <small th:text="${s.protocol} + ' · ' + ${s.at}" class="t-sub">SSH</small></div>
             <span th:text="${s.asset}">자산</span>
             <b th:classappend="${s.status == 'CONNECTED' or s.status == 'CLOSED'} ? 'good' : (${s.status == 'FAILED'} ? 'warn' : '')"
                th:text="${s.status}">상태</b>

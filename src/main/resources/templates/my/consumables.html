@@ -52,9 +52,9 @@
       </div>
       <div class="table-row" th:each="r : ${requests}">
         <strong th:text="${r.itemName}">품목</strong>
-        <span th:text="${r.note} ?: '-'" style="color:#7a869a">내용</span>
+        <span th:text="${r.note} ?: '-'" class="t-muted">내용</span>
         <b th:text="${r.status}">상태</b>
-        <span th:text="${r.reason} ?: '-'" style="color:#7a869a">회신</span>
+        <span th:text="${r.reason} ?: '-'" class="t-muted">회신</span>
         <span class="table-actions">
           <form th:if="${r.cancelable}" method="post"
                 th:action="@{'/my/consumables/' + ${r.id} + '/cancel'}" style="display:inline">

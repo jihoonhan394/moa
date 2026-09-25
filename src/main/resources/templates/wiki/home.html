@@ -12,7 +12,7 @@
       <p class="subcopy">부서·프로젝트별 공간(폴더)으로 문서를 관리합니다. 공간마다 열람·편집 권한이 다릅니다.</p></div>
   </header>
 
-  <p th:if="${wikiError}" class="modal-note" style="color:#c0392b" th:text="${wikiError}">오류</p>
+  <p th:if="${wikiError}" class="modal-note t-bad" th:text="${wikiError}">오류</p>
 
   <section class="panel">
     <form method="get" th:action="@{/wiki/search}" style="display:flex;gap:0.5rem;max-width:640px">
@@ -53,7 +53,7 @@
     <div th:unless="${#lists.isEmpty(spaces)}" class="data-table">
       <div class="table-row" th:each="s : ${spaces}">
         <div><a th:href="@{'/wiki/spaces/' + ${s.id}}" style="font-weight:600" th:text="${s.name}">공간</a>
-          <small th:if="${s.description != null}" th:text="${s.description}" style="display:block;color:#7a869a">설명</small></div>
+          <small th:if="${s.description != null}" th:text="${s.description}" class="t-sub">설명</small></div>
         <a class="button" th:href="@{'/wiki/spaces/' + ${s.id}}">열기</a>
       </div>
     </div>

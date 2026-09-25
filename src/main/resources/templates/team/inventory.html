@@ -62,7 +62,7 @@
           <span th:text="${item.type.label}">실물</span>
           <b th:classappend="${item.status.name() == 'AVAILABLE'} ? 'good' : (${item.status.name() == 'RETIRED'} ? 'bad' : 'warn')" th:text="${item.status.label}">가용</b>
           <span th:text="${item.assignedUserId != null ? userNames.get(item.assignedUserId) : '—'}">배정</span>
-          <span th:text="${groupNames.getOrDefault(item.ownerGroupId, '-')}" style="color:#7a869a">부서</span>
+          <span th:text="${groupNames.getOrDefault(item.ownerGroupId, '-')}" class="t-muted">부서</span>
           <span class="table-actions">
             <form th:if="${item.status.name() != 'ASSIGNED'}" method="post" th:action="@{'/team/inventory/' + ${item.id} + '/assign'}" style="display:inline">
               <select name="userId" required aria-label="배정 팀원">

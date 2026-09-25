@@ -16,8 +16,8 @@
     </div>
   </header>
 
-  <p th:if="${message}" class="subcopy" style="color:#2d7a3a" th:text="${message}"></p>
-  <p th:if="${error}" class="subcopy" style="color:#c0392b" th:text="${error}"></p>
+  <p th:if="${message}" class="subcopy" style="color:var(--green)" th:text="${message}"></p>
+  <p th:if="${error}" class="subcopy t-bad" th:text="${error}"></p>
 
   <!-- 새 요청 -->
   <section class="panel form-panel">
@@ -50,9 +50,9 @@
       <div class="table-row" th:each="r : ${requests}" style="grid-template-columns:1.2fr 1.6fr 1.8fr .8fr 1fr 0.8fr">
         <strong th:text="${r.assetName}">서버</strong>
         <span th:text="${r.reason}">사유</span>
-        <span th:text="${r.period}" style="color:#7a869a">기간</span>
+        <span th:text="${r.period}" class="t-muted">기간</span>
         <b th:text="${r.statusLabel}">상태</b>
-        <span style="color:#7a869a">
+        <span class="t-muted">
           <span th:if="${r.approverName}" th:text="${r.approverName}">승인자</span>
           <span th:if="${r.reviewComment}" th:text="' · ' + ${r.reviewComment}"></span>
         </span>

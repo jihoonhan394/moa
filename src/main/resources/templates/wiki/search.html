@@ -27,7 +27,7 @@
       <div class="table-row" th:each="r : ${results}">
         <div>
           <a th:href="@{'/wiki/' + ${r.pageId}}" style="font-weight:600" th:text="${r.title}">제목</a>
-          <small th:text="${r.snippet}" style="display:block;color:#7a869a">발췌</small>
+          <small th:text="${r.snippet}" class="t-sub">발췌</small>
         </div>
         <span class="pill" th:text="${r.spaceName}">공간</span>
       </div>

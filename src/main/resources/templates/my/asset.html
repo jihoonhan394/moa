@@ -57,7 +57,7 @@
       <div class="table-row" th:each="p : ${parts}">
         <strong th:text="${p.name}">부품</strong>
         <span th:text="${p.quantity}">1</span>
-        <span th:text="${p.serialNo} ?: '-'" style="color:#7a869a">-</span>
+        <span th:text="${p.serialNo} ?: '-'" class="t-muted">-</span>
       </div>
     </div>
   </section>
@@ -82,7 +82,7 @@
         <span th:text="${r.startedOn}">시작</span>
         <span th:if="${r.endedOn != null}" th:text="${r.endedOn}">종료</span>
         <b th:if="${r.endedOn == null}" class="good">보관 중</b>
-        <span th:text="${r.reason} ?: '-'" style="color:#7a869a">사유</span>
+        <span th:text="${r.reason} ?: '-'" class="t-muted">사유</span>
       </div>
     </div>
     <p class="subcopy" style="margin-top:.5rem">

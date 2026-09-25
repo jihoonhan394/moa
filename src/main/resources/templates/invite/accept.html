@@ -13,7 +13,7 @@
     <p class="subcopy">초대받은 이메일로 계정을 만듭니다. 아이디는 이메일이며, 비밀번호와 연락처만 입력하면 됩니다.</p>
 
     <form method="post" th:action="@{'/invite/' + ${token}}">
-      <p th:if="${error != null}" class="subcopy" style="color:#c0392b" th:text="${error}">오류</p>
+      <p th:if="${error != null}" class="subcopy t-bad" th:text="${error}">오류</p>
 
       <label>이메일 (아이디)</label>
       <input type="email" th:value="${email}" readonly>

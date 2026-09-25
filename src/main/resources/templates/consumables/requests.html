@@ -33,15 +33,13 @@
       <div class="table-row" th:each="r : ${requests}">
         <div>
           <strong th:text="${r.itemName}">품목</strong>
-          <small th:if="${r.reviewOn != null}" th:text="'재검토 ' + ${r.reviewOn}"
-                 style="display:block;color:#7a869a">재검토</small>
+          <small th:if="${r.reviewOn != null}" th:text="'재검토 ' + ${r.reviewOn}" class="t-sub">재검토</small>
         </div>
         <span th:text="${r.requester}">요청자</span>
-        <span th:text="${r.note} ?: '-'" style="color:#7a869a">내용</span>
+        <span th:text="${r.note} ?: '-'" class="t-muted">내용</span>
         <div>
           <b th:text="${r.statusLabel}">상태</b>
-          <small th:if="${r.reason != null}" th:text="${r.reason}"
-                 style="display:block;color:#7a869a">사유</small>
+          <small th:if="${r.reason != null}" th:text="${r.reason}" class="t-sub">사유</small>
         </div>
         <span class="table-actions" th:if="${r.open}">
           <form th:if="${r.status.name() == 'REQUESTED'}" method="post"

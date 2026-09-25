@@ -43,7 +43,7 @@
 
   <!-- 온보딩 체크리스트 -->
   <section class="panel" th:if="${!#lists.isEmpty(tasks)}">
-    <h2>온보딩 체크리스트 <small th:text="'(' + ${progress} + '% 완료)'" style="color:#7a869a">(0% 완료)</small></h2>
+    <h2>온보딩 체크리스트 <small th:text="'(' + ${progress} + '% 완료)'" class="t-muted">(0% 완료)</small></h2>
     <div class="data-table">
       <div class="table-row" th:each="t : ${tasks}" th:style="${t.done} ? 'opacity:.55' : ''">
         <div>

@@ -15,9 +15,9 @@
       <a th:if="${inTenantContext}" class="button primary" th:href="@{/notices/new}">공지 등록</a>
     </header>
 
-    <p th:if="${message}" class="subcopy" style="color:#2d7a3a" th:text="${message}"></p>
-    <p th:if="${mailMessage}" class="subcopy" style="color:#2d7a3a" th:text="${mailMessage}"></p>
-    <p th:if="${error}" class="subcopy" style="color:#c0392b" th:text="${error}"></p>
+    <p th:if="${message}" class="subcopy" style="color:var(--green)" th:text="${message}"></p>
+    <p th:if="${mailMessage}" class="subcopy" style="color:var(--green)" th:text="${mailMessage}"></p>
+    <p th:if="${error}" class="subcopy t-bad" th:text="${error}"></p>
 
     <section class="panel">
       <div class="panel-head"><div><p class="eyebrow">목록</p><h2>등록된 공지</h2></div>

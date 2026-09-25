@@ -33,10 +33,10 @@
       <div class="table-row" th:each="a : ${assets}" style="grid-template-columns:1.4fr .7fr 1.5fr 1fr .6fr .9fr">
         <strong><a th:href="@{/assets/{id}/edit(id=${a.id})}" th:text="${a.name}">이름</a></strong>
         <span th:text="${a.assetType.name() == 'SERVER'} ? '서버' : '웹사이트'">종류</span>
-        <span style="color:#7a869a" th:text="${a.assetType.name() == 'SERVER'}
+        <span class="t-muted" th:text="${a.assetType.name() == 'SERVER'}
               ? (${a.host} + ':' + ${a.port} + ' · ' + ${a.protocol})
               : (${a.url} ?: '-')">연결</span>
-        <span style="color:#7a869a" th:text="${a.ownerGroupId != null ? groupNames.getOrDefault(a.ownerGroupId, '(삭제된 그룹)') : '—'}">소유팀</span>
+        <span class="t-muted" th:text="${a.ownerGroupId != null ? groupNames.getOrDefault(a.ownerGroupId, '(삭제된 그룹)') : '—'}">소유팀</span>
         <b th:classappend="${a.status.name() == 'ACTIVE'} ? 'good' : 'bad'"
            th:text="${a.status.name() == 'ACTIVE'} ? '활성' : '비활성'">상태</b>
         <span class="table-actions">

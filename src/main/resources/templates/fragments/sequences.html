@@ -2,7 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="section">
-  <p th:if="${scheduleError}" class="modal-note" style="color:#c0392b" th:text="${scheduleError}">오류</p>
+  <p th:if="${scheduleError}" class="modal-note t-bad" th:text="${scheduleError}">오류</p>
 
   <!-- 실행 결과 -->
   <section class="panel" th:if="${runResult != null}">
@@ -17,7 +17,7 @@
         <span th:text="${o.action}">START</span>
         <b th:classappend="${o.skipped} ? 'warn' : (${o.success} ? 'good' : 'bad')"
            th:text="${o.skipped} ? '건너뜀' : (${o.success} ? '성공' : '실패')">성공</b>
-        <span th:text="${o.output}" style="white-space:pre-wrap;color:#7a869a;font-size:.85rem">출력</span>
+        <span th:text="${o.output}" style="white-space:pre-wrap;color:var(--muted);font-size:.85rem">출력</span>
       </div>
     </div>
   </section>
@@ -65,7 +65,7 @@
       <div class="table-row" th:each="st : ${stepsBySequence.get(seq.id)}">
         <span th:text="${st.order}">1</span>
         <div><strong th:text="${st.solutionName}">솔루션</strong>
-          <small th:text="${st.solutionType}" style="display:block;color:#7a869a">유형</small></div>
+          <small th:text="${st.solutionType}" class="t-sub">유형</small></div>
         <b th:classappend="${st.action.name() == 'STOP'} ? 'warn' : (${st.action.name() == 'START'} ? 'good' : '')" th:text="${st.action}">START</b>
         <span th:text="${st.waitSeconds} + '초' + (${st.verifyAfterStart} ? ' · 상태확인' : '')">0초</span>
         <span class="table-actions">

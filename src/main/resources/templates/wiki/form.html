@@ -16,7 +16,7 @@
       <h1 th:text="${mode == 'new'} ? '새 문서' : '문서 수정'">문서</h1></div>
   </header>
 
-  <p th:if="${wikiError}" class="modal-note" style="color:#c0392b" th:text="${wikiError}">오류</p>
+  <p th:if="${wikiError}" class="modal-note t-bad" th:text="${wikiError}">오류</p>
 
   <section class="panel" th:if="${mode == 'new' and !#lists.isEmpty(templates)}">
     <div class="panel-head"><div><p class="eyebrow">서식</p><h2>서식 불러오기</h2></div></div>
@@ -49,7 +49,7 @@
       <input type="text" th:field="*{title}" maxlength="200" placeholder="문서 제목" required>
       <p th:if="${#fields.hasErrors('title')}" class="error-message" th:errors="*{title}"></p>
 
-      <label>내용 <small style="color:#7a869a">(마크다운 · 표·취소선 지원 · 오른쪽에 실시간 미리보기)</small></label>
+      <label>내용 <small class="t-muted">(마크다운 · 표·취소선 지원 · 오른쪽에 실시간 미리보기)</small></label>
       <!-- 마크다운 툴바: 선택 영역을 감싸거나 줄 앞에 삽입(wiki-editor.js) -->
       <div class="wiki-toolbar" id="wikiToolbar" style="display:flex;flex-wrap:wrap;gap:.3rem">
         <button type="button" class="button" data-md="bold" title="굵게" style="font-weight:800">B</button>

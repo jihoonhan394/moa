@@ -45,13 +45,13 @@
       <div class="table-row" th:each="t : ${trackers}" style="grid-template-columns:1.4fr .8fr .9fr .8fr .8fr .7fr .9fr"
            th:with="d=${T(java.time.temporal.ChronoUnit).DAYS.between(today, t.dueOn)}">
         <span><strong th:text="${t.label}">라벨</strong>
-          <small th:if="${t.detail}" th:text="${t.detail}" style="display:block;color:#7a869a">상세</small></span>
+          <small th:if="${t.detail}" th:text="${t.detail}" class="t-sub">상세</small></span>
         <span th:text="${t.dueOn}">2026-01-01</span>
         <b th:classappend="${d <= 7} ? 'bad' : (${d <= 30} ? 'warn' : 'good')"
            th:text="${d < 0} ? ('만료 ' + (${d} * -1) + '일 지남') : (${d == 0} ? '오늘' : (${d <= 7} ? ('D-' + ${d} + ' 임박') : ('D-' + ${d})))">D-3</b>
         <span th:text="${t.recurring} ? (${t.recurEveryDays} + '일마다') : '1회성'">-</span>
-        <span th:text="${t.lastDoneOn} ?: '-'" style="color:#7a869a">-</span>
-        <span th:text="${t.source == 'SSL_PROBE'} ? 'SSL 자동' : '수동'" style="color:#7a869a">수동</span>
+        <span th:text="${t.lastDoneOn} ?: '-'" class="t-muted">-</span>
+        <span th:text="${t.source == 'SSL_PROBE'} ? 'SSL 자동' : '수동'" class="t-muted">수동</span>
         <span style="display:flex;gap:.35rem;white-space:nowrap">
           <form method="post" th:action="@{${basePath} + '/trackers/' + ${t.id} + '/done'}" style="display:inline">
             <button class="button" type="submit" th:text="${t.recurring} ? '완료(다음)' : '완료'">완료</button>

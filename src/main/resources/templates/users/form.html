@@ -18,14 +18,14 @@
         <form th:object="${userForm}" method="post" th:action="${userId == null} ? @{/users} : @{/users/{id}(id=${userId})}">
           <p class="error-message" th:errors="*{global}"></p>
           <label for="name">Name</label><input id="name" th:field="*{name}" maxlength="100" required><p class="error-message" th:errors="*{name}"></p>
-          <label for="username">표시 이름 (아이디) <small style="color:#7a869a">— 화면 표시용, @ 불가</small></label><input id="username" th:field="*{username}" maxlength="100" required placeholder="예: 한지훈"><p class="error-message" th:errors="*{username}"></p>
-          <label for="email">이메일 (로그인 ID) <small style="color:#7a869a">— 기관 내 유일, 이 이메일로 로그인</small></label><input id="email" th:field="*{email}" maxlength="255" type="email" required><p class="error-message" th:errors="*{email}"></p>
+          <label for="username">표시 이름 (아이디) <small class="t-muted">— 화면 표시용, @ 불가</small></label><input id="username" th:field="*{username}" maxlength="100" required placeholder="예: 한지훈"><p class="error-message" th:errors="*{username}"></p>
+          <label for="email">이메일 (로그인 ID) <small class="t-muted">— 기관 내 유일, 이 이메일로 로그인</small></label><input id="email" th:field="*{email}" maxlength="255" type="email" required><p class="error-message" th:errors="*{email}"></p>
           <label for="phone">전화번호</label><input id="phone" th:field="*{phone}" maxlength="30" required placeholder="010-1234-5678"><p class="error-message" th:errors="*{phone}"></p>
           <label for="password">Password</label><input id="password" th:field="*{password}" type="password" maxlength="100" th:attr="placeholder=${userId == null ? '8 characters or more' : 'Leave empty to keep current password'}"><p class="error-message" th:errors="*{password}"></p>
           <label for="passwordConfirm">비밀번호 확인</label><input id="passwordConfirm" name="passwordConfirm" type="password" maxlength="100" th:attr="placeholder=${userId == null ? '비밀번호 재입력' : '변경 시에만 재입력'}">
           <label for="status">Status</label><select id="status" th:field="*{status}"><option th:each="status : ${statuses}" th:value="${status}" th:text="${status}"></option></select>
           <div th:if="${roleEditable}">
-            <label>관리 권한 <small style="color:#7a869a">(체크 안 하면 일반 사용자 — 접속·제어만)</small></label>
+            <label>관리 권한 <small class="t-muted">(체크 안 하면 일반 사용자 — 접속·제어만)</small></label>
             <label class="checkbox-row" th:each="r : ${assignableRoles}">
               <input type="checkbox" name="roles" th:value="${r}" th:checked="${currentRoles.contains(r)}">
               <span th:switch="${r.name()}">
@@ -35,7 +35,7 @@
                 <span th:case="*" th:text="${r.label}">역할</span>
               </span>
             </label>
-            <p class="subcopy" style="margin:.3rem 0 0;color:#7a869a">
+            <p class="subcopy t-muted" style="margin:.3rem 0 0">
               부여 가능한 관리 역할만 표시됩니다(기관이 켠 기능 기준). 기능은 플랫폼 관리자가
               <span style="font-family:monospace">기관 관리(/admin/tenants)</span>에서 켭니다.</p>
           </div>

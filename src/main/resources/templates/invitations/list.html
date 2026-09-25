@@ -20,7 +20,7 @@
       <div class="table-row" th:each="r : ${results}">
         <span th:text="${r.email}">이메일</span>
         <span th:text="${r.skipped} ? ('건너뜀: ' + ${r.reason}) : (${r.emailed} ? '메일 발송됨' : '메일 미발송 — 메일 설정의 [발송 활성화]를 켰는지 확인하거나 아래 링크를 복사해 전달')"
-              th:style="${r.skipped} ? 'color:#c0392b' : (${r.emailed} ? 'color:#2e7d32' : 'color:#b26a00')">상태</span>
+              th:style="${r.skipped} ? 'color:var(--red)' : (${r.emailed} ? 'color:var(--green)' : 'color:var(--warn)')">상태</span>
         <input th:unless="${r.skipped}" type="text" th:value="${r.link}" readonly onclick="this.select()" style="width:100%">
         <span th:if="${r.skipped}">—</span>
       </div>
@@ -70,7 +70,7 @@
         <span th:text="${inv.email}">이메일</span>
         <span th:text="${inv.groupId != null ? groupNames.get(inv.groupId) : '—'} ?: '—'">부서</span>
         <span th:text="${inv.status}"
-              th:style="${inv.status.name() == 'ACCEPTED'} ? 'color:#2e7d32' : (${inv.status.name() == 'REVOKED'} ? 'color:#c0392b' : '')">상태</span>
+              th:style="${inv.status.name() == 'ACCEPTED'} ? 'color:var(--green)' : (${inv.status.name() == 'REVOKED'} ? 'color:var(--red)' : '')">상태</span>
         <span th:text="${#temporals.format(inv.expiresAt, 'yyyy-MM-dd')}">만료</span>
         <span class="table-actions">
           <form th:if="${inv.status.name() != 'ACCEPTED'}" method="post" th:action="@{'/invitations/' + ${inv.id} + '/resend'}" style="display:inline">

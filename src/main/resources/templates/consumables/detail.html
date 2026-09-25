@@ -93,8 +93,8 @@
       <div class="table-row" th:each="o : ${orders}">
         <strong th:text="${o.orderedOn}">날짜</strong>
         <span th:text="${o.quantity} + ' ' + (${item.unit} ?: '개')">1개</span>
-        <span th:text="${o.note} ?: '-'" style="color:#7a869a">메모</span>
-        <span th:text="${o.actor}" style="color:#7a869a">기록자</span>
+        <span th:text="${o.note} ?: '-'" class="t-muted">메모</span>
+        <span th:text="${o.actor}" class="t-muted">기록자</span>
       </div>
     </div>
   </section>
