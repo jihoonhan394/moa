@@ -7,6 +7,7 @@ import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,10 +50,14 @@ public class TeamDeputyController {
     UUID me = tenantContext.currentUserId();
     Set<UUID> teamIds = groupService.teamMemberIds(tenantId, me);
 
-    List<ManagedUser> teamUsers = userService.findByTenant(tenantId).stream()
-        .filter(u -> teamIds.contains(u.getId())).toList();
-    Map<UUID, String> userNames = new HashMap<>();
-    userService.findByTenant(tenantId).forEach(u -> userNames.put(u.getId(), u.getName() + " (" + u.getUsername() + ")"));
+    // 한 번 읽어 팀원 목록과 이름 맵에 함께 쓴다(전에는 같은 질의를 두 번 했다).
+    List<ManagedUser> tenantUsers = userService.findByTenant(tenantId);
+    List<ManagedUser> teamUsers =
+        tenantUsers.stream().filter(u -> teamIds.contains(u.getId())).toList();
+    Map<UUID, String> userNames = new LinkedHashMap<>();
+    for (ManagedUser u : tenantUsers) {
+      userNames.put(u.getId(), ManagedUserService.label(u));
+    }
 
     // 내 팀과 관련된 대직만 표시(부재자 또는 대직자가 내 팀원).
     LocalDate today = LocalDate.now();

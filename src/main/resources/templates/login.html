@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MOA - 로그인</title>
-  <link rel="stylesheet" th:href="@{/css/style.css}">
-  <script th:src="@{/js/console-preview.js}" defer></script>
-</head>
+<head th:replace="~{fragments/head :: head('MOA - 로그인')}"></head>
 <body>
 <main class="workspace login-workspace">
   <section class="panel login-panel">
@@ -32,5 +27,6 @@
     <p class="subcopy login-help" th:unless="${platform}">계정은 기관 관리자의 초대 메일로 발급됩니다.</p>
   </section>
 </main>
+  <script th:src="@{/js/console-preview.js}" defer></script>
 </body>
 </html>

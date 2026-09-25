@@ -163,11 +163,9 @@ public class MaintenanceController {
     return names;
   }
 
-  /** userId → 이름(목록 표시용). */
+  /** userId → 이름(목록 표시용). 이름 순서가 유지되므로 선택 상자에도 쓴다. */
   private Map<UUID, String> userNames(UUID tenantId) {
-    Map<UUID, String> names = new LinkedHashMap<>();
-    userService.findByTenant(tenantId).forEach(u -> names.put(u.getId(), u.getName()));
-    return names;
+    return userService.namesByTenant(tenantId);
   }
 
   /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */

@@ -53,9 +53,7 @@ public class ConnectionHistoryController {
     List<ConnectionSession> sessions =
         sessionService.findHistory(tenantId).stream().limit(MAX_ROWS).toList();
 
-    Map<UUID, String> userNames = userService.findByTenant(tenantId).stream()
-        .collect(Collectors.toMap(
-            ManagedUser::getId, u -> u.getUsername() + " (" + u.getName() + ")", (a, b) -> a));
+    Map<UUID, String> userNames = userService.labelsByTenant(tenantId);
     Map<UUID, String> assetNames = assetService.findAll(tenantId).stream()
         .collect(Collectors.toMap(Asset::getId, Asset::getName, (a, b) -> a));
 

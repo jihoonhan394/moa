@@ -8,6 +8,7 @@ import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
 import jakarta.validation.Valid;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,11 +60,13 @@ public class TeamInventoryController {
 
     // 배정 대상: 내가 이끄는 팀의 팀원.
     Set<UUID> teamIds = groupService.teamMemberIds(tenantId, userId);
-    List<ManagedUser> teamUsers = userService.findByTenant(tenantId).stream()
-        .filter(u -> teamIds.contains(u.getId())).toList();
-    Map<UUID, String> userNames = new HashMap<>();
-    for (ManagedUser u : userService.findByTenant(tenantId)) {
-      userNames.put(u.getId(), u.getName() + " (" + u.getUsername() + ")");
+    // 한 번 읽어 배정 대상과 이름 맵에 함께 쓴다(전에는 같은 질의를 두 번 했다).
+    List<ManagedUser> tenantUsers = userService.findByTenant(tenantId);
+    List<ManagedUser> teamUsers =
+        tenantUsers.stream().filter(u -> teamIds.contains(u.getId())).toList();
+    Map<UUID, String> userNames = new LinkedHashMap<>();
+    for (ManagedUser u : tenantUsers) {
+      userNames.put(u.getId(), ManagedUserService.label(u));
     }
 
     if (!model.containsAttribute("inventoryForm")) {

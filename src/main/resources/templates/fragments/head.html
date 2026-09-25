@@ -1,0 +1,29 @@
+<!--/*
+  모든 화면의 <head>.
+
+  전에는 88개 템플릿이 같은 네 줄(charset·viewport·title·style.css)을 각자 갖고 있었다.
+  스타일시트 경로나 메타 태그를 하나 바꾸려면 88곳을 찾아야 했고, 실제로 이미 갈라져
+  있었다 — 403·404만 th:href 대신 절대경로를 써서 컨텍스트 경로가 붙으면 스타일이
+  깨질 상태였다. 한 곳에 두면 그런 표류가 생기지 않는다.
+
+  쓰는 쪽:  <head th:replace="~{fragments/head :: head('MOA - 자산')}"></head>
+*/-->
+<head th:fragment="head(title)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title}">MOA</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<!--/*
+  fetch로 서버를 부르는 화면(위키 편집기·본문 보기)은 CSRF 토큰을 메타로 내려받는다.
+  스크립트가 헤더에 실어 보내지 않으면 저장이 403으로 막힌다.
+*/-->
+<head th:fragment="headWithCsrf(title)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title}">MOA</title>
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>

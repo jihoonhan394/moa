@@ -57,4 +57,39 @@ class ManagedUserServiceTest {
     assertTrue(userService.activeUserEmails(Tenant.DEFAULT_TENANT_ID).contains(admin + "@example.com"),
         "관리자가 브로드캐스트 수신자에서 누락됨");
   }
+  /**
+   * 표시 라벨 형식을 고정한다. 전에는 화면 5곳이 각자 "이름 (계정)"을 만들고 접속 이력만
+   * 순서가 뒤집혀 있어, 같은 사람이 화면마다 다르게 보였다. 형식이 한 곳에 있다는 것을
+   * 이 테스트가 지킨다.
+   */
+  @Test
+  void userLabelIsNameThenUsername() {
+    String username = "lbl" + System.nanoTime();
+    ManagedUser created = userService.create(Tenant.DEFAULT_TENANT_ID, new UserForm(
+        username, "이름있는사람", username + "@example.com", "safe-password-123", UserStatus.ACTIVE));
+
+    assertEquals("이름있는사람 (" + username + ")", ManagedUserService.label(created));
+    assertEquals("이름있는사람 (" + username + ")",
+        userService.labelsByTenant(Tenant.DEFAULT_TENANT_ID).get(created.getId()));
+    assertEquals("이름있는사람",
+        userService.namesByTenant(Tenant.DEFAULT_TENANT_ID).get(created.getId()));
+  }
+
+  /**
+   * 맵 순서가 조회 순서(이름 오름차순)와 같아야 한다 — 이 맵이 선택 상자에 그대로 쓰인다.
+   * HashMap으로 돌아가면 담당자 목록이 매번 다른 순서로 보인다.
+   *
+   * <p>정렬 규칙을 다시 계산해 비교하지 않는다(DB 콜레이션과 자바 비교가 어긋날 수 있다).
+   * 확인할 것은 "조회한 순서를 그대로 유지하는가"다.
+   */
+  @Test
+  void nameMapsKeepQueryOrder() {
+    var expected = userService.findByTenant(Tenant.DEFAULT_TENANT_ID).stream()
+        .map(ManagedUser::getId).toList();
+
+    assertEquals(expected,
+        java.util.List.copyOf(userService.namesByTenant(Tenant.DEFAULT_TENANT_ID).keySet()));
+    assertEquals(expected,
+        java.util.List.copyOf(userService.labelsByTenant(Tenant.DEFAULT_TENANT_ID).keySet()));
+  }
 }

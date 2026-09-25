@@ -7,7 +7,6 @@ import com.moara.moa.category.CategoryService;
 import com.moara.moa.group.AccessGroup;
 import com.moara.moa.group.AccessGroupService;
 import com.moara.moa.security.TenantContext;
-import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
@@ -230,10 +229,7 @@ public class AssetController {
   public String history(@PathVariable UUID id, Model model) {
     Asset asset = assetService.findById(tenantContext.currentTenantId(), id);
     UUID tenantId = tenantContext.currentTenantId();
-    Map<UUID, String> actorNames = new HashMap<>();
-    for (ManagedUser u : userService.findByTenant(tenantId)) {
-      actorNames.put(u.getId(), u.getName() + " (" + u.getUsername() + ")");
-    }
+    Map<UUID, String> actorNames = userService.labelsByTenant(tenantId);
     model.addAttribute("asset", asset);
     model.addAttribute("logs", auditLogService.findByTarget(tenantId, TARGET_TYPE, id));
     model.addAttribute("actorNames", actorNames);

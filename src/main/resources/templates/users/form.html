@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="${userId == null ? 'MOA - Add User' : 'MOA - Edit User'}">MOA - Add User</title>
-  <link rel="stylesheet" th:href="@{/css/style.css}">
-</head>
+<head th:replace="~{fragments/head :: head(${userId == null ? 'MOA - 사용자 추가' : 'MOA - 사용자 수정'})}"></head>
 <body>
   <div class="app-shell">
     <aside th:replace="~{fragments/sidebar :: sidebar('users')}"></aside>

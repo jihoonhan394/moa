@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.UUID;
@@ -314,9 +315,9 @@ public class InventoryController {
     model.addAttribute("assetCategories", assetCategoryNodes());
     java.util.List<ManagedUser> tenantUsers = userService.findByTenant(tenantId);
     model.addAttribute("tenantUsers", tenantUsers);
-    Map<UUID, String> userNames = new HashMap<>();
+    Map<UUID, String> userNames = new LinkedHashMap<>();
     for (ManagedUser u : tenantUsers) {
-      userNames.put(u.getId(), u.getName() + " (" + u.getUsername() + ")");
+      userNames.put(u.getId(), ManagedUserService.label(u));
     }
     model.addAttribute("userNames", userNames);
     java.util.List<com.moara.moa.group.AccessGroup> groups = groupService.findAll(tenantId);

@@ -15,7 +15,6 @@ import com.moara.moa.tenant.TenantService;
 import com.moara.moa.tracker.ResourceTracker;
 import com.moara.moa.tracker.ResourceTrackerService;
 import com.moara.moa.tracker.TrackerTargetType;
-import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -198,10 +197,6 @@ public class ExpirationService {
   }
 
   private Map<UUID, String> userNames(UUID tenantId) {
-    Map<UUID, String> names = new HashMap<>();
-    for (ManagedUser u : userService.findByTenant(tenantId)) {
-      names.put(u.getId(), u.getName());
-    }
-    return names;
+    return userService.namesByTenant(tenantId);
   }
 }

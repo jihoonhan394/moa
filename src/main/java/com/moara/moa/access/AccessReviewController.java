@@ -80,7 +80,7 @@ public class AccessReviewController {
     List<UserGrant> userGrants = permissionService.findUserAssignments(tenantId, permission.getId()).stream()
         .map(a -> {
           ManagedUser user = userById.get(a.getUserId());
-          String label = user != null ? user.getName() + " (" + user.getUsername() + ")" : "(알 수 없음)";
+          String label = user != null ? ManagedUserService.label(user) : "(알 수 없음)";
           return new UserGrant(label, a.getExpiresAt());
         })
         .toList();

@@ -94,10 +94,7 @@ public class SolutionController {
 
   private void populateDetail(Model model, UUID tenantId, ManagedSolution solution) {
     UUID id = solution.getId();
-    Map<UUID, String> userNames = new HashMap<>();
-    for (ManagedUser u : userService.findByTenant(tenantId)) {
-      userNames.put(u.getId(), u.getName());
-    }
+    Map<UUID, String> userNames = userService.namesByTenant(tenantId);
     WikiSpace manualSpace = solution.getWikiSpaceId() == null ? null
         : wikiSpaceService.findAll(tenantId).stream()
             .filter(s -> s.getId().equals(solution.getWikiSpaceId())).findFirst().orElse(null);

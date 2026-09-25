@@ -1,12 +1,10 @@
 package com.moara.moa.audit;
 
 import com.moara.moa.security.TenantContext;
-import com.moara.moa.user.ManagedUser;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import com.moara.moa.user.ManagedUserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -34,8 +32,7 @@ public class AuditLogController {
   @GetMapping("/audit")
   public String audit(Model model) {
     UUID tenantId = tenantContext.currentTenantId();
-    Map<UUID, String> actorNames = userService.findByTenant(tenantId).stream()
-        .collect(Collectors.toMap(ManagedUser::getId, ManagedUser::getName));
+    Map<UUID, String> actorNames = userService.namesByTenant(tenantId);
 
     List<AuditView> logs = auditLogService.findByTenant(tenantId).stream()
         .map(log -> toView(log, actorNames))

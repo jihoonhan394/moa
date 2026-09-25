@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,11 +39,31 @@ public class ManagedUserService {
    * 한 명씩 조회하면 N+1이 되므로, 한 번 읽어 맵으로 쓰라고 제공하는 조회다.
    */
   public Map<UUID, String> namesByTenant(UUID tenantId) {
-    Map<UUID, String> names = new HashMap<>();
+    Map<UUID, String> names = new LinkedHashMap<>();
     for (ManagedUser user : findByTenant(tenantId)) {
       names.put(user.getId(), user.getName());
     }
     return names;
+  }
+
+  /**
+   * 이력·배정 화면에서 쓰는 표시 라벨을 모아 준다. 이름만으로는 동명이인을 구별할 수 없어
+   * 계정명을 함께 보이는데, 그 형식을 화면마다 손으로 만들면 같은 사람이 화면마다 다르게
+   * 보인다(실제로 접속 이력만 순서가 뒤집혀 있었다). 형식은 {@link #label}에만 있다.
+   *
+   * <p>이름 순서를 유지하므로 선택 상자에 그대로 쓸 수 있다.
+   */
+  public Map<UUID, String> labelsByTenant(UUID tenantId) {
+    Map<UUID, String> labels = new LinkedHashMap<>();
+    for (ManagedUser user : findByTenant(tenantId)) {
+      labels.put(user.getId(), label(user));
+    }
+    return labels;
+  }
+
+  /** 사람 하나의 표시 라벨. 맵을 만들 필요가 없는 곳(단건 표시)에서 쓴다. */
+  public static String label(ManagedUser user) {
+    return user.getName() + " (" + user.getUsername() + ")";
   }
 
   public long countUsers() {

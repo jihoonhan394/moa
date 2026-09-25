@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MOA - 권한이 없습니다</title>
-  <link rel="stylesheet" href="/css/style.css">
-</head>
+<head th:replace="~{fragments/head :: head('MOA - 권한이 없습니다')}"></head>
 <body>
 <!--
   권한 없는 화면에 들어왔을 때. 전에는 Spring 기본 응답이 그대로 나가 JSON 원문

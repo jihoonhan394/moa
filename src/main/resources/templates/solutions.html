@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MOA - 솔루션</title>
-  <link rel="stylesheet" th:href="@{/css/style.css}">
-  <script th:src="@{/js/console-preview.js}" defer></script>
-  <script th:src="@{/js/solutions-demo.js}" defer></script>
-</head>
+<head th:replace="~{fragments/head :: head('MOA - 솔루션')}"></head>
 <body>
 <div class="app-shell">
   <aside th:replace="~{fragments/sidebar :: sidebar('solutions')}"></aside>
@@ -65,5 +58,7 @@
     <div class="modal-footer"><button type="button" data-instance-profile-close>닫기</button><button class="button primary" type="button" data-demo-register>상태 리포트 생성</button></div>
   </section>
 </dialog>
+  <script th:src="@{/js/console-preview.js}" defer></script>
+  <script th:src="@{/js/solutions-demo.js}" defer></script>
 </body>
 </html>
