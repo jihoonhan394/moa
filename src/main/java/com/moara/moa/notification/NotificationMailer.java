@@ -4,7 +4,10 @@ import com.moara.moa.mail.MailSendResult;
 import com.moara.moa.mail.MailService;
 import com.moara.moa.mail.MailSetting;
 import com.moara.moa.mail.MailSettingService;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -69,6 +72,43 @@ public class NotificationMailer {
       log.warn("알림 메일 발송 실패 — 인앱 알림은 이미 기록됐습니다. tenantId={}", tenantId, failure);
       return 0;
     }
+  }
+
+  /**
+   * 사람마다 모은 줄을 <b>사람당 한 통</b>으로 보낸다. 같은 내용을 받는 사람끼리는 한 번의
+   * 발송으로 묶어 SMTP 왕복을 줄인다(보통 담당자들이 같은 목록을 받으므로 대개 한 덩어리다).
+   *
+   * <p>만료 알림과 소모품 알림이 같은 코드를 각자 갖고 있었다 — 구분자와 문구만 달랐다.
+   * 알림 종류가 늘 때마다 같은 실수가 반복되므로 여기로 모았다. 제목은 건수를 받아
+   * 호출자가 완성한다({@code subjectFormat}에 {@code %d}).
+   *
+   * @param subjectFormat 예: {@code "[MOA] 만료 임박 %d건"}
+   * @param intro 본문 첫 줄(무엇에 대한 알림인지)
+   * @param separator 항목 사이 구분자. 한 줄짜리 항목은 {@code "
+"}, 여러 줄이면 {@code "
+
+"}
+   * @return 보낸 총 통수
+   */
+  public int sendDigest(
+      UUID tenantId, Map<String, List<String>> linesByEmail, String subjectFormat,
+      String intro, String separator, String link) {
+    Map<String, List<String>> byBody = new LinkedHashMap<>();
+    for (Map.Entry<String, List<String>> entry : linesByEmail.entrySet()) {
+      String email = entry.getKey();
+      if (email == null || email.isBlank() || entry.getValue().isEmpty()) {
+        continue;
+      }
+      byBody.computeIfAbsent(String.join(separator, entry.getValue()), key -> new ArrayList<>())
+          .add(email);
+    }
+    int sent = 0;
+    for (Map.Entry<String, List<String>> group : byBody.entrySet()) {
+      int count = group.getKey().split(java.util.regex.Pattern.quote(separator), -1).length;
+      sent += send(tenantId, group.getValue(), String.format(subjectFormat, count),
+          intro + "\n\n" + group.getKey(), link);
+    }
+    return sent;
   }
 
   private String withLink(String body, String link) {

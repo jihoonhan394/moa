@@ -108,30 +108,18 @@ public class ExpirationAlertService {
         }
       }
     }
-    mailDigest(tenantId, digest);
+    // 사람당 한 통. 묶는 규칙은 NotificationMailer가 갖고 있다 — 알림 종류마다
+    // 같은 코드를 다시 쓰지 않도록.
+    mailer.sendDigest(tenantId, emailLines(digest), "[MOA] 만료 임박 %d건",
+        "만료가 임박한 항목입니다.", "\n", "/expirations");
     return sent;
   }
 
-  /**
-   * 수신자별 묶음 메일. 같은 목록을 받는 사람끼리는 한 번의 발송으로 묶어 SMTP 왕복을 줄인다
-   * (보통 모든 관리자가 같은 항목을 받으므로 대개 한 덩어리가 된다).
-   */
-  private void mailDigest(UUID tenantId, Map<ManagedUser, List<String>> digest) {
-    Map<String, List<String>> byBody = new LinkedHashMap<>();
-    for (Map.Entry<ManagedUser, List<String>> entry : digest.entrySet()) {
-      String email = entry.getKey().getEmail();
-      if (email == null || email.isBlank()) {
-        continue;
-      }
-      byBody.computeIfAbsent(String.join("\n", entry.getValue()), key -> new ArrayList<>())
-          .add(email);
-    }
-    for (Map.Entry<String, List<String>> group : byBody.entrySet()) {
-      int count = group.getKey().split("\n").length;
-      mailer.send(
-          tenantId, group.getValue(), "[MOA] 만료 임박 " + count + "건",
-          "만료가 임박한 항목입니다.\n\n" + group.getKey(), "/expirations");
-    }
+  /** 수신자를 이메일 키로 바꾼다(메일 발송기는 사용자 개념을 모른다). */
+  private Map<String, List<String>> emailLines(Map<ManagedUser, List<String>> digest) {
+    Map<String, List<String>> out = new LinkedHashMap<>();
+    digest.forEach((user, lines) -> out.put(user.getEmail(), lines));
+    return out;
   }
 
   /** 관리 권한을 가진 활성 사용자. 만료 대시보드를 볼 수 있는 사람에게만 알린다. */

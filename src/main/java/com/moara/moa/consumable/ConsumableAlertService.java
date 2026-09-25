@@ -100,7 +100,10 @@ public class ConsumableAlertService {
         }
       }
     }
-    mailDigest(tenantId, digest);
+    // 품목이 여러 개여도 사람당 한 통. 묶는 규칙은 NotificationMailer 공용이다.
+    mailer.sendDigest(tenantId, emailLines(digest), "[MOA] 소모품 주문 시점 %d건",
+        "아래 소모품의 주문 주기가 돌아왔습니다. 재고를 확인해 주세요.", "\n\n",
+        "/consumables");
     return sent;
   }
 
@@ -158,22 +161,10 @@ public class ConsumableAlertService {
     return new ArrayList<>(out);
   }
 
-  /** 품목이 여러 개여도 사람당 한 통. 건별로 보내면 수신자가 메일을 차단한다. */
-  private void mailDigest(UUID tenantId, Map<ManagedUser, List<String>> digest) {
-    Map<String, List<String>> byBody = new LinkedHashMap<>();
-    for (Map.Entry<ManagedUser, List<String>> entry : digest.entrySet()) {
-      String email = entry.getKey().getEmail();
-      if (email == null || email.isBlank()) {
-        continue;
-      }
-      byBody.computeIfAbsent(String.join("\n\n", entry.getValue()), key -> new ArrayList<>())
-          .add(email);
-    }
-    for (Map.Entry<String, List<String>> group : byBody.entrySet()) {
-      int count = group.getKey().split("\n\n").length;
-      mailer.send(tenantId, group.getValue(), "[MOA] 소모품 주문 시점 " + count + "건",
-          "아래 소모품의 주문 주기가 돌아왔습니다. 재고를 확인해 주세요.\n\n" + group.getKey(),
-          "/consumables");
-    }
+  /** 수신자를 이메일 키로 바꾼다(메일 발송기는 사용자 개념을 모른다). */
+  private Map<String, List<String>> emailLines(Map<ManagedUser, List<String>> digest) {
+    Map<String, List<String>> out = new LinkedHashMap<>();
+    digest.forEach((user, lines) -> out.put(user.getEmail(), lines));
+    return out;
   }
 }
