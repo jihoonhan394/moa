@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('MOA - AI를 쓸 수 없습니다')}"></head>
+<body>
+<!--
+  AI 호출이 실패했을 때. AI는 거들 뿐이라, 실패가 "시스템 고장"처럼 보이면 안 된다.
+  무엇이 안 됐고 누가 무엇을 고치면 되는지 한 화면에 둔다.
+-->
+<main class="workspace">
+  <section class="panel" style="max-width:640px;margin:3rem auto">
+    <p class="eyebrow">AI</p>
+    <h1>지금은 AI를 쓸 수 없습니다</h1>
+    <p class="subcopy" th:text="${reason}">이유</p>
+    <p class="subcopy">
+      AI가 없어도 나머지 기능은 그대로 쓸 수 있습니다. 설정이 필요하면 기관 관리자가
+      <b>AI 설정</b>에서 제공자와 키를 등록하고 <b>연결 확인</b>으로 점검할 수 있습니다.
+    </p>
+    <p style="margin-top:1rem">
+      <a class="button" th:href="@{/portal}">처음으로</a>
+      <a class="button" th:href="@{/ai-settings}">AI 설정</a>
+    </p>
+  </section>
+</main>
+</body>
+</html>

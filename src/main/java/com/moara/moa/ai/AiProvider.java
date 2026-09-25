@@ -9,7 +9,9 @@ package com.moara.moa.ai;
  */
 public enum AiProvider {
   GEMINI("Gemini", "https://generativelanguage.googleapis.com", "gemini-1.5-flash"),
-  CLAUDE("Claude", "https://api.anthropic.com", "claude-3-5-sonnet-latest"),
+  // 기본값은 현행 세대로 둔다. 구세대 이름은 언젠가 제공자에서 사라져, 아무 설정도
+  // 건드리지 않은 기관이 어느 날 404를 만나게 된다.
+  CLAUDE("Claude", "https://api.anthropic.com", "claude-sonnet-5"),
   OPENAI("OpenAI", "https://api.openai.com", "gpt-4o-mini"),
   DEEPSEEK("DeepSeek", "https://api.deepseek.com", "deepseek-chat");
 

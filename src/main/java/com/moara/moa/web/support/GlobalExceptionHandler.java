@@ -1,6 +1,7 @@
 package com.moara.moa.web.support;
 
 import com.moara.moa.access.AccessRequestNotFoundException;
+import com.moara.moa.ai.AiException;
 import com.moara.moa.asset.AssetNotFoundException;
 import com.moara.moa.category.CategoryNotFoundException;
 import com.moara.moa.connection.ConnectionSessionNotFoundException;
@@ -21,6 +22,7 @@ import com.moara.moa.wiki.WikiPageNotFoundException;
 import com.moara.moa.wiki.WikiSpaceNotFoundException;
 import com.moara.moa.wiki.WikiTemplateNotFoundException;
 import org.springframework.http.HttpStatus;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -64,5 +66,20 @@ public class GlobalExceptionHandler {
   @ResponseStatus(HttpStatus.NOT_FOUND)
   public String handleNotFound() {
     return "error/404";
+  }
+
+  /**
+   * AI 호출 실패의 안전망. 지금은 각 화면이 직접 잡아 그 자리에서 안내하지만, 새 AI 기능이
+   * 그걸 빠뜨리면 whitelabel 500이 나간다 — 외부 제공자가 잠깐 죽은 것뿐인데 사용자는
+   * "시스템이 고장났다"고 읽는다. AI는 <b>거들 뿐</b>이므로 실패해도 그렇게 보여선 안 된다.
+   *
+   * <p>{@code AiException}의 메시지는 제공자 응답 본문이 아니라 우리가 만든 안내 문구다
+   * (본문·URL은 키를 담을 수 있어 담지 않는다). 그대로 화면에 보여도 안전하다.
+   */
+  @ExceptionHandler(AiException.class)
+  @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+  public String handleAiFailure(AiException exception, Model model) {
+    model.addAttribute("reason", exception.getMessage());
+    return "error/ai";
   }
 }

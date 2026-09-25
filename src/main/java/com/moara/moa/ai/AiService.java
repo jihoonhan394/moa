@@ -27,6 +27,10 @@ public class AiService {
   private final int requestTimeoutSeconds;
   private final ObjectMapper mapper = new ObjectMapper();
 
+  /** 연결 확인용 프롬프트. 왕복만 증명하면 되므로 토큰을 거의 쓰지 않게 짧게 둔다. */
+  private static final String PROBE_PROMPT =
+      "연결 확인입니다. 다른 말 없이 «연결 확인됨» 이라고만 답하세요.";
+
   public AiService(
       AiSettingService settingService,
       @Value("${moa.ai.connect-timeout-seconds:10}") int connectTimeoutSeconds,
@@ -62,8 +66,57 @@ public class AiService {
     } catch (InterruptedException exception) {
       Thread.currentThread().interrupt();
       throw new AiException("AI 호출이 중단되었습니다.");
+    } catch (java.net.http.HttpTimeoutException timeout) {
+      throw new AiException("응답 시간 초과(" + requestTimeoutSeconds
+          + "초). 네트워크와 Base URL을 확인하세요. 폐쇄망이면 프록시·방화벽도 함께 보세요.");
+    } catch (java.io.IOException unreachable) {
+      throw new AiException("제공자에 연결할 수 없습니다. Base URL과 방화벽을 확인하세요.");
     } catch (Exception exception) {
-      throw new AiException("AI 호출 실패: " + exception.getClass().getSimpleName());
+      // 예외 메시지에는 URL이 실릴 수 있고 Gemini는 URL 쿼리에 키를 담는다 → 종류만 남긴다.
+      throw new AiException("AI 호출 실패(" + exception.getClass().getSimpleName() + ").");
+    }
+  }
+
+  /**
+   * 설정이 실제로 동작하는지 왕복으로 확인한다.
+   *
+   * <p>저장만으로는 아무것도 증명되지 않는다 — 키가 틀려도 화면은 "저장했습니다"라고 하고,
+   * 문제는 한참 뒤 다른 기능에서 조용한 비활성으로 나타난다. 짧은 프롬프트 한 번이면
+   * 키·모델명·주소·네트워크가 한꺼번에 확인된다.
+   */
+  public TestResult test(UUID tenantId) {
+    AiSetting setting = settingService.findForTenant(tenantId).orElse(null);
+    if (setting == null || !setting.hasSecret()) {
+      return TestResult.failed("API 키가 저장되어 있지 않습니다. 키를 입력하고 저장하세요.", null, null);
+    }
+    String model = setting.effectiveModel();
+    String baseUrl = setting.effectiveBaseUrl();
+    if (!setting.isEnabled()) {
+      return TestResult.failed(
+          "설정이 비활성 상태입니다. 'AI 기능 사용'을 켜야 각 화면에서 쓰입니다.", model, baseUrl);
+    }
+    try {
+      String reply = generate(tenantId, PROBE_PROMPT);
+      return new TestResult(true, "연결에 성공했습니다.", model, baseUrl, shorten(reply));
+    } catch (AiException failure) {
+      return TestResult.failed(failure.getMessage(), model, baseUrl);
+    }
+  }
+
+  /** 응답이 길어도 화면은 앞부분만 있으면 된다 — 왕복이 됐다는 증거면 충분하다. */
+  private static String shorten(String reply) {
+    String trimmed = reply.strip();
+    return trimmed.length() <= 200 ? trimmed : trimmed.substring(0, 200) + "…";
+  }
+
+  /**
+   * 연결 확인 결과. 성공·실패 모두 <b>무엇으로 붙었는지</b>(모델·주소)를 같이 돌려준다 —
+   * 비워 둔 칸이 제공자 기본값으로 채워지므로, 사용자가 자기가 입력한 것과 실제로 쓰인 것을
+   * 견줄 수 있어야 한다. 키는 담지 않는다.
+   */
+  public record TestResult(boolean ok, String message, String model, String baseUrl, String reply) {
+    static TestResult failed(String message, String model, String baseUrl) {
+      return new TestResult(false, message, model, baseUrl, null);
     }
   }
 
@@ -120,9 +173,27 @@ public class AiService {
   private JsonNode send(HttpRequest request) throws Exception {
     HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     if (response.statusCode() / 100 != 2) {
-      // 응답 본문/URL은 키를 담을 수 있어 노출하지 않는다.
-      throw new AiException("AI 제공자 오류(HTTP " + response.statusCode() + ").");
+      throw new AiException(explain(response.statusCode()));
     }
     return mapper.readTree(response.body());
+  }
+
+  /**
+   * 상태 코드를 <b>고칠 수 있는 말</b>로 바꾼다. "AI 제공자 오류(HTTP 401)"만으로는 키가
+   * 틀렸는지 모델명이 틀렸는지 알 수 없어, 사용자가 설정 화면에서 할 일을 찾지 못한다.
+   *
+   * <p>응답 본문과 요청 URL은 절대 담지 않는다 — 본문은 키를 되비추는 제공자가 있고,
+   * Gemini는 <b>URL 쿼리에 키가 들어간다</b>.
+   */
+  private static String explain(int status) {
+    return switch (status) {
+      case 401, 403 -> "API 키가 거부되었습니다(HTTP " + status
+          + "). 키가 맞는지, 선택한 제공자의 키가 맞는지 확인하세요.";
+      case 404 -> "모델이나 주소를 찾을 수 없습니다(HTTP 404). 모델명과 Base URL을 확인하세요.";
+      case 429 -> "요청 한도를 넘었습니다(HTTP 429). 잠시 후 다시 시도하거나 제공자 사용량을 확인하세요.";
+      default -> status / 100 == 5
+          ? "제공자 서버 오류(HTTP " + status + "). 잠시 후 다시 시도하세요."
+          : "제공자가 요청을 거부했습니다(HTTP " + status + "). 모델명과 설정을 확인하세요.";
+    };
   }
 }
