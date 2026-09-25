@@ -10,7 +10,11 @@ import org.springframework.stereotype.Component;
 
 /**
  * SSH(JSch, 비밀번호 인증)로 원격 명령을 실행한다. 자격증명은 {@link RemoteTarget}로 즉시 전달·사용·폐기하며
- * 로그에 남기지 않는다. StrictHostKeyChecking은 제어/데모 편의상 off(운영은 known_hosts 관리 권장).
+ * 로그에 남기지 않는다.
+ *
+ * <p>호스트 신원은 TOFU로 확인한다({@link TofuHostKeyRepository}) — 처음 본 호스트는 기록하고
+ * 통과, 기록과 다르면 막는다. 전에는 {@code StrictHostKeyChecking=no}여서 그 주소에 답하는
+ * 누구에게나 볼트에서 꺼낸 평문 비밀번호를 건넸다.
  */
 @Component
 public class JschSshExecutor implements RemoteExecutor {
@@ -18,16 +22,25 @@ public class JschSshExecutor implements RemoteExecutor {
   private static final long READ_TIMEOUT_MS = 60_000;
   private static final long POLL_INTERVAL_MS = 100;
 
+  private final RemoteHostKeyStore hostKeyStore;
+
+  public JschSshExecutor(RemoteHostKeyStore hostKeyStore) {
+    this.hostKeyStore = hostKeyStore;
+  }
+
   @Override
   public ExecResult execute(RemoteTarget target, String command) {
     Session session = null;
     ChannelExec channel = null;
     try {
       JSch jsch = new JSch();
+      jsch.setHostKeyRepository(new TofuHostKeyRepository(
+          hostKeyStore, target.tenantId(), target.host(), target.port()));
       session = jsch.getSession(target.username(), target.host(), target.port());
       session.setPassword(target.secret());
       Properties config = new Properties();
-      config.put("StrictHostKeyChecking", "no");
+      // 검사를 켜 두고, 무엇을 통과시킬지는 위 저장소가 정한다.
+      config.put("StrictHostKeyChecking", "yes");
       session.setConfig(config);
       session.connect(CONNECT_TIMEOUT_MS);
 
@@ -59,6 +72,12 @@ public class JschSshExecutor implements RemoteExecutor {
       Thread.currentThread().interrupt();
       throw new RemoteExecutionException("원격 명령 실행이 중단되었습니다", interrupted);
     } catch (Exception exception) {
+      // JSch는 연결 중 튀어나온 예외를 자기 JSchException으로 감싼다. 신원 불일치는
+      // 관리자가 읽고 판단해야 하는 메시지라, 감싸인 원인을 그대로 꺼내 올린다.
+      HostIdentityMismatchException mismatch = mismatchIn(exception);
+      if (mismatch != null) {
+        throw mismatch;
+      }
       throw new RemoteExecutionException("원격 명령 실행 실패: " + exception.getMessage(), exception);
     } finally {
       if (channel != null) {
@@ -68,5 +87,14 @@ public class JschSshExecutor implements RemoteExecutor {
         session.disconnect();
       }
     }
+  }
+
+  private static HostIdentityMismatchException mismatchIn(Throwable thrown) {
+    for (Throwable t = thrown; t != null; t = t.getCause()) {
+      if (t instanceof HostIdentityMismatchException mismatch) {
+        return mismatch;
+      }
+    }
+    return null;
   }
 }

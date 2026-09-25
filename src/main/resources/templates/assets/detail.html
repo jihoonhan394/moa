@@ -46,6 +46,38 @@
     <div class="panel-head"><div><p class="eyebrow">비고</p><h2>운영 메모</h2></div></div>
     <p class="subcopy" th:text="${asset.description}" style="white-space:pre-wrap">메모</p>
   </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">보안</p><h2>원격 신원</h2></div></div>
+    <p class="subcopy">
+      제어에 붙을 때 이 호스트가 제시한 신원입니다. 처음 붙을 때 기록하고, 그 뒤 달라지면
+      연결을 막습니다. <b>서버를 다시 설치했다면</b> 기록을 지운 뒤 다시 붙으세요.
+    </p>
+    <p th:if="${message}" class="subcopy t-good" th:text="${message}"></p>
+
+    <p th:if="${#lists.isEmpty(hostKeys)}" class="subcopy t-muted">
+      아직 기록이 없습니다. 이 서버에 처음 제어 명령을 보낼 때 기록됩니다.
+    </p>
+
+    <div th:unless="${#lists.isEmpty(hostKeys)}" class="data-table compact">
+      <div class="table-row table-head">
+        <span>채널</span><span>종류</span><span>지문(SHA-256)</span><span>처음 확인</span><span>마지막 확인</span>
+      </div>
+      <div class="table-row" th:each="key : ${hostKeys}">
+        <b th:text="${key.channel}">SSH</b>
+        <span th:text="${key.keyType}">ssh-ed25519</span>
+        <span th:text="${key.fingerprint}" style="word-break:break-all">SHA256:…</span>
+        <span th:text="${#temporals.format(key.firstSeenAt, 'yyyy-MM-dd HH:mm')}">—</span>
+        <span th:text="${#temporals.format(key.lastSeenAt, 'yyyy-MM-dd HH:mm')}">—</span>
+      </div>
+    </div>
+
+    <form th:unless="${#lists.isEmpty(hostKeys)}" class="inline"
+          method="post" th:action="@{/servers/{id}/host-key/forget(id=${asset.id})}"
+          onsubmit="return confirm('기록된 신원을 지웁니다. 서버를 다시 설치한 것이 맞습니까? 그런 적이 없다면 중간자 공격일 수 있습니다.');">
+      <button class="button" type="submit" style="margin-top:.6rem">기록 지우기</button>
+    </form>
+  </section>
 </main></div>
 </body>
 </html>

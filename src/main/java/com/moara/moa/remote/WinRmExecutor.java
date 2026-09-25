@@ -1,23 +1,36 @@
 package com.moara.moa.remote;
 
+import javax.net.ssl.X509TrustManager;
 import org.springframework.stereotype.Component;
 
 /**
  * WinRM(WS-Management) 원격 실행기 — 외부 SOAP 스택 없이 우리가 소유한 최소 구현({@link WinRmClient}).
  * 윈도우 네이티브 관리 채널이라 OpenSSH가 없어도 GPO로 대량 배포된 WinRM을 그대로 쓸 수 있다.
- * 포트 5986은 HTTPS, 그 외(5985)는 HTTP로 처리한다. 자격증명은 즉시 사용·폐기하며 로그에 남기지 않는다.
+ * 자격증명은 즉시 사용·폐기하며 로그에 남기지 않는다.
+ *
+ * <p>TLS로 붙을 때는 서버 인증서를 고정한다({@link PinningTrustManager}) — 처음 본 인증서는
+ * 기록하고 통과, 그 뒤 바뀌면 막는다.
  */
 @Component
 public class WinRmExecutor implements RemoteExecutor {
-
   /** WinRM 평문(HTTP) 기본 포트. 마이크로소프트가 정한 값이다. */
   static final int HTTP_PORT = 5985;
 
+  private final RemoteHostKeyStore hostKeyStore;
+
+  public WinRmExecutor(RemoteHostKeyStore hostKeyStore) {
+    this.hostKeyStore = hostKeyStore;
+  }
+
   @Override
   public ExecResult execute(RemoteTarget target, String command) {
+    boolean https = useHttps(target.port());
+    X509TrustManager trust = https
+        ? new PinningTrustManager(
+            hostKeyStore, target.tenantId(), target.host(), target.port())
+        : null;
     WinRmClient client = new WinRmClient(
-        target.host(), target.port(), useHttps(target.port()),
-        target.username(), target.secret());
+        target.host(), target.port(), https, target.username(), target.secret(), trust);
     return client.run(command);
   }
 

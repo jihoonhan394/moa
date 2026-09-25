@@ -45,7 +45,7 @@ public class SolutionControlService {
         credentialService.resolveSecret(tenantId, solution.getCredentialId());
     String command = buildCommand(solution, action);
     RemoteTarget target = new RemoteTarget(
-        asset.getHost(), controlPort(solution, asset.getPort()), credential.username(),
+        tenantId, asset.getHost(), controlPort(solution, asset.getPort()), credential.username(),
         credential.secret(), controlProtocol(solution));
     ExecResult result = remoteExecutor.execute(target, command);
     return new ControlResult(action, result.success(), result.output());
@@ -69,7 +69,7 @@ public class SolutionControlService {
     CredentialService.ResolvedCredential credential =
         credentialService.resolveSecret(tenantId, solution.getCredentialId());
     RemoteTarget target = new RemoteTarget(
-        asset.getHost(), controlPort(solution, asset.getPort()), credential.username(),
+        tenantId, asset.getHost(), controlPort(solution, asset.getPort()), credential.username(),
         credential.secret(), controlProtocol(solution));
     return remoteExecutor.execute(target, logCommand).output();
   }

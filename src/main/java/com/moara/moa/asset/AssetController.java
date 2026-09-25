@@ -6,6 +6,7 @@ import com.moara.moa.category.CategoryDomain;
 import com.moara.moa.category.CategoryService;
 import com.moara.moa.group.AccessGroup;
 import com.moara.moa.group.AccessGroupService;
+import com.moara.moa.remote.RemoteHostKeyStore;
 import com.moara.moa.security.TenantContext;
 import com.moara.moa.support.Values;
 import com.moara.moa.user.ManagedUserService;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class AssetController {
@@ -35,18 +37,21 @@ public class AssetController {
   private final ManagedUserService userService;
   private final AccessGroupService groupService;
   private final CategoryService categoryService;
+  private final RemoteHostKeyStore hostKeyStore;
   private final TenantContext tenantContext;
 
   public AssetController(
       AssetService assetService, AuditLogService auditLogService, TenantAuditRecorder auditRecorder,
       ManagedUserService userService, AccessGroupService groupService,
-      CategoryService categoryService, TenantContext tenantContext) {
+      CategoryService categoryService, RemoteHostKeyStore hostKeyStore,
+      TenantContext tenantContext) {
     this.assetService = assetService;
     this.auditLogService = auditLogService;
     this.auditRecorder = auditRecorder;
     this.userService = userService;
     this.groupService = groupService;
     this.categoryService = categoryService;
+    this.hostKeyStore = hostKeyStore;
     this.tenantContext = tenantContext;
   }
 
@@ -109,13 +114,36 @@ public class AssetController {
 
   @GetMapping("/servers/{id}")
   public String serverDetail(@PathVariable UUID id, Model model) {
-    Asset asset = assetService.findById(tenantContext.currentTenantId(), id);
+    UUID tenantId = tenantContext.currentTenantId();
+    Asset asset = assetService.findById(tenantId, id);
     model.addAttribute("asset", asset);
+    // 이 호스트에 대해 기록된 신원. 관리자가 지문을 눈으로 대조하고, 서버를 다시 깔았다면
+    // 여기서 지워 다음 연결을 새 "처음"으로 만든다.
+    model.addAttribute("hostKeys", hostKeyStore.findByTenant(tenantId).stream()
+        .filter(key -> key.getHost().equals(asset.getHost())).toList());
     addGroups(model);
     model.addAttribute("page", "servers");
     model.addAttribute("pageTitle", "서버 상세");
     model.addAttribute("projectName", "MOA");
     return "assets/detail";
+  }
+
+  /**
+   * 기록된 호스트 신원을 지운다 — 서버를 다시 깔면 호스트 키·인증서가 정당하게 바뀐다.
+   *
+   * <p>이 문이 없으면 재설치 한 번에 제어가 영영 막힌다. 반대로 아무나 누를 수 있으면 검증이
+   * 무의미해지므로 인프라 관리자만 할 수 있고(SecurityConfig의 /servers/**), 누가 언제 지웠는지
+   * 감사에 남긴다 — 중간자 공격 뒤에 기록을 지우는 것이 공격의 마지막 단계이기 때문이다.
+   */
+  @PostMapping("/servers/{id}/host-key/forget")
+  public String forgetHostKey(@PathVariable UUID id, RedirectAttributes redirect) {
+    UUID tenantId = tenantContext.currentTenantId();
+    Asset asset = assetService.findById(tenantId, id);
+    hostKeyStore.forget(tenantId, asset.getHost(), asset.getPort());
+    audit("ASSET_FORGET_HOST_KEY", id, asset.getHost() + ":" + asset.getPort());
+    redirect.addFlashAttribute("message",
+        "기록된 호스트 신원을 지웠습니다. 다음 연결에서 다시 기록합니다.");
+    return "redirect:/servers/" + id;
   }
 
   /** 소유팀 배정/해제(인프라 관리자). 빈 값=해제. 서버 페이지에서 온 경우 그쪽으로 돌아간다. */

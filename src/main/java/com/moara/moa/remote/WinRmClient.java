@@ -7,7 +7,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.UUID;
@@ -24,7 +23,8 @@ import org.w3c.dom.NodeList;
 /**
  * 최소 WinRM(WS-Management, MS-WSMV) 클라이언트. 외부 SOAP 스택 없이 JDK {@link HttpClient}로만 구현한다.
  * cmd Shell을 열어 명령을 실행하고 stdout/stderr를 수신한 뒤 Shell을 닫는다.
- * 인증은 Basic을 사용한다 — 운영은 HTTPS(5986)를 전제로 하고, 평문(HTTP)은 개발/검증용이다.
+ * 인증은 Basic을 사용한다 — 운영은 TLS를 전제로 하고, 평문(HTTP)은 개발/검증용이다(5985만).
+ * TLS 서버 인증서는 호출자가 넘긴 검증기가 판정한다(TOFU 고정).
  * XML 파싱은 JDK 내장 {@code java.xml}(javax.xml.parsers)만 사용하므로 jakarta 전환과 무관하다.
  */
 class WinRmClient {
@@ -45,13 +45,22 @@ class WinRmClient {
   private final URI endpoint;
   private final String authHeader;
 
-  WinRmClient(String host, int port, boolean https, String username, String secret) {
+  /**
+   * @param trust TLS로 붙을 때 서버 인증서를 판정할 검증기. 평문(HTTP)이면 {@code null}이다.
+   *     전에는 이 자리에 "무엇이든 믿는" 검증기가 박혀 있어, 끼어든 쪽이 아무 자체서명
+   *     인증서나 내밀고 Basic 인증 헤더를 받아 갈 수 있었다.
+   */
+  WinRmClient(String host, int port, boolean https, String username, String secret,
+      X509TrustManager trust) {
     this.endpoint = URI.create((https ? "https" : "http") + "://" + host + ":" + port + "/wsman");
     this.authHeader = "Basic " + Base64.getEncoder()
         .encodeToString((username + ":" + secret).getBytes(StandardCharsets.UTF_8));
     HttpClient.Builder builder = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15));
     if (https) {
-      builder.sslContext(trustAllContext());
+      if (trust == null) {
+        throw new RemoteExecutionException("TLS 연결에는 인증서 검증기가 필요합니다");
+      }
+      builder.sslContext(contextWith(trust));
     }
     this.http = builder.build();
   }
@@ -256,22 +265,10 @@ class WinRmClient {
         .replace("\"", "&quot;").replace("'", "&apos;");
   }
 
-  private static SSLContext trustAllContext() {
+  private static SSLContext contextWith(X509TrustManager trust) {
     try {
-      TrustManager[] trustAll = {new X509TrustManager() {
-        @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType) {}
-
-        @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType) {}
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-          return new X509Certificate[0];
-        }
-      }};
       SSLContext context = SSLContext.getInstance("TLS");
-      context.init(null, trustAll, new SecureRandom());
+      context.init(null, new TrustManager[] {trust}, new SecureRandom());
       return context;
     } catch (Exception e) {
       throw new RemoteExecutionException("WinRM TLS 초기화 실패: " + e.getMessage(), e);

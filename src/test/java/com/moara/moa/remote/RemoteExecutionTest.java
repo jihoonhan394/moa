@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Test;
  * 단위 테스트의 몫이 아니다(서버 대상 수동 검증은 doc/test-environment.md).
  */
 class RemoteExecutionTest {
+  private static final java.util.UUID TENANT = java.util.UUID.randomUUID();
 
   // ── 어떤 채널로 붙는가 ────────────────────────────────────────────────────
 
@@ -38,7 +40,7 @@ class RemoteExecutionTest {
   @Test
   void targetDefaultsToSsh() {
     assertEquals(RemoteProtocol.SSH,
-        new RemoteTarget("10.0.0.1", 22, "root", "secret").protocol());
+        new RemoteTarget(TENANT, "10.0.0.1", 22, "root", "secret").protocol());
   }
 
   /** 디스패처는 프로토콜만 보고 갈라야 한다 — 주입받는 쪽은 채널을 몰라도 된다. */
@@ -48,11 +50,11 @@ class RemoteExecutionTest {
     RecordingWinRm winRm = new RecordingWinRm();
     RemoteExecutorDispatcher dispatcher = new RemoteExecutorDispatcher(ssh, winRm);
 
-    dispatcher.execute(new RemoteTarget("h", 22, "u", "s", RemoteProtocol.SSH), "uptime");
+    dispatcher.execute(new RemoteTarget(TENANT, "h", 22, "u", "s", RemoteProtocol.SSH), "uptime");
     assertEquals("uptime", ssh.lastCommand);
     assertNull(winRm.lastCommand, "SSH 대상인데 WinRM이 불렸다");
 
-    dispatcher.execute(new RemoteTarget("h", 5986, "u", "s", RemoteProtocol.WINRM), "ipconfig");
+    dispatcher.execute(new RemoteTarget(TENANT, "h", 5986, "u", "s", RemoteProtocol.WINRM), "ipconfig");
     assertEquals("ipconfig", winRm.lastCommand);
   }
 
@@ -111,8 +113,8 @@ class RemoteExecutionTest {
     String secret = "p@ssw0rd-should-never-appear";
 
     RemoteExecutionException thrown = assertThrows(RemoteExecutionException.class,
-        () -> new JschSshExecutor()
-            .execute(new RemoteTarget("127.0.0.1", closedPort, "root", secret), "uptime"));
+        () -> new JschSshExecutor(recordingStore())
+            .execute(new RemoteTarget(TENANT, "127.0.0.1", closedPort, "root", secret), "uptime"));
 
     assertFalse(chainText(thrown).contains(secret), "예외 사슬에 비밀번호가 섞였다");
     assertTrue(thrown.getMessage().contains("원격 명령 실행 실패"));
@@ -134,8 +136,8 @@ class RemoteExecutionTest {
       accepter.start();
 
       RemoteExecutionException thrown = assertThrows(RemoteExecutionException.class,
-          () -> new JschSshExecutor().execute(
-              new RemoteTarget("127.0.0.1", server.getLocalPort(), "root", secret), "uptime"));
+          () -> new JschSshExecutor(recordingStore()).execute(
+              new RemoteTarget(TENANT, "127.0.0.1", server.getLocalPort(), "root", secret), "uptime"));
 
       assertFalse(chainText(thrown).contains(secret));
     }
@@ -150,6 +152,15 @@ class RemoteExecutionTest {
   }
 
   // ── 도우미 ────────────────────────────────────────────────────────────────
+
+  /**
+   * 신원 저장소의 껍데기. 이 테스트들은 손잡이가 붙기 전(연결 자체가 실패하는) 경로만 보므로
+   * 저장소는 불리지 않는다. 실제 TOFU 판단은 {@code RemoteHostKeyStoreTest}에서 DB와 함께 본다.
+   */
+  private static RemoteHostKeyStore recordingStore() {
+    return new RemoteHostKeyStore(mock(RemoteHostKeyRepository.class));
+  }
+
 
   private static String chainText(Throwable thrown) {
     StringBuilder text = new StringBuilder();
@@ -169,6 +180,10 @@ class RemoteExecutionTest {
   private static class RecordingSsh extends JschSshExecutor {
     String lastCommand;
 
+    RecordingSsh() {
+      super(recordingStore());
+    }
+
     @Override
     public ExecResult execute(RemoteTarget target, String command) {
       lastCommand = command;
@@ -178,6 +193,10 @@ class RemoteExecutionTest {
 
   private static class RecordingWinRm extends WinRmExecutor {
     String lastCommand;
+
+    RecordingWinRm() {
+      super(recordingStore());
+    }
 
     @Override
     public ExecResult execute(RemoteTarget target, String command) {
