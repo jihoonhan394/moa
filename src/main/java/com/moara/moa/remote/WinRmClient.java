@@ -218,14 +218,28 @@ class WinRmClient {
     return reason == null ? "(알 수 없는 응답)" : reason;
   }
 
-  /** 명령을 실행 파일(첫 토큰)과 인자(나머지)로 분리한다. WinRM CommandLine 스키마용. */
-  private static String[] splitCommand(String command) {
+  /**
+   * 명령을 실행 파일(첫 토큰)과 인자(나머지)로 분리한다. WinRM CommandLine 스키마는 둘을
+   * 따로 받는다.
+   *
+   * <p>윈도우 경로에는 공백이 흔하다. 전에는 첫 공백에서 무조건 잘라
+   * {@code "C:PATH x.exe" -flag}가 실행 파일 {@code "C:PATH}와 인자 {@code x.exe" -flag}로
+   * 갈렸다 — 실행될 수 없는 조합이다. 큰따옴표로 감싼 경우에는 닫는 따옴표 뒤의 공백에서
+   * 자른다.
+   */
+  static String[] splitCommand(String command) {
     String trimmed = command.strip();
-    int space = trimmed.indexOf(' ');
-    if (space < 0) {
+    int cut;
+    if (trimmed.startsWith("\"")) {
+      int closing = trimmed.indexOf('\"', 1);
+      cut = closing < 0 ? -1 : trimmed.indexOf(' ', closing);
+    } else {
+      cut = trimmed.indexOf(' ');
+    }
+    if (cut < 0) {
       return new String[] {trimmed, ""};
     }
-    return new String[] {trimmed.substring(0, space), trimmed.substring(space + 1)};
+    return new String[] {trimmed.substring(0, cut), trimmed.substring(cut + 1).strip()};
   }
 
   private static int parseInt(String value, int fallback) {
@@ -236,7 +250,8 @@ class WinRmClient {
     }
   }
 
-  private static String xml(String s) {
+  /** SOAP 본문에 넣기 전 XML 특수문자를 막는다. `dir & echo x` 같은 명령이 봉투를 깨뜨린다. */
+  static String xml(String s) {
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         .replace("\"", "&quot;").replace("'", "&apos;");
   }
