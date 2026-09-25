@@ -54,7 +54,7 @@
             <b th:if="${d.startsOn.isAfter(today)}" class="warn">예정</b>
             <b th:if="${d.endsOn.isBefore(today)}" class="t-muted">종료</b>
           </span>
-          <form method="post" th:action="@{'/team/deputies/' + ${d.id} + '/end'}" style="display:inline"
+          <form class="inline" method="post" th:action="@{'/team/deputies/' + ${d.id} + '/end'}"
                 onsubmit="return confirm('이 대직을 종료할까요?')">
             <button class="button" type="submit">종료</button>
           </form>

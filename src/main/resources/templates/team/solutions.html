@@ -80,11 +80,11 @@
           <span th:text="${assetNames.getOrDefault(sol.assetId, '-')}" class="t-muted">서버</span>
           <span th:text="${groupNames.getOrDefault(sol.ownerGroupId, '-')}" class="t-muted">부서</span>
           <span class="table-actions">
-            <form th:each="act : ${actions}" method="post" th:action="@{'/team/solutions/' + ${sol.id} + '/control'}" style="display:inline">
+            <form class="inline" th:each="act : ${actions}" method="post" th:action="@{'/team/solutions/' + ${sol.id} + '/control'}">
               <input type="hidden" name="action" th:value="${act}">
               <button class="button" type="submit" th:text="${act}">START</button>
             </form>
-            <form method="post" th:action="@{'/team/solutions/' + ${sol.id} + '/delete'}" style="display:inline"
+            <form class="inline" method="post" th:action="@{'/team/solutions/' + ${sol.id} + '/delete'}"
                   onsubmit="return confirm('이 솔루션을 삭제할까요?')">
               <button class="button" type="submit">삭제</button>
             </form>

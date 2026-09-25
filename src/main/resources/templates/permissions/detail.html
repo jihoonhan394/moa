@@ -46,7 +46,7 @@
           <strong th:text="${entry.assetName}">자산</strong>
           <span th:text="${entry.action}">SSH</span>
           <span class="table-actions">
-            <form method="post" th:action="@{'/permissions/' + ${permission.id} + '/entries/delete'}" style="display:inline">
+            <form class="inline" method="post" th:action="@{'/permissions/' + ${permission.id} + '/entries/delete'}">
               <input type="hidden" name="assetId" th:value="${entry.assetId}">
               <input type="hidden" name="action" th:value="${entry.action}">
               <button class="button" type="submit">삭제</button>
@@ -72,7 +72,7 @@
         <div class="table-row" th:each="ga : ${groupAssignments}">
           <strong th:text="${ga.groupName}">그룹</strong>
           <span class="table-actions">
-            <form method="post" th:action="@{'/permissions/' + ${permission.id} + '/groups/delete'}" style="display:inline">
+            <form class="inline" method="post" th:action="@{'/permissions/' + ${permission.id} + '/groups/delete'}">
               <input type="hidden" name="groupId" th:value="${ga.groupId}">
               <button class="button" type="submit">해제</button>
             </form>
@@ -102,7 +102,7 @@
           <strong th:text="${ua.name + ' (' + ua.username + ')'}">사용자</strong>
           <span th:text="${ua.expiresAt != null ? ua.expiresAt : '무기한'}">만료</span>
           <span class="table-actions">
-            <form method="post" th:action="@{'/permissions/' + ${permission.id} + '/users/delete'}" style="display:inline">
+            <form class="inline" method="post" th:action="@{'/permissions/' + ${permission.id} + '/users/delete'}">
               <input type="hidden" name="userId" th:value="${ua.userId}">
               <button class="button" type="submit">해제</button>
             </form>

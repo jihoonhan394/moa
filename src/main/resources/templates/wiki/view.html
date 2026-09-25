@@ -14,7 +14,7 @@
       </p>
     </div>
     <div class="top-actions">
-      <form method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/favorite'}" style="display:inline">
+      <form class="inline" method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/favorite'}">
         <button class="button" type="submit" th:text="${isFavorite} ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기'">☆ 즐겨찾기</button>
       </form>
       <button th:if="${aiConfigured}" class="button" type="button" id="aiSummaryBtn"
@@ -33,8 +33,8 @@
   <!-- 라벨 -->
   <section class="panel">
     <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
-      <span class="eyebrow" style="margin:0">라벨</span>
-      <span th:if="${#lists.isEmpty(labels)}" class="subcopy" style="margin:0">없음</span>
+      <span class="eyebrow no-margin">라벨</span>
+      <span th:if="${#lists.isEmpty(labels)}" class="subcopy no-margin">없음</span>
       <span th:each="l : ${labels}" class="pill" style="display:inline-flex;align-items:center;gap:.3rem">
         <span th:text="${l.label}">라벨</span>
         <form th:if="${canEdit}" method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/labels/' + ${l.id} + '/delete'}" style="display:inline;margin:0">
@@ -69,7 +69,7 @@
           enctype="multipart/form-data" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.8rem">
       <input type="file" name="file" required>
       <button class="button" type="submit">첨부 업로드</button>
-      <span class="subcopy" style="margin:0">최대 20MB</span>
+      <span class="subcopy no-margin">최대 20MB</span>
     </form>
 
     <p th:if="${#lists.isEmpty(attachments)}" class="subcopy">첨부파일이 없습니다.</p>
@@ -88,8 +88,8 @@
             · <span th:text="${a.contentType != null ? a.contentType : '파일'}">타입</span>
           </p>
         </div>
-        <form th:if="${canEdit}" method="post"
-              th:action="@{'/wiki/attachments/' + ${a.id} + '/delete'}" style="margin:0"
+        <form class="no-margin" th:if="${canEdit}" method="post"
+              th:action="@{'/wiki/attachments/' + ${a.id} + '/delete'}"
               onsubmit="return confirm('이 첨부를 삭제할까요?')">
           <button class="button t-bad" type="submit">삭제</button>
         </form>
@@ -105,7 +105,7 @@
       <div th:each="c : ${comments}" style="border-bottom:1px solid rgba(128,128,128,.15);padding-bottom:.5rem">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <strong th:text="${c.authorUserId != null ? commentAuthors.get(c.authorUserId) : '알 수 없음'}">작성자</strong>
-          <span class="subcopy" style="margin:0">
+          <span class="subcopy no-margin">
             <span th:text="${#temporals.format(c.createdAt, 'yyyy-MM-dd HH:mm')}">시각</span>
             <form th:if="${(c.authorUserId != null and c.authorUserId == myUserId) or canManage}" method="post"
                   th:action="@{'/wiki/' + ${wikiPage.id} + '/comments/' + ${c.id} + '/delete'}" style="display:inline;margin-left:.4rem">

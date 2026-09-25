@@ -60,14 +60,14 @@
           <span th:text="${item.assignedUserId != null ? userNames.get(item.assignedUserId) : '—'}">배정</span>
           <span th:text="${groupNames.getOrDefault(item.ownerGroupId, '-')}" class="t-muted">부서</span>
           <span class="table-actions">
-            <form th:if="${item.status.name() != 'ASSIGNED'}" method="post" th:action="@{'/team/inventory/' + ${item.id} + '/assign'}" style="display:inline">
+            <form class="inline" th:if="${item.status.name() != 'ASSIGNED'}" method="post" th:action="@{'/team/inventory/' + ${item.id} + '/assign'}">
               <select name="userId" required aria-label="배정 팀원">
                 <option value="" disabled selected>팀원 선택</option>
                 <option th:each="u : ${teamUsers}" th:value="${u.id}" th:text="${u.name}">팀원</option>
               </select>
               <button class="button" type="submit">배정</button>
             </form>
-            <form th:if="${item.status.name() == 'ASSIGNED'}" method="post" th:action="@{'/team/inventory/' + ${item.id} + '/reclaim'}" style="display:inline">
+            <form class="inline" th:if="${item.status.name() == 'ASSIGNED'}" method="post" th:action="@{'/team/inventory/' + ${item.id} + '/reclaim'}">
               <button class="button" type="submit">회수</button>
             </form>
             <details style="display:inline-block">
@@ -85,7 +85,7 @@
                 </form>
               </div>
             </details>
-            <form method="post" th:action="@{'/team/inventory/' + ${item.id} + '/delete'}" style="display:inline"
+            <form class="inline" method="post" th:action="@{'/team/inventory/' + ${item.id} + '/delete'}"
                   onsubmit="return confirm('이 자산을 삭제할까요?')">
               <button class="button" type="submit">삭제</button>
             </form>

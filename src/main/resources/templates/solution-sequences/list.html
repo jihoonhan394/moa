@@ -34,7 +34,7 @@
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">등록</p><h2>기동 순서 만들기</h2></div></div>
     <form method="post" th:action="@{/solution-sequences}" th:object="${sequenceForm}" class="stacked-form" style="display:flex;gap:0.5rem;max-width:760px;">
-      <input type="text" th:field="*{name}" maxlength="100" placeholder="순서 이름 (예: 모바일 그룹웨어 중단 / 페일오버)" required style="flex:1">
+      <input class="fill" type="text" th:field="*{name}" maxlength="100" placeholder="순서 이름 (예: 모바일 그룹웨어 중단 / 페일오버)" required>
       <input type="text" th:field="*{description}" maxlength="500" placeholder="설명 (선택)" style="flex:2">
       <button class="button primary" type="submit">추가</button>
       <!-- 전역오류는 th:object 폼 안에서 표시해야 렌더된다(밖이면 안 보임). -->
@@ -55,15 +55,15 @@
     <div class="panel-head">
       <div><p class="eyebrow" th:text="${seq.description != null ? seq.description : '기동 순서'}">설명</p><h2 th:text="${seq.name}">순서</h2></div>
       <div style="display:flex;gap:0.4rem">
-        <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/run'}" style="display:inline"
+        <form class="inline" method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/run'}"
               onsubmit="return confirm('정방향으로 각 단계 동작을 순서대로 실행합니다. 진행할까요?')">
           <button class="button primary" type="submit">▶ 정방향 실행</button>
         </form>
-        <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/reverse'}" style="display:inline"
+        <form class="inline" method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/reverse'}"
               onsubmit="return confirm('역방향으로(반대 동작을 역순으로) 실행합니다. 진행할까요?')">
           <button class="button" type="submit">◀ 역방향 실행</button>
         </form>
-        <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/delete'}" style="display:inline"
+        <form class="inline" method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/delete'}"
               onsubmit="return confirm('이 기동 순서를 삭제할까요?')">
           <button class="button" type="submit">삭제</button>
         </form>
@@ -80,13 +80,13 @@
         <b th:classappend="${st.action.name() == 'STOP'} ? 'warn' : (${st.action.name() == 'START'} ? 'good' : '')" th:text="${st.action}">START</b>
         <span th:text="${st.waitSeconds} + '초' + (${st.verifyAfterStart} ? ' · 상태확인' : '')">0초</span>
         <span class="table-actions">
-          <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps/' + ${st.stepId} + '/move'}" style="display:inline">
+          <form class="inline" method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps/' + ${st.stepId} + '/move'}">
             <input type="hidden" name="up" value="true"><button class="button" type="submit" title="위로">▲</button>
           </form>
-          <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps/' + ${st.stepId} + '/move'}" style="display:inline">
+          <form class="inline" method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps/' + ${st.stepId} + '/move'}">
             <input type="hidden" name="up" value="false"><button class="button" type="submit" title="아래로">▼</button>
           </form>
-          <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps/' + ${st.stepId} + '/delete'}" style="display:inline">
+          <form class="inline" method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps/' + ${st.stepId} + '/delete'}">
             <button class="button" type="submit">제거</button>
           </form>
         </span>
@@ -107,7 +107,7 @@
     </form>
 
     <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/schedule'}" style="display:flex;gap:0.4rem;margin-top:0.5rem;flex-wrap:wrap;align-items:center">
-      <span class="subcopy" style="margin:0">자동 스케줄(cron 초 분 시 일 월 요일):</span>
+      <span class="subcopy no-margin">자동 스케줄(cron 초 분 시 일 월 요일):</span>
       <input type="text" name="forwardCron" th:value="${seq.forwardCron}" placeholder="정방향 예: 0 0 19 * * *" style="width:200px">
       <input type="text" name="reverseCron" th:value="${seq.reverseCron}" placeholder="역방향 예: 0 0 8 * * *" style="width:200px">
       <button class="button" type="submit">스케줄 저장</button>

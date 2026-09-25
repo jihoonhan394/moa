@@ -17,7 +17,7 @@
         <span th:text="${r.editor}">수정자</span>
         <span class="table-actions">
           <a class="button" th:href="@{'/wiki/' + ${wikiPage.id} + '/history/' + ${r.revId}}">보기</a>
-          <form th:if="${canEdit}" method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/history/' + ${r.revId} + '/restore'}" style="display:inline"
+          <form class="inline" th:if="${canEdit}" method="post" th:action="@{'/wiki/' + ${wikiPage.id} + '/history/' + ${r.revId} + '/restore'}"
                 onsubmit="return confirm('이 버전으로 되돌릴까요? 현재 내용도 이력으로 남습니다.')">
             <button class="button" type="submit">되돌리기</button>
           </form>

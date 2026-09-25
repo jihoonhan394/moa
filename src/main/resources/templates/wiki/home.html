@@ -12,7 +12,7 @@
 
   <section class="panel">
     <form method="get" th:action="@{/wiki/search}" style="display:flex;gap:0.5rem;max-width:640px">
-      <input type="text" name="q" maxlength="100" placeholder="위키 검색 (제목·본문)" required style="flex:1">
+      <input class="fill" type="text" name="q" maxlength="100" placeholder="위키 검색 (제목·본문)" required>
       <button class="button" type="submit">검색</button>
     </form>
   </section>

@@ -11,8 +11,8 @@
       <a th:if="${inTenantContext}" class="button primary" th:href="@{/notices/new}">공지 등록</a>
     </header>
 
-    <p th:if="${message}" class="subcopy" style="color:var(--green)" th:text="${message}"></p>
-    <p th:if="${mailMessage}" class="subcopy" style="color:var(--green)" th:text="${mailMessage}"></p>
+    <p th:if="${message}" class="subcopy t-good" th:text="${message}"></p>
+    <p th:if="${mailMessage}" class="subcopy t-good" th:text="${mailMessage}"></p>
     <p th:if="${error}" class="subcopy t-bad" th:text="${error}"></p>
 
     <section class="panel">
@@ -30,7 +30,7 @@
           <span th:text="${#temporals.format(notice.createdAt, 'yyyy-MM-dd HH:mm')}">등록일</span>
           <span th:if="${inTenantContext}" class="table-actions">
             <a class="button" th:href="@{'/notices/' + ${notice.id} + '/edit'}">수정</a>
-            <form method="post" th:action="@{'/notices/' + ${notice.id} + '/delete'}" style="display:inline"
+            <form class="inline" method="post" th:action="@{'/notices/' + ${notice.id} + '/delete'}"
                   onsubmit="return confirm('이 공지를 삭제할까요?');">
               <button class="button" type="submit">삭제</button>
             </form>

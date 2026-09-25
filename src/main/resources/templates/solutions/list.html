@@ -43,7 +43,7 @@
                   th:text="${#strings.repeat('— ', n.depth) + n.name}">그룹웨어 / WAS</option>
         </select>
       </div>
-      <p class="subcopy" style="margin:0">서버·이름·유형·식별자만 넣으면 등록됩니다. 나머지는 기본값으로 충분해요.</p>
+      <p class="subcopy no-margin">서버·이름·유형·식별자만 넣으면 등록됩니다. 나머지는 기본값으로 충분해요.</p>
       <details style="border:1px solid var(--line);border-radius:8px;padding:.45rem .75rem">
         <summary style="cursor:pointer;font-weight:700;color:#5a6b8c">고급 설정 (자격증명 · 상태 · health · 사용자 지정 명령 · 제어 채널 · 소유팀)</summary>
         <div style="display:grid;gap:.5rem;margin-top:.6rem">
@@ -101,7 +101,7 @@
         <span class="table-actions">
           <a class="button" th:href="@{'/solutions/' + ${sol.id}}" title="운영 콘솔(매뉴얼·업체·이력)">콘솔</a>
           <a class="button" th:href="@{'/solutions/' + ${sol.id} + '/edit'}" title="등록값 수정(자격증명·명령 등)">수정</a>
-          <form th:each="act : ${actions}" method="post" th:action="@{'/solutions/' + ${sol.id} + '/control'}" style="display:inline">
+          <form class="inline" th:each="act : ${actions}" method="post" th:action="@{'/solutions/' + ${sol.id} + '/control'}">
             <input type="hidden" name="action" th:value="${act}">
             <button class="button" type="submit" th:text="${act}">START</button>
           </form>
@@ -109,7 +109,7 @@
             <summary class="button" style="list-style:none;cursor:pointer">소유팀</summary>
             <div style="margin-top:.5rem;text-align:left;min-width:240px">
               <form method="post" th:action="@{'/solutions/' + ${sol.id} + '/owner'}" style="display:flex;gap:.4rem">
-                <select name="ownerGroupId" style="flex:1">
+                <select class="fill" name="ownerGroupId">
                   <option value="" th:selected="${sol.ownerGroupId == null}">소유팀 없음 (인프라 전용)</option>
                   <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}"
                           th:selected="${g.id == sol.ownerGroupId}">부서</option>
@@ -124,14 +124,14 @@
             <div style="margin-top:.5rem;text-align:left;min-width:240px">
               <p class="subcopy" th:if="${#lists.isEmpty(solutionUsers.get(sol.id))}">배정된 사용자가 없습니다.</p>
               <div th:each="u : ${solutionUsers.get(sol.id)}" style="display:flex;gap:.4rem;align-items:center;margin-bottom:.3rem">
-                <span th:text="${u.name + ' (' + u.username + ')'}" style="flex:1">사용자</span>
-                <form method="post" th:action="@{'/solutions/' + ${sol.id} + '/users/delete'}" style="margin:0">
+                <span class="fill" th:text="${u.name + ' (' + u.username + ')'}">사용자</span>
+                <form class="no-margin" method="post" th:action="@{'/solutions/' + ${sol.id} + '/users/delete'}">
                   <input type="hidden" name="userId" th:value="${u.id}">
                   <button class="button" type="submit">해제</button>
                 </form>
               </div>
               <form method="post" th:action="@{'/solutions/' + ${sol.id} + '/users'}" style="display:flex;gap:.4rem;margin-top:.4rem">
-                <select name="userId" required style="flex:1">
+                <select class="fill" name="userId" required>
                   <option value="" disabled selected>사용자 선택</option>
                   <option th:each="tu : ${tenantUsers}" th:value="${tu.id}" th:text="${tu.name + ' (' + tu.username + ')'}">사용자</option>
                 </select>
@@ -139,7 +139,7 @@
               </form>
             </div>
           </details>
-          <form method="post" th:action="@{'/solutions/' + ${sol.id} + '/delete'}" style="display:inline">
+          <form class="inline" method="post" th:action="@{'/solutions/' + ${sol.id} + '/delete'}">
             <button class="button" type="submit">삭제</button>
           </form>
         </span>

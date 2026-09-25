@@ -55,7 +55,7 @@
         </span>
         <span th:text="${sess.startedAt != null ? sess.startedAt : sess.createdAt}">시각</span>
         <span class="table-actions">
-          <form th:if="${sess.status.name() == 'CONNECTED'}" method="post" th:action="@{'/portal/sessions/' + ${sess.id} + '/close'}" style="display:inline">
+          <form class="inline" th:if="${sess.status.name() == 'CONNECTED'}" method="post" th:action="@{'/portal/sessions/' + ${sess.id} + '/close'}">
             <button class="button" type="submit">종료</button>
           </form>
         </span>

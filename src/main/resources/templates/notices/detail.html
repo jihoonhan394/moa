@@ -23,7 +23,7 @@
     <section th:if="${inTenantContext}" class="panel">
       <div class="table-actions">
         <a class="button" th:href="@{'/notices/' + ${notice.id} + '/edit'}">수정</a>
-        <form method="post" th:action="@{'/notices/' + ${notice.id} + '/delete'}" style="display:inline"
+        <form class="inline" method="post" th:action="@{'/notices/' + ${notice.id} + '/delete'}"
               onsubmit="return confirm('이 공지를 삭제할까요?');">
           <button class="button" type="submit">삭제</button>
         </form>

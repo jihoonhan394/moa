@@ -87,7 +87,7 @@
             <a class="button primary" th:if="${s.protocol != null and (s.protocol.name() == 'SSH' or s.protocol.name() == 'RDP')}"
                th:href="@{/servers/{id}/connect(id=${s.id})}" title="웹 SSH/RDP 접속">접속</a>
             <a class="button" th:href="@{/assets/{id}/edit(id=${s.id})}">수정</a>
-            <form method="post" th:action="@{/assets/{id}/delete(id=${s.id})}" style="display:inline"
+            <form class="inline" method="post" th:action="@{/assets/{id}/delete(id=${s.id})}"
                   onsubmit="return confirm('이 서버를 삭제할까요?')">
               <button class="button" type="submit">삭제</button>
             </form>

@@ -24,7 +24,7 @@
         <strong th:text="${sol.name}">이름</strong>
         <span th:text="${sol.type}">유형</span>
         <span class="table-actions">
-          <form th:each="act : ${actions}" method="post" th:action="@{'/my-solutions/' + ${sol.id} + '/control'}" style="display:inline">
+          <form class="inline" th:each="act : ${actions}" method="post" th:action="@{'/my-solutions/' + ${sol.id} + '/control'}">
             <input type="hidden" name="action" th:value="${act}">
             <button class="button" type="submit" th:text="${act}">START</button>
           </form>

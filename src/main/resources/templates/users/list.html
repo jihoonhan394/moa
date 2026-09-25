@@ -27,19 +27,19 @@
              th:text="${user.status.label}">활성</b>
           <span class="table-actions">
             <!-- 퇴사(종료)는 되돌릴 수 없으므로 관리 액션을 노출하지 않는다. -->
-            <span th:if="${user.status.name() == 'OFFBOARDED'}" class="subcopy" style="margin:0">퇴사 처리됨</span>
+            <span th:if="${user.status.name() == 'OFFBOARDED'}" class="subcopy no-margin">퇴사 처리됨</span>
             <th:block th:unless="${user.status.name() == 'OFFBOARDED'}">
-              <form th:if="${user.status.name() == 'PENDING'}" method="post" th:action="@{'/users/' + ${user.id} + '/approve'}" style="display:inline">
+              <form class="inline" th:if="${user.status.name() == 'PENDING'}" method="post" th:action="@{'/users/' + ${user.id} + '/approve'}">
                 <button class="button primary" type="submit">승인</button>
               </form>
               <a class="button" th:href="@{'/users/' + ${user.id} + '/edit'}">수정</a>
-              <form th:if="${user.status.name() == 'ACTIVE'}" method="post" th:action="@{'/users/' + ${user.id} + '/disable'}" style="display:inline">
+              <form class="inline" th:if="${user.status.name() == 'ACTIVE'}" method="post" th:action="@{'/users/' + ${user.id} + '/disable'}">
                 <button class="button" type="submit">비활성</button>
               </form>
-              <form th:if="${user.status.name() == 'DISABLED'}" method="post" th:action="@{'/users/' + ${user.id} + '/activate'}" style="display:inline">
+              <form class="inline" th:if="${user.status.name() == 'DISABLED'}" method="post" th:action="@{'/users/' + ${user.id} + '/activate'}">
                 <button class="button" type="submit">활성</button>
               </form>
-              <form th:if="${user.status.name() == 'ACTIVE' or user.status.name() == 'DISABLED'}" method="post" th:action="@{'/users/' + ${user.id} + '/offboard'}" style="display:inline"
+              <form class="inline" th:if="${user.status.name() == 'ACTIVE' or user.status.name() == 'DISABLED'}" method="post" th:action="@{'/users/' + ${user.id} + '/offboard'}"
                     onsubmit="return confirm('퇴사 처리하면 이 사용자의 모든 접근(그룹·권한·솔루션)이 회수되고 되돌릴 수 없습니다. 진행할까요?')">
                 <button class="button t-bad" type="submit">퇴사</button>
               </form>

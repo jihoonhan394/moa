@@ -48,8 +48,8 @@
             <button class="button" type="submit">이름</button>
           </form>
           <!-- 삭제(고정 루트·하위 보유 노드는 막힘) -->
-          <form th:unless="${n.hasChildren or (hierarchical and n.depth == 0 and !hierarchicalRootAddable)}" method="post"
-                th:action="@{${basePath} + '/' + ${n.id} + '/delete'}" style="display:inline"
+          <form class="inline" th:unless="${n.hasChildren or (hierarchical and n.depth == 0 and !hierarchicalRootAddable)}" method="post"
+                th:action="@{${basePath} + '/' + ${n.id} + '/delete'}"
                 onsubmit="return confirm('이 카테고리를 삭제할까요? 이미 이 카테고리로 등록된 항목의 값은 그대로 남습니다.')">
             <button class="button" type="submit">삭제</button>
           </form>

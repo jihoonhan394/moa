@@ -17,7 +17,7 @@
       <div class="table-row" th:each="t : ${templates}">
         <strong th:text="${t.name}">서식</strong>
         <span class="table-actions">
-          <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/templates/' + ${t.id} + '/delete'}" style="display:inline"
+          <form class="inline" method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/templates/' + ${t.id} + '/delete'}"
                 onsubmit="return confirm('이 서식을 삭제할까요?')">
             <button class="button" type="submit">삭제</button>
           </form>

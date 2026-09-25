@@ -18,7 +18,7 @@
     </div>
   </header>
 
-  <p th:if="${teamOk != null}" class="subcopy" style="color:var(--green)" th:text="${teamOk}">완료</p>
+  <p th:if="${teamOk != null}" class="subcopy t-good" th:text="${teamOk}">완료</p>
   <p th:if="${teamError != null}" class="subcopy t-bad" th:text="${teamError}">오류</p>
 
   <section class="panel" th:if="${!isAdmin and #lists.isEmpty(ledGroups)}">
@@ -66,7 +66,7 @@
           <span th:text="${#lists.isEmpty(m.assets)} ? '—' : ${#strings.listJoin(m.assets, ', ')}">자산</span>
           <span th:text="${#lists.isEmpty(m.spaces)} ? '—' : ${#strings.listJoin(m.spaces, ', ')}">위키</span>
           <span class="table-actions">
-            <form th:each="role : ${delegatableRoles}" method="post" th:action="@{/team/roles}" style="display:inline">
+            <form class="inline" th:each="role : ${delegatableRoles}" method="post" th:action="@{/team/roles}">
               <input type="hidden" name="userId" th:value="${m.user.id}">
               <input type="hidden" name="role" th:value="${role}">
               <input type="hidden" name="grant" th:value="${!m.roles.contains(role)}">

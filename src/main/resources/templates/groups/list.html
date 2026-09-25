@@ -19,18 +19,18 @@
     <form method="post" th:action="@{/groups}" th:object="${groupForm}"
           style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end">
       <label style="display:flex;flex-direction:column;gap:.25rem">
-        <span class="subcopy" style="margin:0"><b>① 상위 부서</b> (어디 밑에?)</span>
+        <span class="subcopy no-margin"><b>① 상위 부서</b> (어디 밑에?)</span>
         <select th:field="*{parentId}" style="min-width:180px">
           <option th:value="${null}">— 최상위 (독립 부서) —</option>
           <option th:each="p : ${parentOptions}" th:value="${p.id}" th:text="${p.name}">상위</option>
         </select>
       </label>
       <label style="display:flex;flex-direction:column;gap:.25rem;flex:1;min-width:180px">
-        <span class="subcopy" style="margin:0"><b>② 부서 이름</b></span>
+        <span class="subcopy no-margin"><b>② 부서 이름</b></span>
         <input type="text" th:field="*{name}" placeholder="예: 영업팀" required>
       </label>
       <label style="display:flex;flex-direction:column;gap:.25rem;flex:1;min-width:150px">
-        <span class="subcopy" style="margin:0">설명 (선택)</span>
+        <span class="subcopy no-margin">설명 (선택)</span>
         <input type="text" th:field="*{description}" placeholder="예: 국내 영업">
       </label>
       <button class="button primary" type="submit" style="height:fit-content">추가</button>
@@ -66,17 +66,17 @@
             </form>
           </details>
           <a class="button" th:href="@{'/groups/' + ${node.group.id}}">상세</a>
-          <form method="post" th:action="@{'/groups/' + ${node.group.id} + '/move'}" style="display:inline">
+          <form class="inline" method="post" th:action="@{'/groups/' + ${node.group.id} + '/move'}">
             <select name="parentId" aria-label="상위 이동" onchange="this.form.submit()">
               <option value="">최상위로</option>
               <option th:each="p : ${parentOptions}" th:if="${p.id != node.group.id}"
                       th:value="${p.id}" th:selected="${p.id == node.group.parentId}" th:text="'→ ' + ${p.name}">상위</option>
             </select>
           </form>
-          <form th:if="${node.group.status.name() == 'ACTIVE'}" method="post" th:action="@{'/groups/' + ${node.group.id} + '/disable'}" style="display:inline">
+          <form class="inline" th:if="${node.group.status.name() == 'ACTIVE'}" method="post" th:action="@{'/groups/' + ${node.group.id} + '/disable'}">
             <button class="button" type="submit">비활성</button>
           </form>
-          <form method="post" th:action="@{'/groups/' + ${node.group.id} + '/delete'}" style="display:inline"
+          <form class="inline" method="post" th:action="@{'/groups/' + ${node.group.id} + '/delete'}"
                 th:attr="onsubmit=|return confirm('&quot;${node.group.name}&quot; 부서를 삭제할까요? 하위 그룹은 상위로 올라가고 멤버 배정은 해제됩니다.')|">
             <button class="button danger" type="submit">삭제</button>
           </form>

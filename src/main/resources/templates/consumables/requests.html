@@ -38,8 +38,8 @@
           <small th:if="${r.reason != null}" th:text="${r.reason}" class="t-sub">사유</small>
         </div>
         <span class="table-actions" th:if="${r.open}">
-          <form th:if="${r.status.name() == 'REQUESTED'}" method="post"
-                th:action="@{'/consumables/requests/' + ${r.id} + '/acknowledge'}" style="display:inline">
+          <form class="inline" th:if="${r.status.name() == 'REQUESTED'}" method="post"
+                th:action="@{'/consumables/requests/' + ${r.id} + '/acknowledge'}">
             <button class="button primary" type="submit">접수</button>
           </form>
           <a class="button" th:href="@{'/consumables/' + ${r.itemId}}">주문 기록 →</a>

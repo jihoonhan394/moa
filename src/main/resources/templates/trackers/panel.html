@@ -49,10 +49,10 @@
         <span th:text="${t.lastDoneOn} ?: '-'" class="t-muted">-</span>
         <span th:text="${t.source == 'SSL_PROBE'} ? 'SSL 자동' : '수동'" class="t-muted">수동</span>
         <span style="display:flex;gap:.35rem;white-space:nowrap">
-          <form method="post" th:action="@{${basePath} + '/trackers/' + ${t.id} + '/done'}" style="display:inline">
+          <form class="inline" method="post" th:action="@{${basePath} + '/trackers/' + ${t.id} + '/done'}">
             <button class="button" type="submit" th:text="${t.recurring} ? '완료(다음)' : '완료'">완료</button>
           </form>
-          <form method="post" th:action="@{${basePath} + '/trackers/' + ${t.id} + '/delete'}" style="display:inline"
+          <form class="inline" method="post" th:action="@{${basePath} + '/trackers/' + ${t.id} + '/delete'}"
                 onsubmit="return confirm('이 항목을 삭제할까요?');">
             <button class="button" type="submit">삭제</button>
           </form>
@@ -70,7 +70,7 @@
       <label>예정일</label><input type="date" name="dueOn" required>
       <label>반복 주기(일) — 비우면 1회성</label>
       <input type="number" name="recurEveryDays" min="1" placeholder="예: 90 (분기점검)">
-      <p class="subcopy" style="margin:0">반복으로 등록하면 '완료' 시 예정일이 자동으로 다음 주기로 넘어갑니다.</p>
+      <p class="subcopy no-margin">반복으로 등록하면 '완료' 시 예정일이 자동으로 다음 주기로 넘어갑니다.</p>
       <div><button class="button primary" type="submit">등록</button></div>
     </form>
   </section>

@@ -41,7 +41,7 @@
         <div class="table-row" th:each="it : ${items}">
           <span class="pill" th:text="${it.itemType.label}">유형</span>
           <span th:text="${it.label} ?: ${it.refId}">내용</span>
-          <form method="post" th:action="@{'/onboarding/templates/' + ${selected.id} + '/items/' + ${it.id} + '/delete'}" style="display:inline">
+          <form class="inline" method="post" th:action="@{'/onboarding/templates/' + ${selected.id} + '/items/' + ${it.id} + '/delete'}">
             <button class="button danger" type="submit">삭제</button>
           </form>
         </div>

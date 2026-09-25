@@ -98,8 +98,7 @@
         <span th:text="${p.serialNo} ?: '-'" class="t-muted">시리얼</span>
         <span class="table-actions">
           <a class="button" th:href="@{'/inventory/' + ${p.id} + '/custody'}">이력</a>
-          <form method="post" th:action="@{'/inventory/' + ${item.id} + '/parts/' + ${p.id} + '/detach'}"
-                style="display:inline">
+          <form class="inline" method="post" th:action="@{'/inventory/' + ${item.id} + '/parts/' + ${p.id} + '/detach'}">
             <button class="button" type="submit">분리</button>
           </form>
         </span>

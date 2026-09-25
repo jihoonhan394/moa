@@ -13,7 +13,7 @@
 
   <!-- 사용 중 -->
   <section class="panel" th:if="${enabled}">
-    <p class="subcopy" style="color:var(--green)"><b>2단계 인증 사용 중</b>입니다.</p>
+    <p class="subcopy t-good"><b>2단계 인증 사용 중</b>입니다.</p>
     <form method="post" th:action="@{/security/2fa/disable}">
       <button class="button danger" type="submit">해제</button>
     </form>

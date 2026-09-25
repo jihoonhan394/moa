@@ -20,7 +20,7 @@
         <strong th:text="${v.subject}">대상</strong>
         <span th:text="${v.level}">열람</span>
         <span class="table-actions">
-          <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions/' + ${v.permId} + '/delete'}" style="display:inline">
+          <form class="inline" method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions/' + ${v.permId} + '/delete'}">
             <button class="button" type="submit">제거</button>
           </form>
         </span>
@@ -35,7 +35,7 @@
       <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;gap:.4rem;align-items:center">
         <input type="hidden" name="subjectType" value="GROUP">
         <span style="width:70px">부서</span>
-        <select name="subjectId" required style="flex:1">
+        <select class="fill" name="subjectId" required>
           <option value="" disabled selected>부서 선택</option>
           <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}">부서</option>
         </select>
@@ -46,7 +46,7 @@
       <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;gap:.4rem;align-items:center">
         <input type="hidden" name="subjectType" value="USER">
         <span style="width:70px">사용자</span>
-        <select name="subjectId" required style="flex:1">
+        <select class="fill" name="subjectId" required>
           <option value="" disabled selected>사용자 선택</option>
           <option th:each="u : ${tenantUsers}" th:value="${u.id}" th:text="${u.name + ' (' + u.username + ')'}">사용자</option>
         </select>
@@ -57,7 +57,7 @@
       <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;gap:.4rem;align-items:center">
         <input type="hidden" name="subjectType" value="ALL">
         <span style="width:70px">전 직원</span>
-        <select name="level" style="flex:1"><option th:each="l : ${levels}" th:value="${l}" th:text="${l.label}">열람</option></select>
+        <select class="fill" name="level"><option th:each="l : ${levels}" th:value="${l}" th:text="${l.label}">열람</option></select>
         <button class="button" type="submit">전체 공개</button>
       </form>
     </div>

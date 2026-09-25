@@ -10,7 +10,7 @@
 
   <section class="panel">
     <form method="get" th:action="@{/wiki/search}" style="display:flex;gap:0.5rem;max-width:640px">
-      <input type="text" name="q" th:value="${q}" maxlength="100" placeholder="검색어" required style="flex:1">
+      <input class="fill" type="text" name="q" th:value="${q}" maxlength="100" placeholder="검색어" required>
       <button class="button primary" type="submit">검색</button>
     </form>
   </section>

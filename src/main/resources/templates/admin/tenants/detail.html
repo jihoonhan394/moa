@@ -14,8 +14,8 @@
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">상태</p><h2>기관 정보</h2></div>
-      <form th:if="${tenant.status.name() == 'ACTIVE'}" method="post" th:action="@{'/admin/tenants/' + ${tenant.id} + '/disable'}" style="margin:0"><button class="button" type="submit">비활성</button></form>
-      <form th:unless="${tenant.status.name() == 'ACTIVE'}" method="post" th:action="@{'/admin/tenants/' + ${tenant.id} + '/enable'}" style="margin:0"><button class="button" type="submit">재활성</button></form>
+      <form class="no-margin" th:if="${tenant.status.name() == 'ACTIVE'}" method="post" th:action="@{'/admin/tenants/' + ${tenant.id} + '/disable'}"><button class="button" type="submit">비활성</button></form>
+      <form class="no-margin" th:unless="${tenant.status.name() == 'ACTIVE'}" method="post" th:action="@{'/admin/tenants/' + ${tenant.id} + '/enable'}"><button class="button" type="submit">재활성</button></form>
     </div>
     <dl class="detail-list">
       <div><dt>상태</dt><dd><span class="state" th:classappend="${tenant.isAccessible(today)} ? 'online' : 'offline'"></span>
@@ -67,13 +67,13 @@
         <div><strong th:text="${admin.username}">아이디</strong><small th:text="${admin.name}" class="t-sub">이름</small></div>
         <span><span class="state" th:classappend="${admin.status.name() == 'ACTIVE'} ? 'online' : 'offline'"></span><span th:text="${admin.status}">ACTIVE</span></span>
         <span class="row-actions" style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:start">
-          <form th:if="${admin.status.name() == 'ACTIVE'}" method="post"
-                th:action="@{'/admin/tenants/' + ${tenant.id} + '/admins/' + ${admin.id} + '/disable'}" style="margin:0">
+          <form class="no-margin" th:if="${admin.status.name() == 'ACTIVE'}" method="post"
+                th:action="@{'/admin/tenants/' + ${tenant.id} + '/admins/' + ${admin.id} + '/disable'}">
             <button class="button" type="submit">비활성</button></form>
-          <form th:unless="${admin.status.name() == 'ACTIVE'}" method="post"
-                th:action="@{'/admin/tenants/' + ${tenant.id} + '/admins/' + ${admin.id} + '/enable'}" style="margin:0">
+          <form class="no-margin" th:unless="${admin.status.name() == 'ACTIVE'}" method="post"
+                th:action="@{'/admin/tenants/' + ${tenant.id} + '/admins/' + ${admin.id} + '/enable'}">
             <button class="button" type="submit">활성</button></form>
-          <details style="margin:0">
+          <details class="no-margin">
             <summary class="button" style="list-style:none;cursor:pointer">수정</summary>
             <form method="post" th:action="@{'/admin/tenants/' + ${tenant.id} + '/admins/' + ${admin.id} + '/update'}"
                   style="margin-top:0.5rem;display:flex;flex-direction:column;gap:0.4rem;min-width:220px">
@@ -85,8 +85,7 @@
               <button class="button primary" type="submit">저장</button>
             </form>
           </details>
-          <form method="post" th:action="@{'/admin/tenants/' + ${tenant.id} + '/admins/' + ${admin.id} + '/delete'}"
-                style="margin:0" onsubmit="return confirm('이 관리자를 삭제할까요? 활동 이력이 있으면 삭제 대신 비활성을 사용하세요.')">
+          <form class="no-margin" method="post" th:action="@{'/admin/tenants/' + ${tenant.id} + '/admins/' + ${admin.id} + '/delete'}" onsubmit="return confirm('이 관리자를 삭제할까요? 활동 이력이 있으면 삭제 대신 비활성을 사용하세요.')">
             <button class="button t-bad" type="submit">삭제</button></form>
         </span>
       </div>

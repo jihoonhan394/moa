@@ -48,7 +48,7 @@
         </div>
         <div>
           <span th:if="${t.done}" style="color:#3a7;">완료됨</span>
-          <form th:unless="${t.done}" method="post" th:action="@{'/my/workspace/tasks/' + ${t.id} + '/done'}" style="display:inline">
+          <form class="inline" th:unless="${t.done}" method="post" th:action="@{'/my/workspace/tasks/' + ${t.id} + '/done'}">
             <button class="button" type="submit" th:text="${t.kind.name() == 'ACK_DOC'} ? '읽고 동의' : '완료'">완료</button>
           </form>
         </div>

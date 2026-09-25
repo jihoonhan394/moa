@@ -46,7 +46,7 @@
         <span th:text="${rv.purpose != null ? rv.purpose : '—'}">용도</span>
         <b th:classappend="${rv.status.name() == 'BOOKED'} ? 'good' : 'warn'" th:text="${rv.status.label}">예약됨</b>
         <span class="table-actions">
-          <form th:if="${rv.status.name() == 'BOOKED'}" method="post" th:action="@{'/reservations/' + ${rv.id} + '/cancel'}" style="display:inline">
+          <form class="inline" th:if="${rv.status.name() == 'BOOKED'}" method="post" th:action="@{'/reservations/' + ${rv.id} + '/cancel'}">
             <button class="button" type="submit">취소</button>
           </form>
         </span>

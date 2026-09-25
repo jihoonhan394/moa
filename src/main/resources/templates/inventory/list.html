@@ -44,7 +44,7 @@
         <label style="display:grid;gap:.15rem;font-size:.78rem;color:var(--muted)">보증 만료<input type="date" th:field="*{warrantyEnds}"></label>
         <label style="display:grid;gap:.15rem;font-size:.78rem;color:var(--muted)">리스/렌탈 만료<input type="date" th:field="*{leaseEnds}"></label>
       </div>
-      <p class="subcopy" style="margin:0">보증·리스·라이선스 만료는 <b>만료 관리</b> 대시보드에 자동 표시되고 임박 시 알림이 갑니다.</p>
+      <p class="subcopy no-margin">보증·리스·라이선스 만료는 <b>만료 관리</b> 대시보드에 자동 표시되고 임박 시 알림이 갑니다.</p>
       <div class="asset-toolbar">
         <select name="ownerGroupId" aria-label="소유팀(그룹)">
           <option value="">소유팀 없음 (자산관리자 전용)</option>
@@ -94,7 +94,7 @@
             <summary class="button" style="list-style:none;cursor:pointer">소유팀</summary>
             <div style="margin-top:.5rem;text-align:left;min-width:220px">
               <form method="post" th:action="@{'/inventory/' + ${item.id} + '/owner'}" style="display:flex;gap:.4rem">
-                <select name="ownerGroupId" style="flex:1">
+                <select class="fill" name="ownerGroupId">
                   <option value="" th:selected="${item.ownerGroupId == null}">소유팀 없음 (자산관리자 전용)</option>
                   <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}"
                           th:selected="${g.id == item.ownerGroupId}">부서</option>
@@ -103,20 +103,20 @@
               </form>
             </div>
           </details>
-          <form th:if="${item.status.name() != 'ASSIGNED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/assign'}" style="display:inline">
+          <form class="inline" th:if="${item.status.name() != 'ASSIGNED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/assign'}">
             <select name="userId" required aria-label="배정 사용자">
               <option value="" disabled selected>사용자 선택</option>
               <option th:each="u : ${tenantUsers}" th:value="${u.id}" th:text="${u.name + ' (' + u.username + ')'}">사용자</option>
             </select>
             <button class="button" type="submit">배정</button>
           </form>
-          <form th:if="${item.status.name() == 'ASSIGNED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/reclaim'}" style="display:inline">
+          <form class="inline" th:if="${item.status.name() == 'ASSIGNED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/reclaim'}">
             <button class="button" type="submit">회수</button>
           </form>
-          <form th:if="${item.status.name() != 'RETIRED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/retire'}" style="display:inline">
+          <form class="inline" th:if="${item.status.name() != 'RETIRED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/retire'}">
             <button class="button" type="submit">폐기</button>
           </form>
-          <form method="post" th:action="@{'/inventory/' + ${item.id} + '/delete'}" style="display:inline"
+          <form class="inline" method="post" th:action="@{'/inventory/' + ${item.id} + '/delete'}"
                 onsubmit="return confirm('이 항목을 삭제할까요?')">
             <button class="button" type="submit">삭제</button>
           </form>

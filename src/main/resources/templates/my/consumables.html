@@ -52,8 +52,8 @@
         <b th:text="${r.status}">상태</b>
         <span th:text="${r.reason} ?: '-'" class="t-muted">회신</span>
         <span class="table-actions">
-          <form th:if="${r.cancelable}" method="post"
-                th:action="@{'/my/consumables/' + ${r.id} + '/cancel'}" style="display:inline">
+          <form class="inline" th:if="${r.cancelable}" method="post"
+                th:action="@{'/my/consumables/' + ${r.id} + '/cancel'}">
             <button class="button" type="submit">취소</button>
           </form>
         </span>

@@ -37,7 +37,7 @@
            th:text="${a.status.name() == 'ACTIVE'} ? '활성' : '비활성'">상태</b>
         <span class="table-actions">
           <a class="button" th:href="@{/assets/{id}/edit(id=${a.id})}">수정</a>
-          <form method="post" th:action="@{/assets/{id}/delete(id=${a.id})}" style="display:inline"
+          <form class="inline" method="post" th:action="@{/assets/{id}/delete(id=${a.id})}"
                 onsubmit="return confirm('이 자산을 삭제할까요?')">
             <button class="button" type="submit">삭제</button>
           </form>

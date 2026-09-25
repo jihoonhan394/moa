@@ -69,10 +69,10 @@
               th:style="${inv.status.name() == 'ACCEPTED'} ? 'color:var(--green)' : (${inv.status.name() == 'REVOKED'} ? 'color:var(--red)' : '')">상태</span>
         <span th:text="${#temporals.format(inv.expiresAt, 'yyyy-MM-dd')}">만료</span>
         <span class="table-actions">
-          <form th:if="${inv.status.name() != 'ACCEPTED'}" method="post" th:action="@{'/invitations/' + ${inv.id} + '/resend'}" style="display:inline">
+          <form class="inline" th:if="${inv.status.name() != 'ACCEPTED'}" method="post" th:action="@{'/invitations/' + ${inv.id} + '/resend'}">
             <button class="button" type="submit" title="새 링크 생성(+메일 발송 시도)">재발송·링크</button>
           </form>
-          <form th:if="${inv.status.name() == 'PENDING'}" method="post" th:action="@{'/invitations/' + ${inv.id} + '/revoke'}" style="display:inline">
+          <form class="inline" th:if="${inv.status.name() == 'PENDING'}" method="post" th:action="@{'/invitations/' + ${inv.id} + '/revoke'}">
             <button class="button danger" type="submit">철회</button>
           </form>
         </span>

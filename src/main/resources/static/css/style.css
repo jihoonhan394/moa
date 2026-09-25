@@ -953,3 +953,17 @@ h1 { font-size: 2.1rem; font-weight: 780; letter-spacing: -0.8px; }
 @media (max-width: 860px) { .dashboard-primary-grid { grid-template-columns: 1fr; } }
 @media (max-width: 860px) { .console-split, .overview-grid { grid-template-columns: 1fr; } .detail-panel { order: -1; } }
 @media (max-width: 860px) { .asset-workspace { grid-template-columns: 1fr; } .asset-data-table { min-width: 850px; } }
+
+/* ── 유틸리티 ────────────────────────────────────────────────────────────────
+   인라인 style을 대체한다. 인라인은 스타일시트로 덮을 수 없고 미디어쿼리·다크모드에
+   반응하지 않으며 토큰을 우회한다 — 실제로 같은 역할의 글자가 두 색으로 보이던 원인이
+   그것이었다(위 .t-* 주석 참고).
+
+   한 클래스에 한 선언만 둔다. 조합해 쓰되, 여러 선언을 묶은 클래스는 만들지 않는다 —
+   그러면 '거의 같은' 클래스가 늘어나 원래 문제로 돌아간다.
+
+   파일 끝에 두는 이유: 같은 특정도끼리는 나중에 선언된 쪽이 이긴다. 유틸리티는
+   기존 클래스(.subcopy 등)를 덮어야 인라인 style을 대신할 수 있다. */
+.inline { display: inline; }            /* 버튼 하나만 감싼 폼이 형제와 한 줄에 놓이게 */
+.no-margin { margin: 0; }
+.fill { flex: 1; }                      /* 남은 자리를 채운다 */

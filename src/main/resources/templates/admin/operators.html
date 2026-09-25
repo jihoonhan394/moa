@@ -45,7 +45,7 @@
           <span th:text="${op.status}">ACTIVE</span>
         </span>
         <span class="table-actions">
-          <form th:if="${op.status.name() == 'ACTIVE'}" method="post" th:action="@{'/admin/operators/' + ${op.id} + '/disable'}" style="display:inline">
+          <form class="inline" th:if="${op.status.name() == 'ACTIVE'}" method="post" th:action="@{'/admin/operators/' + ${op.id} + '/disable'}">
             <button class="button" type="submit">비활성</button>
           </form>
         </span>

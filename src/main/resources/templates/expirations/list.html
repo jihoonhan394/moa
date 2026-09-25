@@ -43,7 +43,7 @@
                  or ((r.sourceType?.name() == 'ASSET' or r.sourceType?.name() == 'ACCESS_GRANT')
                      and isInfraManager))}"
              class="button" th:href="@{${r.link}}" title="이 항목을 처리하러 가기">열기</a>
-        <form method="post" th:action="@{/expirations/ai-draft}" style="display:inline">
+        <form class="inline" method="post" th:action="@{/expirations/ai-draft}">
           <input type="hidden" name="sourceType" th:value="${r.sourceType}">
           <input type="hidden" name="sourceId" th:value="${r.sourceId}">
           <input type="hidden" name="category" th:value="${r.category}">
