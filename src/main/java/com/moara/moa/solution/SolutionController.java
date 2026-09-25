@@ -9,6 +9,7 @@ import com.moara.moa.maintenance.MaintenanceService;
 import com.moara.moa.maintenance.MaintenanceTargetType;
 import com.moara.moa.remote.RemoteProtocol;
 import com.moara.moa.security.TenantContext;
+import com.moara.moa.support.Values;
 import com.moara.moa.wiki.WikiSpace;
 import com.moara.moa.wiki.WikiSpaceService;
 import com.moara.moa.user.ManagedUser;
@@ -312,8 +313,9 @@ public class SolutionController {
     return "redirect:/solutions";
   }
 
+  /** 선택 항목으로 넘어온 식별자. 안 고르거나 망가진 값은 안 고른 것으로 본다. */
   private UUID parseUuid(String value) {
-    return value == null || value.isBlank() ? null : UUID.fromString(value.trim());
+    return Values.optionalUuid(value);
   }
 
   /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */

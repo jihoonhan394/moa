@@ -40,7 +40,14 @@ Codex와 Claude Code는 작업 전 이 파일과 `doc/1차-진행/AGENTS.md`를 
 - 감사 로그는 append-only를 지향하고 사후 삭제·수정을 허용하지 않는다.
 - 감사 로그·이벤트 페이로드에 평문 secret·비밀번호·키를 남기지 않는다(마스킹). 발송 대상 이메일 등 목록성 PII는 **개수만** 남긴다.
 - **기록 대상 판단 기준**: 상태를 바꾸거나(생성·수정·삭제·활성/비활성), 외부로 내보내거나(메일·웹훅 발송), 보안 태세를 바꾸는(2FA·권한·자격증명) 동작은 전부 기록한다. 단순 조회(GET)는 제외한다. 성공/실패가 갈리는 동작은 `AuditResult.FAILURE`도 남긴다.
-- ⚠️ **감사 기록은 AOP가 아니라 컨트롤러별 `private void audit(...)` 수동 호출** 구조다(기관 스코프는 `recordTenantAction`, 플랫폼은 `recordGlobalAction`). 따라서 **새 컨트롤러·새 액션을 추가하면 기본값이 "기록 없음"이다** — 추가할 때 감사 호출을 함께 넣는 것이 작성자 책임이다. 기존 컨트롤러(`CredentialController` 등)의 헬퍼를 복제해 쓴다. (공통 지점(AOP/인터셉터) 전환은 향후 과제.)
+- ⚠️ **감사 기록은 AOP가 아니라 컨트롤러별 `private void audit(...)` 수동 호출**이다. 따라서 **새 컨트롤러·새 액션을 추가하면 기본값이 "기록 없음"**이다 — 추가할 때 감사 호출을 함께 넣는 것이 작성자 책임이다.
+- 그 헬퍼의 본문은 **복사하지 말고** `TenantAuditRecorder`에 위임한다(0.8.4에서 23곳을 모았다). 정책 — "행위자를 모르면 기록하지 않는다", "기본 결과는 성공" — 은 그 한 클래스에만 둔다:
+  ```java
+  private void audit(String action, UUID targetId, String message) {
+    auditRecorder.record("도메인명", action, targetId, message);
+  }
+  ```
+  실패만 남길 때는 `recordFailure(...)`, 성공·실패가 함께 갈리는 지점은 `record(..., AuditResult, ...)`를 쓴다. 새 모듈은 위 세 줄만 넣으면 된다. 플랫폼 범위 행위는 여전히 `recordGlobalAction`을 직접 부른다.
 
 ## 자격증명·비밀 수명주기
 
@@ -70,6 +77,21 @@ Codex와 Claude Code는 작업 전 이 파일과 `doc/1차-진행/AGENTS.md`를 
 - 구조적 로깅과 요청 상관관계 식별자를 사용하고, 로그 레벨 규칙을 지킨다.
 - 로그·에러 응답에서 secret·PII·내부 경로·stack trace를 마스킹/제거한다.
 - 예외를 화면·API로 그대로 흘리지 않고 표준 에러 응답 형식으로 반환한다.
+- 도메인별 `NotFoundException`은 `GlobalExceptionHandler`에 등록해 **404**로 내린다(등록을 빠뜨리면 whitelabel 500이 나간다).
+
+## 공통 지점 (중복하지 말 것)
+
+같은 판단이 여러 곳에 흩어지면 반드시 갈라진다. 아래는 이미 한 곳으로 모은 것들이니 **복사본을 새로 만들지 않는다**.
+
+- 감사 기록 → `TenantAuditRecorder` (위 "감사 로그" 참고)
+- 입력 정규화 → `com.moara.moa.support.Values`
+  - `blankToNull` : 빈 폼 값은 `null`로 저장한다(엔티티 8개가 각자 갖고 있던 것)
+  - `optionalUuid` : 선택 항목 식별자. 안 골랐거나 망가진 값은 **안 고른 것**으로 본다.
+    직접 `UUID.fromString`을 부르면 자리 수가 잘린 값이 예외 없이 **다른 UUID**가 된다
+- 사용자 표시 이름 → `ManagedUserService.namesByTenant` / `labelsByTenant` / `label`
+  (화면마다 "이름 (계정)" 형식을 만들면 곧 순서가 뒤집힌 화면이 생긴다 — 실제로 생겼다)
+- 화면 `<head>` → `fragments/head.html` (`head(title)`, CSRF 메타가 필요하면 `headWithCsrf(title)`)
+- 알림 묶음 메일 → `NotificationMailer.sendDigest`
 
 ## 의존성·공급망 위생
 

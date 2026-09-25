@@ -4,6 +4,7 @@ import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.group.AccessGroup;
 import com.moara.moa.group.AccessGroupService;
 import com.moara.moa.security.TenantContext;
+import com.moara.moa.support.Values;
 import com.moara.moa.user.ManagedUserService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
@@ -211,15 +212,9 @@ public class ConsumableController {
     return rows;
   }
 
+  /** 선택 항목으로 넘어온 식별자. 안 고르거나 망가진 값은 안 고른 것으로 본다. */
   private UUID parseUuid(String raw) {
-    if (raw == null || raw.isBlank()) {
-      return null;
-    }
-    try {
-      return UUID.fromString(raw);
-    } catch (IllegalArgumentException invalid) {
-      return null;
-    }
+    return Values.optionalUuid(raw);
   }
 
   /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */

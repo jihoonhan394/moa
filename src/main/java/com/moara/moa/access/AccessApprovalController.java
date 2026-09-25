@@ -3,6 +3,7 @@ package com.moara.moa.access;
 import com.moara.moa.credential.Credential;
 import com.moara.moa.credential.CredentialService;
 import com.moara.moa.security.TenantContext;
+import com.moara.moa.support.Values;
 import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
 import java.util.HashMap;
@@ -119,15 +120,9 @@ public class AccessApprovalController {
     return "redirect:/access-approvals";
   }
 
+  /** 선택 항목으로 넘어온 식별자. 안 고르거나 망가진 값은 안 고른 것으로 본다. */
   private static UUID parseUuid(String value) {
-    if (value == null || value.isBlank()) {
-      return null;
-    }
-    try {
-      return UUID.fromString(value.trim());
-    } catch (IllegalArgumentException invalid) {
-      return null;
-    }
+    return Values.optionalUuid(value);
   }
 
   private String credentialLabel(Credential credential) {

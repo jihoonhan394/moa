@@ -7,6 +7,7 @@ import com.moara.moa.category.CategoryService;
 import com.moara.moa.group.AccessGroup;
 import com.moara.moa.group.AccessGroupService;
 import com.moara.moa.security.TenantContext;
+import com.moara.moa.support.Values;
 import com.moara.moa.user.ManagedUserService;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
@@ -49,8 +50,9 @@ public class AssetController {
     this.tenantContext = tenantContext;
   }
 
+  /** 선택 항목으로 넘어온 식별자. 안 고르거나 망가진 값은 안 고른 것으로 본다. */
   private static UUID parseUuid(String value) {
-    return value == null || value.isBlank() ? null : UUID.fromString(value.trim());
+    return Values.optionalUuid(value);
   }
 
   @GetMapping("/assets")

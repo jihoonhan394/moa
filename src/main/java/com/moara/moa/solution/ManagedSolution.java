@@ -1,6 +1,7 @@
 package com.moara.moa.solution;
 
 import com.moara.moa.remote.RemoteProtocol;
+import com.moara.moa.support.Values;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -143,7 +144,7 @@ public class ManagedSolution {
   }
 
   private static String blankToNull(String value) {
-    return value == null || value.isBlank() ? null : value.trim();
+    return Values.blankToNull(value);
   }
 
   public UUID getWikiSpaceId() { return wikiSpaceId; }

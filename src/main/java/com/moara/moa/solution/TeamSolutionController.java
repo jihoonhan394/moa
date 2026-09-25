@@ -9,6 +9,7 @@ import com.moara.moa.group.AccessGroup;
 import com.moara.moa.group.AccessGroupService;
 import com.moara.moa.remote.RemoteProtocol;
 import com.moara.moa.security.TenantContext;
+import com.moara.moa.support.Values;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -210,8 +211,9 @@ public class TeamSolutionController {
     return ledGroupIds(tenantId).contains(groupId);
   }
 
+  /** 선택 항목으로 넘어온 식별자. 안 고르거나 망가진 값은 안 고른 것으로 본다. */
   private static UUID parseUuid(String value) {
-    return value == null || value.isBlank() ? null : UUID.fromString(value.trim());
+    return Values.optionalUuid(value);
   }
 
   /** 특권 행위 기록. 정책(행위자 없으면 미기록 등)은 TenantAuditRecorder에 있다. */

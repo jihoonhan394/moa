@@ -1,5 +1,6 @@
 package com.moara.moa.solution;
 
+import com.moara.moa.support.Values;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -66,7 +67,7 @@ public class SolutionSequence {
   public void markReverseFired(String minuteKey) { this.lastReverseFired = minuteKey; }
 
   private static String blankToNull(String value) {
-    return value == null || value.isBlank() ? null : value.trim();
+    return Values.blankToNull(value);
   }
 
   public UUID getId() { return id; }
