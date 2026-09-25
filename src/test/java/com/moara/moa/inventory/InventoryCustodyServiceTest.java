@@ -84,15 +84,26 @@ class InventoryCustodyServiceTest {
     assertThat(custodyService.history(tenantId, itemId)).hasSize(1);
   }
 
-  /** 퇴사 회수도 장부에 남는다. 배치라 행위자는 없지만 사유가 맥락을 남긴다. */
+  /**
+   * 퇴사 반납은 <b>실물을 확인한 시점에</b> 장부에 남는다. 사유가 맥락을 남기고, 배치가 아닌
+   * 사람이 확인했더라도 행위자를 모르면 null이다.
+   *
+   * <p>이 테스트는 전에 "퇴사 처리만으로 창고 구간이 생긴다"를 검증했다 — 즉 결함을 고정하고
+   * 있었다. 아무도 물건을 보지 않았는데 장부가 창고에 있다고 말하던 동작이다.
+   */
   @Test
-  void 퇴사_회수도_사유와_함께_남는다() {
+  void 퇴사_반납은_실물_확인_시점에_남는다() {
     UUID tenantId = tenant();
     ManagedUser leaver = user(tenantId);
     UUID itemId = item(tenantId, "퇴사노트북").getId();
     inventoryService.assign(tenantId, itemId, leaver.getId(), null);
 
-    inventoryService.reclaimAllFrom(tenantId, leaver.getId());
+    inventoryService.requestReturnFrom(tenantId, leaver.getId());
+    assertThat(custodyService.current(tenantId, itemId).orElseThrow().getHolderType())
+        .as("퇴사 처리만으로 창고 입고가 기록됐다")
+        .isEqualTo(InventoryHolderType.USER);
+
+    inventoryService.reclaim(tenantId, itemId, null, "퇴사 회수");
 
     InventoryCustody latest = custodyService.history(tenantId, itemId).get(0);
     assertThat(latest.getHolderType()).isEqualTo(InventoryHolderType.WAREHOUSE);

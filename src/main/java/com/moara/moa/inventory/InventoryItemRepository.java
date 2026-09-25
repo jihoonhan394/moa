@@ -19,6 +19,9 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, UU
   /** 특정 사용자에게 배정된 항목(퇴사 회수 대상). */
   List<InventoryItem> findAllByTenantIdAndAssignedUserId(UUID tenantId, UUID assignedUserId);
 
+  /** 반납 대기(퇴사했지만 실물 미확인) 목록. 관리자 화면의 미반납 배지가 쓴다. */
+  List<InventoryItem> findAllByTenantIdAndStatus(UUID tenantId, InventoryItemStatus status);
+
   /** 장비에 장착된 구성품. */
   List<InventoryItem> findAllByTenantIdAndParentItemId(UUID tenantId, UUID parentItemId);
 

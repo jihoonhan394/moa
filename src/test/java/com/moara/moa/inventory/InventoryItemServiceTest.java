@@ -52,18 +52,26 @@ class InventoryItemServiceTest {
         () -> service.create(MOA, form(name, InventoryItemType.SOFTWARE)));
   }
 
+  /**
+   * 퇴사 반납 요청은 건수를 돌려주고 상태를 '반납 대기'로 바꾼다.
+   *
+   * <p>배정은 <b>풀지 않는다</b> — 풀면 "누구에게 받아야 하나"가 사라진다. 전에 이 테스트는
+   * 배정이 0건이 되는 것을 검증했는데, 그건 물건을 보지도 않고 회수됐다고 적던 동작이었다.
+   */
   @Test
-  void reclaimAllFromReturnsCountAndClears() {
+  void requestReturnFromMarksPendingWithoutClearingHolder() {
     UUID userId = user().getId();
     InventoryItem a = service.create(MOA, form("a-" + System.nanoTime(), InventoryItemType.PHYSICAL));
     InventoryItem b = service.create(MOA, form("b-" + System.nanoTime(), InventoryItemType.SOFTWARE));
     service.assign(MOA, a.getId(), userId);
     service.assign(MOA, b.getId(), userId);
 
-    long reclaimed = service.reclaimAllFrom(MOA, userId);
+    long requested = service.requestReturnFrom(MOA, userId);
 
-    assertEquals(2, reclaimed);
-    assertEquals(0, service.findAssignedTo(MOA, userId).size());
+    assertEquals(2, requested);
+    assertEquals(2, service.findAssignedTo(MOA, userId).size());
+    assertEquals(InventoryItemStatus.RETURN_PENDING, service.findById(MOA, a.getId()).getStatus());
+    assertEquals(InventoryItemStatus.RETURN_PENDING, service.findById(MOA, b.getId()).getStatus());
   }
 
   private InventoryItemForm form(String name, InventoryItemType type) {

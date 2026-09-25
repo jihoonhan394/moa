@@ -47,6 +47,7 @@ application-local.yaml
 ### Local logs and internal documentation ###
 *.log
 /doc/
+/제품문서/
 
 ### Build archives ###
 *.zip

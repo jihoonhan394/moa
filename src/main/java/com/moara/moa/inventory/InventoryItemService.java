@@ -135,21 +135,37 @@ public class InventoryItemService {
     return repository.save(item);
   }
 
-  /** 퇴사 회수: 사용자에게 배정된 모든 항목을 회수(AVAILABLE). 회수 건수 반환. */
+  /**
+   * 퇴사 반납 요청: 배정된 항목을 <b>반납 대기</b>로 표시한다. 대상 건수 반환.
+   *
+   * <p>전에는 여기서 곧바로 {@code reclaim} + 창고 입고를 기록했다. 그러면 <b>아무도 물건을
+   * 보지 않았는데 장부가 "창고에 있음"이라고 말한다.</b> 게다가 상태가 AVAILABLE이 되어 다음
+   * 사람에게 배정까지 가능했고, 받으러 간 사람은 아무것도 찾지 못한다.
+   *
+   * <p>장부의 값어치는 확인된 사실에 있다. 확인하지 않은 기록은 없는 것보다 나쁘다 — 확인한
+   * 구간과 구별되지 않은 채 확신을 가지고 틀리기 때문이다. 0.7.20의 인수 확인이 "관리자가
+   * 일방적으로 쓴 장부는 한쪽 주장일 뿐"이라서 생겼는데 이 경로가 그것을 우회하고 있었다.
+   * 하필 퇴사는 정산이 걸려 분쟁 가능성이 가장 높은 순간이다.
+   *
+   * <p><b>보관 구간은 건드리지 않는다.</b> 물건은 아직 그 사람에게 있고, 그것이 사실이다.
+   * 자산 관리자가 실물을 확인하고 창고 입고를 기록할 때({@link #reclaim}) 구간이 닫힌다.
+   *
+   * <p>계정 차단은 이것과 무관하게 즉시 이뤄진다 — 물건을 기다리느라 접근을 열어 두면 안 된다.
+   */
   @Transactional
-  public long reclaimAllFrom(UUID tenantId, UUID userId) {
+  public long requestReturnFrom(UUID tenantId, UUID userId) {
     List<InventoryItem> assigned = repository.findAllByTenantIdAndAssignedUserId(tenantId, userId);
     OffsetDateTime now = OffsetDateTime.now();
     for (InventoryItem item : assigned) {
-      item.reclaim(now);
+      item.awaitReturn(now);
     }
     repository.saveAll(assigned);
-    // 퇴사 회수도 장부에 남긴다. 행위자는 이 계층에서 알 수 없어(OffboardHandler SPI에 없다)
-    // null이며, 사유가 그 맥락을 대신한다 — "누가 퇴사 처리했나"는 감사 로그가 답한다.
-    for (InventoryItem item : assigned) {
-      custodyService.toWarehouse(tenantId, item.getId(), "퇴사 회수", null);
-    }
     return assigned.size();
+  }
+
+  /** 반납 대기(퇴사했지만 실물 미확인) 목록. */
+  public List<InventoryItem> returnPending(UUID tenantId) {
+    return repository.findAllByTenantIdAndStatus(tenantId, InventoryItemStatus.RETURN_PENDING);
   }
 
   /**

@@ -122,14 +122,20 @@ class UserLifecycleServiceTest {
     assertEquals(1, revoked(result, "그룹 멤버십"));
     assertEquals(1, revoked(result, "직접 권한"));
     assertEquals(1, revoked(result, "솔루션 배정"));
-    assertEquals(1, revoked(result, "배정 자산"));
+    assertEquals(1, revoked(result, "자산 반납 요청(실물 확인 필요)"));
     assertEquals(1, revoked(result, "활성 세션"));
     assertEquals(1, revoked(result, "예약"));
     assertEquals(1, revoked(result, "위키 개인권한"));
     assertEquals(7, result.total());
 
-    // 배정 자산 회수 + 세션 종료 + 예약 취소.
-    assertTrue(inventoryService.findAssignedTo(MOA, userId).isEmpty());
+    // 자산은 '반납 대기'로 표시만 한다 — 아무도 물건을 보지 않았으므로 돌아왔다고 적지 않는다.
+    // 배정도 그대로 둔다: 누구에게 받아야 하는지가 사라지면 안 된다. 실물을 확인한 사람이
+    // 창고 입고를 기록할 때 비로소 회수가 완료된다(OffboardReturnPendingTest).
+    assertEquals(1, inventoryService.findAssignedTo(MOA, userId).size());
+    assertEquals(com.moara.moa.inventory.InventoryItemStatus.RETURN_PENDING,
+        inventoryService.findAssignedTo(MOA, userId).get(0).getStatus());
+
+    // 세션 종료 + 예약 취소.
     assertEquals(ConnectionStatus.CLOSED, connectionSessionService.findById(MOA, session.getId()).getStatus());
     assertEquals(0, reservationService.findMyReservations(MOA, userId).stream()
         .filter(com.moara.moa.reservation.Reservation::isBooked).count());

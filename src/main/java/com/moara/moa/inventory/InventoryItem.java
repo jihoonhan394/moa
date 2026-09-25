@@ -117,6 +117,18 @@ public class InventoryItem {
     this.updatedAt = now;
   }
 
+  /**
+   * 반납 요청 → 상태만 '반납 대기'. <b>배정은 풀지 않는다.</b>
+   *
+   * <p>물건은 아직 그 사람에게 있다. 배정을 풀면 장부가 "아무도 안 갖고 있다"고 말하게 되는데
+   * 그건 사실이 아니다. 실물을 확인하는 사람이 창고 입고를 기록할 때 비로소 배정이 풀린다
+   * ({@link #reclaim}).
+   */
+  public void awaitReturn(OffsetDateTime now) {
+    this.status = InventoryItemStatus.RETURN_PENDING;
+    this.updatedAt = now;
+  }
+
   /** 폐기(불용) → 배정 해제 + 상태 RETIRED. 이력을 위해 레코드는 남긴다. */
   public void retire(OffsetDateTime now) {
     this.assignedUserId = null;

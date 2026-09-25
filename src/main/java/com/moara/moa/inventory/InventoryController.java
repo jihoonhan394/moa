@@ -314,6 +314,8 @@ public class InventoryController {
     // 배정했는데 받은 사람이 아직 "받았다"를 안 누른 것. 담당자가 챙길 수 있게 목록에 배지로.
     model.addAttribute("awaitingConfirmIds", custodyService.awaitingConfirmation(tenantId).stream()
         .map(InventoryCustody::getItemId).collect(java.util.stream.Collectors.toSet()));
+    // 퇴사했는데 실물이 안 돌아온 것. 가장 잃어버리기 쉬운 자산이라 목록 맨 위에서 세어 준다.
+    model.addAttribute("returnPendingCount", inventoryService.returnPending(tenantId).size());
     model.addAttribute("assetCategories", assetCategoryNodes());
     java.util.List<ManagedUser> tenantUsers = userService.findByTenant(tenantId);
     model.addAttribute("tenantUsers", tenantUsers);
