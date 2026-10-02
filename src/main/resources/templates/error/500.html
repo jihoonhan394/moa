@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head th:replace="~{fragments/head :: head('MOA - 처리 중 오류')}"></head>
+<body>
+<!--
+  예상하지 못한 서버 오류. 403·404는 화면이 있었는데 500만 없어서, 운영에서 Spring 기본
+  Whitelabel Error Page가 그대로 나갔다 — "This application has no explicit mapping for
+  /error"라는, 사용자에게 아무 뜻도 없고 제품처럼 보이지도 않는 문구다.
+
+  무엇이 잘못됐는지는 적지 않는다(server.error.include-message=never). 대신 사용자가 할 수
+  있는 일을 적는다 — 여기서 막힌 사람에게 필요한 것은 원인 설명이 아니라 다음 행동이다.
+
+  실제 원인은 감사 로그가 아니라 애플리케이션 로그에 남는다. 관리자가 재현 경로를 알려 주면
+  그것이 가장 빠른 단서다.
+-->
+<main class="workspace login-workspace">
+  <section class="panel login-panel empty-state">
+    <p class="eyebrow">처리 실패</p>
+    <h1>요청을 처리하지 못했습니다</h1>
+    <p class="subcopy">
+      입력한 내용은 저장되지 않았습니다. 잠시 뒤 다시 시도해 주세요.
+    </p>
+    <p class="subcopy t-muted">
+      같은 자리에서 계속 막히면 <b>어느 화면에서 무엇을 하려 했는지</b>를 관리자에게 알려
+      주세요. 그 경로가 원인을 찾는 가장 빠른 단서입니다.
+    </p>
+    <a class="button primary" href="/">처음 화면으로</a>
+  </section>
+</main>
+</body>
+</html>
