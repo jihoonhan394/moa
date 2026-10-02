@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('MOA - 보유 자산')}"></head>
+<body>
+<!--
+  한 사람이 지금 갖고 있는 자산. 퇴사 반납 체크리스트가 이 화면이다 — 인쇄하면 그대로 쓴다.
+  0.9.4에서 퇴사 처리가 "창고 입고"를 적지 않게 바꿨고, 그래서 생기는 반납 대기를
+  사람 기준으로 모아 볼 곳이 필요해졌다.
+-->
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">자산 / 보유 현황</p>
+      <h1 th:text="${holder.name} + ' 보유 자산'">보유 자산</h1>
+      <p class="subcopy">
+        이 사람에게 <b>지금 나가 있는 자산</b>입니다. 퇴사·부서 이동 때 이 목록으로 반납을 확인합니다.
+        부품은 상위 장비에 묶여 함께 돌아오므로 따로 세지 않습니다.
+      </p>
+    </div>
+    <a class="button" th:href="@{/inventory}">← 자산 목록</a>
+  </header>
+
+  <!-- 퇴사 처리는 물건이 돌아왔다고 기록하지 않는다. 실물을 확인해야 창고 입고가 된다. -->
+  <section class="panel" th:if="${returnPendingCount > 0}">
+    <p class="subcopy t-bad" style="margin:0">
+      <b th:text="'반납 대기 ' + ${returnPendingCount} + '건'">반납 대기</b> —
+      퇴사 처리로 반납이 요청됐지만 <b>실물을 아직 확인하지 않았습니다.</b>
+      물건을 받은 뒤 각 항목의 <b>보관·구성품</b>에서 창고 입고를 기록하세요.
+      그때까지 다른 사람에게 배정되지 않습니다.
+    </p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><p class="eyebrow">배정된 항목</p><h2>보유 목록</h2></div>
+      <span class="pill" th:text="${#lists.size(items)} + '개'">0개</span>
+    </div>
+
+    <p th:if="${#lists.isEmpty(items)}" class="subcopy">
+      배정된 자산이 없습니다. 반납이 모두 끝났거나 아직 받은 장비가 없습니다.
+    </p>
+
+    <div th:unless="${#lists.isEmpty(items)}" class="data-table compact">
+      <div class="table-row table-head">
+        <span>자산</span><span>종류</span><span>상태</span><span>보유 시작</span><span>인수 확인</span><span>작업</span>
+      </div>
+      <div class="table-row" th:each="item : ${items}">
+        <div>
+          <strong th:text="${item.name}">자산명</strong>
+          <small th:if="${item.serialNo != null}" th:text="'S/N ' + ${item.serialNo}"
+                 style="display:block;color:var(--muted)">시리얼</small>
+        </div>
+        <span th:text="${item.type.label}">실물</span>
+        <b th:classappend="${item.status.name() == 'RETURN_PENDING'} ? 't-bad' : 't-muted'"
+           th:text="${item.status.label}">상태</b>
+        <span th:text="${heldSince.containsKey(item.id)} ? ${heldSince.get(item.id)} : '—'">시작일</span>
+        <!-- 받은 사람이 "받았다"를 눌렀는지. 안 눌렀으면 장부가 관리자 한쪽 주장이다. -->
+        <span th:classappend="${confirmed.get(item.id)} ? 't-good' : 't-warn'"
+              th:text="${confirmed.get(item.id)} ? '확인됨' : '미확인'">확인</span>
+        <span class="table-actions">
+          <a class="button" th:href="@{'/inventory/' + ${item.id} + '/custody'}">보관·구성품</a>
+        </span>
+      </div>
+    </div>
+
+    <p class="subcopy t-muted" style="margin-top:.6rem">
+      반납을 받으면 각 항목의 <b>보관·구성품</b>에서 보관자를 <b>창고</b>로 옮깁니다.
+      그 기록이 "누가 언제 확인했다"의 근거가 됩니다.
+    </p>
+  </section>
+</main></div>
+</body>
+</html>

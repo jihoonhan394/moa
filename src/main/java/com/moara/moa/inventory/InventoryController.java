@@ -10,10 +10,11 @@ import com.moara.moa.user.ManagedUserService;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -63,6 +64,45 @@ public class InventoryController {
   /** 선택 항목으로 넘어온 식별자. 안 고르거나 망가진 값은 안 고른 것으로 본다. */
   private static UUID parseUuid(String value) {
     return Values.optionalUuid(value);
+  }
+
+  /**
+   * 한 사람이 지금 갖고 있는 자산. <b>퇴사 반납 체크리스트가 이 화면이다.</b>
+   *
+   * <p>0.9.4에서 퇴사 처리가 "창고 입고"를 적지 않게 바꿨다 — 아무도 물건을 보지 않았으니
+   * 적을 수 없다. 그래서 반납 대기가 생기는데, 그것을 <b>사람 기준으로 모아 볼 화면이
+   * 없었다.</b> 자산 목록에서 이름으로 훑어야 했다.
+   *
+   * <p>경로가 자산 쪽에 있는 이유: 자산 데이터는 자산 권한으로 본다
+   * ({@code SecurityConfig}의 {@code /inventory/**} = ASSET_MANAGER). 사용자 관리 경로에
+   * 두면 TENANT_ADMIN만 볼 수 있어, 정작 실물을 확인하는 사람이 못 본다.
+   */
+  @GetMapping("/inventory/by-user/{userId}")
+  public String byUser(@PathVariable UUID userId, Model model) {
+    UUID tenantId = tenantContext.currentTenantId();
+    ManagedUser holder = userService.findById(tenantId, userId);
+    List<InventoryItem> items = inventoryService.findAssignedTo(tenantId, userId);
+
+    // 부품은 상위 장비에 묶여 움직이므로 따로 세지 않는다 — 노트북을 반납하면 안의 RAM도 온다.
+    List<InventoryItem> topLevel = items.stream().filter(i -> !i.isPart()).toList();
+    model.addAttribute("holder", holder);
+    model.addAttribute("items", topLevel);
+    model.addAttribute("returnPendingCount", topLevel.stream()
+        .filter(i -> i.getStatus() == InventoryItemStatus.RETURN_PENDING).count());
+    // 언제부터 갖고 있나. 분쟁이 날 때 이 날짜가 답한다.
+    Map<UUID, LocalDate> heldSince = new LinkedHashMap<>();
+    Map<UUID, Boolean> confirmed = new LinkedHashMap<>();
+    for (InventoryItem item : topLevel) {
+      custodyService.current(tenantId, item.getId()).ifPresent(custody -> {
+        heldSince.put(item.getId(), custody.getStartedOn());
+        confirmed.put(item.getId(), custody.getConfirmedAt() != null);
+      });
+    }
+    model.addAttribute("heldSince", heldSince);
+    model.addAttribute("confirmed", confirmed);
+    model.addAttribute("currentMenu", "inventory");
+    model.addAttribute("page", "inventory");
+    return "inventory/by-user";
   }
 
   /**

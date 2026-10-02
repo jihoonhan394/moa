@@ -27,6 +27,8 @@
              th:text="${user.status.label}">활성</b>
           <span class="table-actions">
             <!-- 퇴사(종료)는 되돌릴 수 없으므로 관리 액션을 노출하지 않는다. -->
+            <!-- 퇴사자일수록 보유 자산을 봐야 한다. 자산 화면은 자산 권한이라 겸직자에게만 보인다. -->
+            <a th:if="${isAssetManager}" class="button" th:href="@{'/inventory/by-user/' + ${user.id}}">보유 자산</a>
             <span th:if="${user.status.name() == 'OFFBOARDED'}" class="subcopy no-margin">퇴사 처리됨</span>
             <th:block th:unless="${user.status.name() == 'OFFBOARDED'}">
               <form class="inline" th:if="${user.status.name() == 'PENDING'}" method="post" th:action="@{'/users/' + ${user.id} + '/approve'}">

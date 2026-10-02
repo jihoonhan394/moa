@@ -85,7 +85,11 @@
         </div>
         <span th:text="${item.type.label}">실물</span>
         <b th:classappend="${item.status.name() == 'AVAILABLE'} ? 'good' : (${item.status.name() == 'RETURN_PENDING'} ? 'bad' : (${item.status.name() == 'RETIRED'} ? 'bad' : 'warn'))" th:text="${item.status.label}">가용</b>
-        <span th:text="${item.assignedUserId != null ? userNames.get(item.assignedUserId) : '—'}">배정</span>
+        <!-- 배정자를 누르면 그 사람의 보유 자산 전체로. 반납 확인은 사람 기준으로 한다. -->
+        <span th:if="${item.assignedUserId == null}">—</span>
+        <a th:if="${item.assignedUserId != null}"
+           th:href="@{'/inventory/by-user/' + ${item.assignedUserId}}"
+           th:text="${userNames.get(item.assignedUserId)}">배정</a>
         <span th:text="${item.expiresAt != null ? item.expiresAt : '—'}">만료</span>
         <span class="table-actions">
           <a class="button" th:href="@{'/inventory/' + ${item.id} + '/edit'}">수정</a>
