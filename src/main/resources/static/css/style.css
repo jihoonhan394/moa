@@ -967,3 +967,132 @@ h1 { font-size: 2.1rem; font-weight: 780; letter-spacing: -0.8px; }
 .inline { display: inline; }            /* 버튼 하나만 감싼 폼이 형제와 한 줄에 놓이게 */
 .no-margin { margin: 0; }
 .fill { flex: 1; }                      /* 남은 자리를 채운다 */
+
+/* ════════════════════════════════════════════════════════════════════
+   폰 (≤720px)
+
+   ⚠️ 반드시 이 파일의 맨 끝에 둔다. 위쪽 @media 블록들(606·721줄) 뒤에도
+   평범한 규칙들이 이어지는데(799줄~), 같은 특이도면 뒤에 오는 쪽이 이겨서
+   그 미디어쿼리들을 덮어 버린다. 실제로 폰에서 메뉴가 세로로 쪼개지고
+   본문이 안 보이던 원인이 이것이다.
+
+   고치는 것 세 가지
+     ① 세로 사이드바 → 가로 스크롤 메뉴 막대
+     ② .nav 의 flex:1 1 auto 해제 — 그대로 두면 메뉴가 화면 높이를 다 먹는다
+     ③ .nav 의 자식 중 <a> 가 아닌 것(구역 제목·알림)이 찌그러지는 것 방지
+   ════════════════════════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+	.app-shell,
+	.app-shell.sidebar-collapsed {
+		grid-template-columns: 1fr;
+		grid-template-rows: auto minmax(0, 1fr);
+		/* 이것이 핵심이다. grid 의 기본 align-content 는 stretch 라서 남는 높이를
+		   메뉴 막대 행에도 나눠 준다 — 실제로 막대가 화면 한 장(815px)을 차지하고
+		   본문이 첫 화면 아래로 통째로 밀려 "본문이 없다"로 보였다. */
+		align-content: start;
+	}
+
+	.sidebar,
+	.app-shell.sidebar-collapsed .sidebar {
+		/* ⚠️ 750줄의 `.sidebar { position: sticky; height: 100vh }` 를 되돌린다.
+		   그 규칙은 미디어쿼리들보다 뒤에 있어서 모바일 규칙을 이기고, 그래서 메뉴 막대가
+		   항상 화면 한 장(100vh) 높이가 되어 본문이 첫 화면 밖으로 밀려났다.
+		   세로 사이드바에서는 맞는 규칙이지만 가로 막대에서는 틀리다. */
+		position: static;
+		height: auto;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 10px;
+		padding: 12px 14px;
+		border-right: 0;
+		border-bottom: 1px solid var(--line);
+		overflow: visible;
+	}
+
+	.sidebar-toggle {
+		display: none; /* 가로 막대에서는 접을 것이 없다 */
+	}
+
+	.nav,
+	.app-shell.sidebar-collapsed .nav {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		/* 세로로 늘어나지 않게 — 이것이 빠지면 메뉴가 화면 절반을 차지한다. */
+		flex: 0 0 auto;
+		width: 100%;
+		max-width: 100%;
+		overflow-x: auto;
+		overflow-y: visible;
+		padding-bottom: 2px;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	/* a 에만 걸면 나중에 추가된 구역 제목·알림이 최소 너비로 찌그러진다. */
+	.nav > * {
+		flex: 0 0 auto;
+	}
+
+	.nav a,
+	.app-shell.sidebar-collapsed .nav a {
+		width: auto;
+		height: auto;
+		padding: 9px 12px;
+		white-space: nowrap;
+	}
+
+	/* 세로 메뉴는 폭이 좁아 말줄임이 맞지만 가로 막대는 스크롤되므로 다 보여 준다. */
+	.nav a .sidebar-text,
+	.app-shell.sidebar-collapsed .sidebar-text,
+	.app-shell.sidebar-collapsed .nav-label {
+		display: inline;
+		overflow: visible;
+		text-overflow: clip;
+	}
+
+	/* 구역 제목은 세로 메뉴의 묶음 표시다. 가로 막대에서는 자리만 차지한다. */
+	.nav-label {
+		display: none;
+	}
+
+	/* 알림 목록이 펼쳐질 때 막대 높이를 밀지 않도록 띄워서 연다. */
+	.nav-notif {
+		position: relative;
+	}
+
+	.nav-notif > div {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		z-index: 30;
+		min-width: 260px;
+		border: 1px solid var(--line);
+		border-radius: 10px;
+		background: #fff;
+		box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+	}
+
+	.operator {
+		display: none; /* 역할·사용자 표시는 좁은 화면에서 자리값을 못 한다 */
+	}
+
+	.workspace {
+		padding: 18px 14px 28px;
+	}
+
+	.topbar {
+		display: grid;
+		gap: 12px;
+		margin-bottom: 18px;
+	}
+
+	.metric-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.content-grid,
+	.overview-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
