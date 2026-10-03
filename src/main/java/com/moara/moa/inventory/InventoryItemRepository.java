@@ -19,6 +19,40 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, UU
   /** 특정 사용자에게 배정된 항목(퇴사 회수 대상). */
   List<InventoryItem> findAllByTenantIdAndAssignedUserId(UUID tenantId, UUID assignedUserId);
 
+  /**
+   * 이름 또는 시리얼로 찾는다. 현장에서 관리번호를 기존 자산에 붙일 때 쓴다.
+   *
+   * <p>전체를 가져와 메모리에서 거르지 않는다 — 자산이 수천 건인 기관에서 그 방식은 매 요청마다
+   * 테이블을 통째로 읽는다.
+   */
+  List<InventoryItem> findTop30ByTenantIdAndNameContainingIgnoreCaseOrderByNameAsc(
+      UUID tenantId, String name);
+
+  List<InventoryItem> findTop30ByTenantIdAndSerialNoContainingIgnoreCaseOrderByNameAsc(
+      UUID tenantId, String serialNo);
+
+  /**
+   * <b>아직 관리번호가 붙지 않은</b> 자산만 찾는다.
+   *
+   * <p>⚠️ 이름으로 30건을 먼저 자른 뒤 거르면 안 된다. 앞쪽 30건이 전부 번호가 붙은 자산이면
+   * 붙일 수 있는 자산이 한 건도 안 보인다 — 실제 데이터(자산 120건 중 70건에 번호)로 돌려 보니
+   * 첫 화면이 통째로 "이미 번호가 붙어 있습니다"였다. 거른 다음에 잘라야 한다.
+   */
+  @org.springframework.data.jpa.repository.Query("""
+      select i from InventoryItem i
+      where i.tenantId = :tenantId
+        and (lower(i.name) like lower(concat('%', :term, '%'))
+             or lower(i.serialNo) like lower(concat('%', :term, '%')))
+        and not exists (
+          select t from AssetTag t where t.itemId = i.id
+        )
+      order by i.name asc
+      """)
+  List<InventoryItem> searchAttachable(
+      @org.springframework.data.repository.query.Param("tenantId") UUID tenantId,
+      @org.springframework.data.repository.query.Param("term") String term,
+      org.springframework.data.domain.Pageable pageable);
+
   /** 반납 대기(퇴사했지만 실물 미확인) 목록. 관리자 화면의 미반납 배지가 쓴다. */
   List<InventoryItem> findAllByTenantIdAndStatus(UUID tenantId, InventoryItemStatus status);
 

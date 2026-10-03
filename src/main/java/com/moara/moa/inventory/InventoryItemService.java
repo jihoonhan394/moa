@@ -115,6 +115,32 @@ public class InventoryItemService {
   }
 
   /** 특정 사용자에게 배정된 항목. */
+  /** 아직 관리번호가 없는 자산만 찾는다(최대 30건). 번호를 붙일 대상을 고르는 화면용. */
+  @Transactional(readOnly = true)
+  public List<InventoryItem> searchAttachable(UUID tenantId, String keyword) {
+    String term = com.moara.moa.support.Values.blankToNull(keyword);
+    if (term == null) {
+      return List.of();
+    }
+    return repository.searchAttachable(
+        tenantId, term, org.springframework.data.domain.PageRequest.of(0, 30));
+  }
+
+  /** 이름·시리얼로 찾는다(최대 30건). 현장에서 자산을 고를 때 쓴다. */
+  @Transactional(readOnly = true)
+  public List<InventoryItem> search(UUID tenantId, String keyword) {
+    String term = com.moara.moa.support.Values.blankToNull(keyword);
+    if (term == null) {
+      return List.of();
+    }
+    java.util.LinkedHashMap<UUID, InventoryItem> found = new java.util.LinkedHashMap<>();
+    repository.findTop30ByTenantIdAndNameContainingIgnoreCaseOrderByNameAsc(tenantId, term)
+        .forEach(item -> found.put(item.getId(), item));
+    repository.findTop30ByTenantIdAndSerialNoContainingIgnoreCaseOrderByNameAsc(tenantId, term)
+        .forEach(item -> found.put(item.getId(), item));
+    return List.copyOf(found.values());
+  }
+
   public List<InventoryItem> findAssignedTo(UUID tenantId, UUID userId) {
     return repository.findAllByTenantIdAndAssignedUserId(tenantId, userId);
   }

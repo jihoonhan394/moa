@@ -381,18 +381,9 @@ public class InventoryController {
     return categoryService.assetTree(tenantContext.currentTenantId());
   }
 
-  /** 카테고리 경로의 최상위(실물/SW)로 유형을 파생. 알 수 없으면 null. */
+  /** 카테고리 경로의 최상위(실물/SW)로 유형을 파생. 규칙은 모바일 등록과 공유한다. */
   private static InventoryItemType deriveType(String categoryPath) {
-    if (categoryPath == null || categoryPath.isBlank()) {
-      return null;
-    }
-    String root = categoryPath.split(java.util.regex.Pattern.quote(CategoryService.PATH_SEP))[0].trim();
-    for (InventoryItemType type : InventoryItemType.values()) {
-      if (type.getLabel().equals(root)) {
-        return type;
-      }
-    }
-    return null;
+    return InventoryItemType.fromCategoryPath(categoryPath);
   }
 
   private static InventoryItemForm withType(InventoryItemForm form, InventoryItemType type) {

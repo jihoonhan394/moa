@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments :: head('자산')}"></head>
+<body>
+<header th:replace="~{mobile/fragments :: top('자산', '/m/scan')}"></header>
+
+<main>
+  <span class="m-code" th:text="${tag.code}">MOA-0000-0000</span>
+  <h2 class="m-headline" th:text="${item.name}">자산 이름</h2>
+
+  <span class="m-pill" th:classappend="${item.assignedUserId != null} ? 'warn' : 'ok'"
+        th:text="${item.assignedUserId != null} ? '사용 중' : '보관 중'">상태</span>
+
+  <dl class="m-facts">
+    <div th:if="${holder != null}">
+      <dt>사용자</dt><dd th:text="${holder}">-</dd>
+    </div>
+    <div th:if="${item.category != null}">
+      <dt>분류</dt><dd th:text="${item.category}">-</dd>
+    </div>
+    <div th:if="${item.serialNo != null}">
+      <dt>시리얼</dt><dd th:text="${item.serialNo}">-</dd>
+    </div>
+    <div th:if="${item.quantity > 1}">
+      <dt>수량</dt><dd th:text="${item.quantity}">1</dd>
+    </div>
+    <div th:if="${item.purchaseDate != null}">
+      <dt>구매일</dt><dd th:text="${item.purchaseDate}">-</dd>
+    </div>
+    <div th:if="${item.warrantyEnds != null}">
+      <dt>보증 만료</dt><dd th:text="${item.warrantyEnds}">-</dd>
+    </div>
+    <div th:if="${item.note != null}">
+      <dt>비고</dt><dd th:text="${item.note}">-</dd>
+    </div>
+  </dl>
+
+  <!-- 수정·배정은 여기 두지 않는다. 되돌리기 어려운 것은 PC 에서. -->
+</main>
+
+<nav th:replace="~{mobile/fragments :: tabs('scan')}"></nav>
+</body>
+</html>

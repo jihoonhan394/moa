@@ -9,6 +9,7 @@ import com.moara.moa.consumable.ConsumableItemNotFoundException;
 import com.moara.moa.credential.CredentialNotFoundException;
 import com.moara.moa.group.AccessGroupNotFoundException;
 import com.moara.moa.inventory.InventoryItemNotFoundException;
+import com.moara.moa.inventory.tag.AssetTagNotFoundException;
 import com.moara.moa.notice.NoticeNotFoundException;
 import com.moara.moa.onboarding.OnboardingTemplateNotFoundException;
 import com.moara.moa.permission.PermissionNotFoundException;
@@ -46,6 +47,7 @@ public class GlobalExceptionHandler {
       AccessGroupNotFoundException.class,
       AccessRequestNotFoundException.class,
       AssetNotFoundException.class,
+      AssetTagNotFoundException.class,
       CategoryNotFoundException.class,
       ConnectionSessionNotFoundException.class,
       ConsumableItemNotFoundException.class,

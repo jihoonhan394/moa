@@ -1,0 +1,36 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  모바일 화면 공통 조각.
+
+  PC 의 fragments/head.html 과 따로 두는 이유: viewport·stylesheet 가 다르고,
+  PC 쪽에 모바일 사정이 섞이면 둘 다 복잡해진다.
+-->
+<head th:fragment="head(title)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title th:text="${title}">MOA</title>
+  <link rel="stylesheet" th:href="@{/css/mobile.css}">
+</head>
+
+<body>
+<!-- 상단: 제목 하나. 뒤로가기는 기기 버튼이 하므로 필요한 화면에만 둔다. -->
+<header class="m-top" th:fragment="top(title, back)">
+  <a class="m-back" th:if="${back != null}" th:href="@{${back}}" aria-label="뒤로">&#8249;</a>
+  <h1 th:text="${title}">MOA</h1>
+</header>
+
+<!-- 하단 탭: 넷을 넘기지 않는다. 다섯 개가 되는 순간 PC 메뉴가 된다. -->
+<nav class="m-tabs" th:fragment="tabs(current)">
+  <a th:href="@{/m}" th:classappend="${current == 'home'} ? 'active'">
+    <span class="icon">&#9750;</span><span>홈</span>
+  </a>
+  <a th:href="@{/m/scan}" th:classappend="${current == 'scan'} ? 'active'">
+    <span class="icon">&#9635;</span><span>스캔</span>
+  </a>
+  <a th:href="@{/m/me}" th:classappend="${current == 'me'} ? 'active'">
+    <span class="icon">&#9711;</span><span>내 것</span>
+  </a>
+</nav>
+</body>
+</html>

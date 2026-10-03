@@ -1,0 +1,411 @@
+/* ════════════════════════════════════════════════════════════════════
+   모바일 전용 화면(/m/**)의 스타일.
+
+   style.css 를 쓰지 않는다. 그쪽은 사이드바 15개와 긴 표를 전제한 PC 콘솔이고,
+   폰에서 아무리 줄여도 "줄인 PC 화면"으로 보인다. 여기는 처음부터 폰을 전제한다.
+
+   정한 것
+     · 본문 17px — PC 는 14px 다. 현장에서 한 손으로 보는 글씨다
+     · 터치 영역 최소 56px — 장갑 끼고 누른다고 생각한다
+     · 화면 하나에 할 일 하나 — 지표를 늘어놓지 않는다
+     · 그림자 대신 선과 여백 — 평평하게
+   ════════════════════════════════════════════════════════════════════ */
+
+:root {
+	--m-bg: #f6f7f9;
+	--m-surface: #ffffff;
+	--m-ink: #16181d;
+	--m-muted: #6b7280;
+	--m-line: #e5e7eb;
+	--m-accent: #1d4ed8;
+	--m-accent-soft: #eff4ff;
+	--m-danger: #b42318;
+	--m-ok: #067647;
+	--m-ok-soft: #ecfdf3;
+	--m-warn: #b54708;
+	--m-warn-soft: #fffaeb;
+	--m-tabbar: 72px;
+	--m-gutter: 20px;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	padding: 0 0 calc(var(--m-tabbar) + env(safe-area-inset-bottom, 0px));
+	min-height: 100vh;
+	background: var(--m-bg);
+	color: var(--m-ink);
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+	font-size: 17px;
+	line-height: 1.55;
+	-webkit-tap-highlight-color: transparent;
+}
+
+/* ── 상단 ───────────────────────────────────────────────────────── */
+
+.m-top {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 14px var(--m-gutter);
+	background: var(--m-surface);
+	border-bottom: 1px solid var(--m-line);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+.m-back {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	margin-left: -8px;
+	border-radius: 12px;
+	color: var(--m-ink);
+	text-decoration: none;
+	font-size: 22px;
+	line-height: 1;
+}
+
+.m-top h1 {
+	margin: 0;
+	font-size: 19px;
+	font-weight: 700;
+	letter-spacing: -0.2px;
+}
+
+/* ── 본문 ───────────────────────────────────────────────────────── */
+
+main {
+	padding: var(--m-gutter);
+}
+
+.m-lede {
+	margin: 0 0 24px;
+	color: var(--m-muted);
+	font-size: 15px;
+}
+
+.m-section {
+	margin: 32px 0 12px;
+	color: var(--m-muted);
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.4px;
+}
+
+.m-section:first-child {
+	margin-top: 0;
+}
+
+/* ── 큼직한 동작 ────────────────────────────────────────────────── */
+
+.m-action {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	width: 100%;
+	min-height: 76px;
+	padding: 18px 20px;
+	margin-bottom: 12px;
+	border: 1px solid var(--m-line);
+	border-radius: 16px;
+	background: var(--m-surface);
+	color: var(--m-ink);
+	font: inherit;
+	text-align: left;
+	text-decoration: none;
+}
+
+.m-action:active {
+	background: var(--m-accent-soft);
+}
+
+.m-action.primary {
+	min-height: 96px;
+	border: 0;
+	background: var(--m-accent);
+	color: #fff;
+}
+
+.m-action .label {
+	display: block;
+	font-size: 19px;
+	font-weight: 700;
+}
+
+.m-action.primary .label {
+	font-size: 22px;
+}
+
+.m-action .sub {
+	display: block;
+	margin-top: 2px;
+	color: var(--m-muted);
+	font-size: 14px;
+	font-weight: 400;
+}
+
+.m-action.primary .sub {
+	color: rgba(255, 255, 255, 0.82);
+}
+
+.m-action .icon {
+	flex: 0 0 auto;
+	font-size: 28px;
+	line-height: 1;
+}
+
+/* ── 목록 ───────────────────────────────────────────────────────── */
+
+.m-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border: 1px solid var(--m-line);
+	border-radius: 16px;
+	background: var(--m-surface);
+	overflow: hidden;
+}
+
+.m-list li + li {
+	border-top: 1px solid var(--m-line);
+}
+
+.m-row {
+	display: block;
+	min-height: 68px;
+	padding: 16px 20px;
+	color: inherit;
+	text-decoration: none;
+}
+
+.m-row:active {
+	background: var(--m-accent-soft);
+}
+
+.m-row .title {
+	/* ⚠️ display 를 주지 않으면 span 이라 설명과 한 줄에 붙는다(실기기에서 확인). */
+	display: block;
+	font-size: 17px;
+	font-weight: 650;
+}
+
+.m-row .meta {
+	display: block;
+	margin-top: 2px;
+	color: var(--m-muted);
+	font-size: 14px;
+}
+
+/* ── 자산 상세 ──────────────────────────────────────────────────── */
+
+.m-code {
+	display: inline-block;
+	padding: 6px 12px;
+	border-radius: 10px;
+	background: var(--m-accent-soft);
+	color: var(--m-accent);
+	font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+	font-size: 16px;
+	font-weight: 700;
+	letter-spacing: 0.6px;
+}
+
+.m-headline {
+	margin: 14px 0 6px;
+	font-size: 27px;
+	font-weight: 750;
+	letter-spacing: -0.4px;
+	line-height: 1.25;
+}
+
+.m-facts {
+	margin: 24px 0 0;
+	border: 1px solid var(--m-line);
+	border-radius: 16px;
+	background: var(--m-surface);
+	overflow: hidden;
+}
+
+.m-facts div {
+	display: flex;
+	gap: 16px;
+	padding: 15px 20px;
+}
+
+.m-facts div + div {
+	border-top: 1px solid var(--m-line);
+}
+
+.m-facts dt {
+	flex: 0 0 96px;
+	margin: 0;
+	color: var(--m-muted);
+	font-size: 15px;
+}
+
+.m-facts dd {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	word-break: break-word;
+}
+
+/* ── 상태 ───────────────────────────────────────────────────────── */
+
+.m-pill {
+	display: inline-block;
+	padding: 5px 12px;
+	border-radius: 999px;
+	font-size: 14px;
+	font-weight: 700;
+}
+
+.m-pill.ok {
+	background: var(--m-ok-soft);
+	color: var(--m-ok);
+}
+
+.m-pill.warn {
+	background: var(--m-warn-soft);
+	color: var(--m-warn);
+}
+
+/* ── 입력 ───────────────────────────────────────────────────────── */
+
+.m-field {
+	margin-bottom: 18px;
+}
+
+.m-field label {
+	display: block;
+	margin-bottom: 7px;
+	font-size: 15px;
+	font-weight: 650;
+}
+
+.m-field input,
+.m-field select,
+.m-field textarea {
+	display: block;
+	width: 100%;
+	min-height: 56px;
+	padding: 14px 16px;
+	border: 1px solid var(--m-line);
+	border-radius: 14px;
+	background: var(--m-surface);
+	color: var(--m-ink);
+	font: inherit;
+	font-size: 17px;
+}
+
+.m-field input:focus,
+.m-field select:focus,
+.m-field textarea:focus {
+	outline: 2px solid var(--m-accent);
+	outline-offset: -1px;
+}
+
+.m-field .hint {
+	margin: 6px 0 0;
+	color: var(--m-muted);
+	font-size: 14px;
+}
+
+.m-field .error {
+	margin: 6px 0 0;
+	color: var(--m-danger);
+	font-size: 14px;
+	font-weight: 600;
+}
+
+/* 코드 직접 입력 — 사람이 또박또박 치는 자리라 더 크게 */
+.m-code-input {
+	text-align: center;
+	font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+	font-size: 24px !important;
+	letter-spacing: 2px;
+	text-transform: uppercase;
+}
+
+.m-submit {
+	display: block;
+	width: 100%;
+	min-height: 60px;
+	margin-top: 26px;
+	border: 0;
+	border-radius: 14px;
+	background: var(--m-accent);
+	color: #fff;
+	font: inherit;
+	font-size: 18px;
+	font-weight: 700;
+}
+
+.m-submit:active {
+	filter: brightness(0.92);
+}
+
+/* ── 안내 ───────────────────────────────────────────────────────── */
+
+.m-note {
+	padding: 16px 18px;
+	border-radius: 14px;
+	background: var(--m-warn-soft);
+	color: var(--m-warn);
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.m-empty {
+	padding: 48px 20px;
+	color: var(--m-muted);
+	text-align: center;
+	font-size: 16px;
+}
+
+/* ── 하단 탭 ────────────────────────────────────────────────────── */
+
+.m-tabs {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 20;
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
+	padding-bottom: env(safe-area-inset-bottom, 0px);
+	background: var(--m-surface);
+	border-top: 1px solid var(--m-line);
+}
+
+.m-tabs a {
+	display: grid;
+	gap: 3px;
+	place-items: center;
+	min-height: var(--m-tabbar);
+	padding: 10px 4px;
+	color: var(--m-muted);
+	text-decoration: none;
+	font-size: 12px;
+	font-weight: 650;
+}
+
+.m-tabs a .icon {
+	font-size: 22px;
+	line-height: 1;
+}
+
+.m-tabs a.active {
+	color: var(--m-accent);
+}

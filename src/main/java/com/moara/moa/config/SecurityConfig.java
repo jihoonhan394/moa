@@ -36,6 +36,13 @@ public class SecurityConfig {
             // 자가 회원가입은 초대 기반으로 대체되어 제거됨.
             .requestMatchers("/enter", "/enter/**", "/login", "/invite/**", "/css/**", "/js/**", "/fonts/**")
             .permitAll()
+            // 모바일 전용 경로. DMZ 리버스 프록시가 이 경로만 통과시키는 것이 전제이고,
+            // URL 보안과 서비스 레벨 검사를 이중으로 두는 원칙에 따라 여기서도 역할을 건다.
+            // ⚠️ User-Agent 의 caps= 로 인가하지 않는다. 그 값은 클라이언트가 보낸 것이다.
+            .requestMatchers("/m/scan", "/m/t/**")
+            .hasRole("ASSET_MANAGER")
+            .requestMatchers("/m", "/m/**")
+            .authenticated()
             // 플랫폼(기관 관리) 콘솔은 SYSTEM_ADMIN 전용. 아래 공통 관리 라우트보다 먼저 매칭돼야 한다.
             .requestMatchers("/admin/**")
             .hasRole("SYSTEM_ADMIN")

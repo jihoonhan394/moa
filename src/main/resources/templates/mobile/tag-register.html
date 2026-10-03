@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments :: head('자산 등록')}"></head>
+<body>
+<header th:replace="~{mobile/fragments :: top('자산 등록', '/m/scan')}"></header>
+
+<main>
+  <!-- 사용자가 "등록 모드"를 고른 적이 없다. 빈 스티커를 찍었으니 등록 화면인 것이다. -->
+  <span class="m-code" th:text="${tag.code}">MOA-0000-0000</span>
+  <p class="m-lede" style="margin-top:12px">아직 자산이 연결되지 않은 번호입니다. 지금 등록합니다.</p>
+
+  <!-- 현장의 대부분은 새 등록이 아니라 "이미 있는 자산에 번호 붙이기"다. 먼저 보여 준다. -->
+  <a class="m-action" th:href="@{'/m/t/' + ${tag.code} + '/attach'}" style="margin-bottom:28px">
+    <span class="icon">&#9741;</span>
+    <span>
+      <span class="label">이미 있는 자산에 붙이기</span>
+      <span class="sub">대장에 등록된 자산을 찾아 번호만 답니다</span>
+    </span>
+  </a>
+
+  <p class="m-section">새 자산으로 등록</p>
+
+  <form method="post" th:action="@{'/m/t/' + ${tag.code}}" th:object="${form}">
+    <div class="m-field">
+      <label for="name">이름</label>
+      <input type="text" id="name" th:field="*{name}" placeholder="예: 노트북 LG그램 16" required>
+      <p class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">오류</p>
+    </div>
+
+    <div class="m-field">
+      <label for="category">분류</label>
+      <select id="category" th:field="*{category}">
+        <option value="">선택 안 함</option>
+        <option th:each="node : ${categories}" th:if="${!node.hasChildren()}"
+                th:value="${node.path()}" th:text="${node.path()}">분류</option>
+      </select>
+      <p class="error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}">오류</p>
+    </div>
+
+    <div class="m-field">
+      <label for="serialNo">시리얼 번호</label>
+      <input type="text" id="serialNo" th:field="*{serialNo}" autocomplete="off" placeholder="없으면 비워 둡니다">
+      <p class="error" th:if="${#fields.hasErrors('serialNo')}" th:errors="*{serialNo}">오류</p>
+    </div>
+
+    <div class="m-field">
+      <label for="note">비고</label>
+      <input type="text" id="note" th:field="*{note}" placeholder="설치 위치 등">
+      <p class="error" th:if="${#fields.hasErrors('note')}" th:errors="*{note}">오류</p>
+    </div>
+
+    <!-- 구매일·보증·리스·수량은 여기 없다. 현장에서 치는 값이 아니고, 넣는 순간 폼이 길어져
+         아무도 끝까지 안 채운다. 나머지는 PC 에서 보완한다. -->
+    <button class="m-submit" type="submit">등록하고 번호 붙이기</button>
+  </form>
+</main>
+
+<nav th:replace="~{mobile/fragments :: tabs('scan')}"></nav>
+</body>
+</html>

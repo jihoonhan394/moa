@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments :: head('MOA')}"></head>
+<body>
+<header th:replace="~{mobile/fragments :: top('MOA', null)}"></header>
+
+<main>
+  <!-- 홈에 지표를 늘어놓지 않는다. 지금 할 수 있는 일만 둔다. -->
+  <a class="m-action primary" th:href="@{/m/scan}">
+    <span class="icon">&#9635;</span>
+    <span>
+      <span class="label">자산 스캔</span>
+      <span class="sub">QR 을 찍으면 바로 열립니다</span>
+    </span>
+  </a>
+
+  <a class="m-action" th:href="@{/m/me}">
+    <span class="icon">&#9711;</span>
+    <span>
+      <span class="label">내 자산</span>
+      <span class="sub" th:text="${myItemCount} + '건 보유 중'">0건</span>
+    </span>
+  </a>
+
+  <p class="m-lede" style="margin-top:28px" th:if="${unattachedCount > 0}">
+    아직 붙이지 않은 관리번호 스티커가
+    <strong th:text="${unattachedCount}">0</strong>장 있습니다.
+  </p>
+</main>
+
+<nav th:replace="~{mobile/fragments :: tabs('home')}"></nav>
+</body>
+</html>

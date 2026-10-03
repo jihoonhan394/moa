@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments :: head('자산 스캔')}"></head>
+<body>
+<header th:replace="~{mobile/fragments :: top('자산 스캔', '/m')}"></header>
+
+<main>
+  <!-- 앱에서는 카메라가 이 화면을 대신한다. 카메라가 없거나 스티커가 상했을 때를 위해
+       손으로 칠 수 있는 길을 항상 남겨 둔다. -->
+  <p class="m-note" th:if="${notFound != null and !#strings.isEmpty(notFound)}">
+    <span th:text="'‘' + ${notFound} + '’ 은(는) 등록된 관리번호가 아닙니다.'">없는 코드</span>
+  </p>
+
+  <!-- 앱에서는 이 자리에 "카메라로 찍기"가 붙는다. PC 브라우저에서는 아무것도 붙지 않고
+       아래 직접 입력만 남는다. -->
+  <div data-scan-slot></div>
+
+  <p class="m-section">직접 입력</p>
+
+  <form method="post" th:action="@{/m/scan}" data-scan-form>
+    <div class="m-field">
+      <label for="code">관리번호</label>
+      <input class="m-code-input" type="text" id="code" name="code"
+             inputmode="latin" autocomplete="off" autocapitalize="characters"
+             spellcheck="false" placeholder="MOA-0000-0000" required>
+      <p class="hint">스티커에 인쇄된 번호입니다. 붙임표는 없어도 됩니다.</p>
+    </div>
+    <button class="m-submit" type="submit">자산 열기</button>
+  </form>
+</main>
+
+<nav th:replace="~{mobile/fragments :: tabs('scan')}"></nav>
+<script th:src="@{/js/mobile-scan.js}" defer></script>
+</body>
+</html>

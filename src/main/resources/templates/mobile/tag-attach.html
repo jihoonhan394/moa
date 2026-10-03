@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments :: head('자산에 번호 붙이기')}"></head>
+<body>
+<header th:replace="~{mobile/fragments :: top('번호 붙이기', '/m/scan')}"></header>
+
+<main>
+  <span class="m-code" th:text="${tag.code}">MOA-0000-0000</span>
+  <p class="m-lede" style="margin-top:12px">이 번호를 붙일 자산을 찾습니다.</p>
+
+  <form method="get" th:action="@{'/m/t/' + ${tag.code} + '/attach'}">
+    <div class="m-field">
+      <label for="q">이름 또는 시리얼</label>
+      <input type="text" id="q" name="q" th:value="${q}" autocomplete="off"
+             placeholder="예: 노트북, SN2026" required>
+    </div>
+    <button class="m-submit" type="submit">찾기</button>
+  </form>
+
+  <p class="m-note" th:if="${allTagged}" style="margin-top:24px">
+    찾은 자산에 이미 관리번호가 붙어 있습니다. 한 자산에 번호는 하나입니다.
+  </p>
+  <p class="m-empty" th:if="${q != null and #lists.isEmpty(items) and !allTagged}">찾는 자산이 없습니다.</p>
+
+  <ul class="m-list" th:if="${!#lists.isEmpty(items)}" style="margin-top:24px">
+    <!-- 여기 오는 것은 전부 "번호가 없는" 자산이다. 이미 붙은 자산은 질의에서 빠진다
+         (한 자산에 번호가 둘이면 현장에서 못 찾는다). -->
+    <li th:each="item : ${items}">
+      <form method="post" th:action="@{'/m/t/' + ${tag.code} + '/attach'}">
+        <input type="hidden" name="itemId" th:value="${item.id}">
+        <button class="m-row" type="submit"
+                style="display:block;width:100%;border:0;background:none;text-align:left;font:inherit">
+          <span class="title" th:text="${item.name}">자산</span>
+          <span class="meta" th:text="${item.serialNo != null ? item.serialNo : item.category}">-</span>
+        </button>
+      </form>
+    </li>
+  </ul>
+</main>
+
+<nav th:replace="~{mobile/fragments :: tabs('scan')}"></nav>
+</body>
+</html>
