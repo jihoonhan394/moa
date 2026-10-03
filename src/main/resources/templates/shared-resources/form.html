@@ -8,6 +8,7 @@
   </header>
   <section class="panel">
     <form method="post" th:action="@{'/shared-resources/' + ${resourceId}}" th:object="${resourceForm}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:560px;">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <div th:if="${#fields.hasGlobalErrors()}" class="error-message"><p th:each="e : ${#fields.globalErrors()}" th:text="${e}" style="margin:.1rem 0"></p></div>
       <label>이름</label><input type="text" th:field="*{name}" maxlength="100" required>
       <p th:if="${#fields.hasErrors('name')}" class="error-message" th:errors="*{name}"></p>

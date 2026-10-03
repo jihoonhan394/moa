@@ -14,6 +14,7 @@
   <section class="panel form-panel">
     <form th:object="${assetForm}" method="post"
           th:action="${assetId == null} ? (${serverOnly} ? @{/servers} : @{/assets}) : @{/assets/{id}(id=${assetId})}">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <p class="error-message" th:errors="*{connectionTargetValid}"></p>
       <p class="error-message" th:errors="*{protocolValid}"></p>
       <p class="error-message" th:if="${#fields.hasErrors('host')}" th:errors="*{host}"></p>

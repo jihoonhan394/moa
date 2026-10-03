@@ -12,6 +12,7 @@
 
   <section class="panel">
     <form method="post" th:action="@{/ai-settings}" th:object="${aiForm}" class="stacked-form" style="display:grid;gap:0.7rem;max-width:620px;">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <div th:if="${#fields.hasAnyErrors()}" class="error-message"><p th:each="e : ${#fields.allErrors()}" th:text="${e}" style="margin:.1rem 0"></p></div>
       <label>제공자</label>
       <select th:field="*{provider}">

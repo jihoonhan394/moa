@@ -1,5 +1,7 @@
 package com.moara.moa.invitation;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestParam;
  */
 @Controller
 public class InviteAcceptController {
+  private static final Logger log = LoggerFactory.getLogger(InviteAcceptController.class);
+
   private final InvitationService invitationService;
 
   public InviteAcceptController(InvitationService invitationService) {
@@ -58,7 +62,11 @@ public class InviteAcceptController {
     } catch (InvitationInvalidException exception) {
       return "invite/invalid";
     } catch (RuntimeException exception) {
-      model.addAttribute("error", "가입 처리에 실패했습니다: " + exception.getMessage());
+      // ⚠️ exception.getMessage() 를 그대로 보여 주면 SQL·제약 이름 같은 내부 사정이 가입 화면에
+      // 그대로 나간다(실제로 "Unique index or primary key violation: CONSTRAINT_F8 ..." 가 나왔다).
+      // 서버 로그에만 남기고 사용자에게는 할 수 있는 일을 알려 준다.
+      log.warn("초대 수락 실패(token={}): {}", token, exception.toString());
+      model.addAttribute("error", "가입 처리에 실패했습니다. 잠시 후 다시 시도하거나 담당자에게 문의해 주세요.");
       return "invite/accept";
     }
     return "redirect:/login?joined";

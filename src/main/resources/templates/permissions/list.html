@@ -15,6 +15,7 @@
     <section class="panel">
       <div class="panel-head"><div><p class="eyebrow">새 권한</p><h2>권한 생성</h2></div></div>
       <form method="post" th:action="@{/permissions}" th:object="${permissionForm}" class="asset-toolbar">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
         <input type="text" th:field="*{name}" maxlength="100" placeholder="권한 이름 (예: 개발서버 접근)" required>
         <input type="text" th:field="*{description}" maxlength="255" placeholder="설명(선택)">
         <select th:field="*{status}">

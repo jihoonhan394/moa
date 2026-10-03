@@ -12,6 +12,7 @@
   <section class="panel">
     <h2>점검 일정 등록</h2>
     <form method="post" th:action="@{/maintenance/windows}" th:object="${windowForm}" class="stack-form">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <div th:if="${#fields.hasGlobalErrors()}" class="field-error"><p th:each="e : ${#fields.globalErrors()}" th:text="${e}" style="margin:.1rem 0"></p></div>
       <label>대상
         <select name="target" required>

@@ -55,6 +55,7 @@
   <section class="panel" th:if="${canManage}">
     <div class="panel-head"><div><p class="eyebrow">관리</p><h2>하위 폴더 만들기 · 공간 삭제</h2></div></div>
     <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/subfolders'}" th:object="${spaceForm}" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;max-width:760px">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <input type="text" th:field="*{name}" maxlength="100" placeholder="하위 폴더 이름" required style="flex:1;min-width:180px">
       <input type="text" th:field="*{description}" maxlength="500" placeholder="설명 (선택)" style="flex:2;min-width:200px">
       <button class="button" type="submit">하위 폴더 추가</button>

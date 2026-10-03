@@ -68,6 +68,7 @@
     <div class="panel-head"><div><p class="eyebrow">기록</p><h2>주문 등록</h2></div></div>
     <form method="post" th:action="@{'/consumables/' + ${item.id} + '/orders'}"
           th:object="${orderForm}" class="asset-toolbar">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <label>주문일 <input type="date" th:field="*{orderedOn}" required></label>
       <label>수량 <input type="number" th:field="*{quantity}" min="1"></label>
       <input type="text" th:field="*{note}" maxlength="500" placeholder="메모 (선택)">
@@ -99,6 +100,7 @@
     <div class="panel-head"><div><p class="eyebrow">설정</p><h2>품목 수정</h2></div></div>
     <form method="post" th:action="@{'/consumables/' + ${item.id}}" th:object="${itemForm}"
           class="asset-toolbar">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <input type="text" th:field="*{name}" maxlength="100" required>
       <input type="text" th:field="*{category}" maxlength="100" placeholder="분류">
       <input type="text" th:field="*{unit}" maxlength="20" placeholder="단위">

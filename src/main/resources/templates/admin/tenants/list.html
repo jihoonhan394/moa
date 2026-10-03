@@ -14,6 +14,7 @@
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">새 기관</p><h2>기관 등록</h2></div></div>
     <form method="post" th:action="@{/admin/tenants}" th:object="${tenantForm}" class="asset-toolbar">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <input type="text" th:field="*{name}" placeholder="기관명 (예: 카카오)" required>
       <input type="text" th:field="*{code}" placeholder="기관 코드 (예: KAKAO)" required style="text-transform:uppercase">
       <button class="button primary" type="submit">기관 등록</button>

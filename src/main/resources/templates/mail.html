@@ -17,6 +17,7 @@
       <div class="panel-head"><div><p class="eyebrow">SMTP</p><h2>발송 설정</h2></div>
         <span class="pill" th:text="${mailForm.enabled} ? '활성' : '비활성'">상태</span></div>
       <form th:object="${mailForm}" method="post" th:action="@{/mail}">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
         <p class="error-message" th:errors="*{global}"></p>
         <label for="host">SMTP 호스트</label>
         <input id="host" th:field="*{host}" maxlength="255" placeholder="예: smtp.gmail.com" required>

@@ -11,6 +11,7 @@
       </header>
       <section class="panel form-panel">
         <form th:object="${userForm}" method="post" th:action="${userId == null} ? @{/users} : @{/users/{id}(id=${userId})}">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
           <p class="error-message" th:errors="*{global}"></p>
           <label for="name">Name</label><input id="name" th:field="*{name}" maxlength="100" required><p class="error-message" th:errors="*{name}"></p>
           <label for="username">표시 이름 (아이디) <small class="t-muted">— 화면 표시용, @ 불가</small></label><input id="username" th:field="*{username}" maxlength="100" required placeholder="예: 한지훈"><p class="error-message" th:errors="*{username}"></p>

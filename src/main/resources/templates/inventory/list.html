@@ -19,6 +19,7 @@
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">등록</p><h2>자산 등록</h2></div></div>
     <form method="post" th:action="@{/inventory}" th:object="${inventoryForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:760px;">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <p th:each="err : ${#fields.globalErrors()}" class="error-message" th:text="${err}">오류</p>
       <div class="asset-toolbar">
         <input type="text" th:field="*{name}" maxlength="100" placeholder="항목 이름 (예: MacBook Pro 14 #12)" required>

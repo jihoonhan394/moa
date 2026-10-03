@@ -13,6 +13,7 @@
     <section class="panel form-panel">
       <form th:object="${noticeForm}" method="post"
             th:action="${mode == 'create'} ? @{/notices} : @{/notices/{id}(id=${noticeId})}">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
         <p class="error-message" th:errors="*{global}"></p>
         <label for="title">제목</label>
         <input id="title" th:field="*{title}" maxlength="200" required>

@@ -15,6 +15,7 @@
     <div class="panel-head"><div><p class="eyebrow">새 운영자</p><h2>운영자 계정 생성</h2></div></div>
     <p th:if="${selfDisableError}" th:text="${selfDisableError}" class="subcopy t-bad">오류</p>
     <form method="post" th:action="@{/admin/operators}" th:object="${operatorForm}" class="asset-toolbar">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <input type="text" th:field="*{username}" placeholder="아이디" required autocomplete="off">
       <input type="text" th:field="*{name}" placeholder="이름" required>
       <input type="email" th:field="*{email}" placeholder="이메일" required autocomplete="off">

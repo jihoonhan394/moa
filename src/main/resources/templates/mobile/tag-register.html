@@ -21,6 +21,7 @@
   <p class="m-section">새 자산으로 등록</p>
 
   <form method="post" th:action="@{'/m/t/' + ${tag.code}}" th:object="${form}">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
     <div class="m-field">
       <label for="name">이름</label>
       <input type="text" id="name" th:field="*{name}" placeholder="예: 노트북 LG그램 16" required>

@@ -39,6 +39,7 @@
     </div>
 
     <form method="post" th:action="@{'/solutions/' + ${solution.id} + '/ops'}" th:object="${opsForm}" class="stack-form" style="margin-top:.75rem">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <label>기동 매뉴얼(위키 공간)
         <select th:field="*{wikiSpaceId}">
           <option th:value="${null}">— 연결 안 함 —</option>

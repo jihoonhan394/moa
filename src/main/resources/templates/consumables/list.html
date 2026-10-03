@@ -18,6 +18,7 @@
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">등록</p><h2>소모품 등록</h2></div></div>
     <form method="post" th:action="@{/consumables}" th:object="${itemForm}" class="asset-toolbar">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <input type="text" th:field="*{name}" maxlength="100" placeholder="이름 (예: A4용지)" required>
       <input type="text" th:field="*{category}" maxlength="100" placeholder="분류 (선택)">
       <input type="text" th:field="*{unit}" maxlength="20" placeholder="단위 (예: 박스)">

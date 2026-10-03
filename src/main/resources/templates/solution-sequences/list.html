@@ -34,6 +34,7 @@
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">등록</p><h2>기동 순서 만들기</h2></div></div>
     <form method="post" th:action="@{/solution-sequences}" th:object="${sequenceForm}" class="stacked-form" style="display:flex;gap:0.5rem;max-width:760px;">
+    <div th:replace="~{fragments/form-errors :: errors}"></div>
       <input class="fill" type="text" th:field="*{name}" maxlength="100" placeholder="순서 이름 (예: 모바일 그룹웨어 중단 / 페일오버)" required>
       <input type="text" th:field="*{description}" maxlength="500" placeholder="설명 (선택)" style="flex:2">
       <button class="button primary" type="submit">추가</button>

@@ -1096,3 +1096,17 @@ h1 { font-size: 2.1rem; font-weight: 780; letter-spacing: -0.8px; }
 	}
 }
 
+
+/* 폼 상단 오류 요약(fragments/form-errors). 필드별 표시를 빠뜨려도 여기서 전부 보인다. */
+.form-errors {
+	margin: 0 0 16px;
+	padding: 14px 16px;
+	border: 1px solid #f0c2bd;
+	border-radius: 10px;
+	background: #fdf2f1;
+	color: #8f2318;
+}
+
+.form-errors-title { margin: 0 0 6px; font-weight: 800; }
+.form-errors ul { margin: 0; padding-left: 18px; }
+.form-errors li { margin: 2px 0; font-size: .92rem; }

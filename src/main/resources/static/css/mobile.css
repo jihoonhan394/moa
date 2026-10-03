@@ -409,3 +409,28 @@ main {
 .m-tabs a.active {
 	color: var(--m-accent);
 }
+
+/* 폼 상단 오류 요약(fragments/form-errors). PC 와 같은 조각을 쓰고 모양만 폰에 맞춘다. */
+.form-errors {
+	margin: 0 0 18px;
+	padding: 16px 18px;
+	border-radius: 14px;
+	background: #fdf2f1;
+	color: #8f2318;
+}
+
+.form-errors-title {
+	margin: 0 0 6px;
+	font-size: 16px;
+	font-weight: 700;
+}
+
+.form-errors ul {
+	margin: 0;
+	padding-left: 18px;
+}
+
+.form-errors li {
+	margin: 3px 0;
+	font-size: 15px;
+}
