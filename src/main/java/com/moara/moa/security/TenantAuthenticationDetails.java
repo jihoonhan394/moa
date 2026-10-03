@@ -13,13 +13,14 @@ public class TenantAuthenticationDetails extends WebAuthenticationDetails {
   private final boolean platform;
   private final String clientIp;
 
-  public TenantAuthenticationDetails(HttpServletRequest request, UUID tenantId, boolean platform) {
+  public TenantAuthenticationDetails(
+      HttpServletRequest request, UUID tenantId, boolean platform, String clientIp) {
     super(request);
     this.tenantId = tenantId;
     this.platform = platform;
     // 상위의 getRemoteAddress()는 프록시 IP다. 잠금은 실제 출발지 기준이어야 하므로
-    // 프록시 헤더까지 본 값을 따로 들고 간다.
-    this.clientIp = ClientIpResolver.resolve(request);
+    // 신뢰 홉 수까지 반영해 해석한 값을 따로 들고 간다(ClientIpResolver).
+    this.clientIp = clientIp;
   }
 
   public UUID getTenantId() {

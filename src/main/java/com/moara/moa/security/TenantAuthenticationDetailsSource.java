@@ -10,10 +10,17 @@ import org.springframework.stereotype.Component;
 public class TenantAuthenticationDetailsSource
     implements AuthenticationDetailsSource<HttpServletRequest, TenantAuthenticationDetails> {
 
+  private final ClientIpResolver clientIpResolver;
+
+  public TenantAuthenticationDetailsSource(ClientIpResolver clientIpResolver) {
+    this.clientIpResolver = clientIpResolver;
+  }
+
   @Override
   public TenantAuthenticationDetails buildDetails(HttpServletRequest request) {
     HttpSession session = request.getSession(false);
     return new TenantAuthenticationDetails(
-        request, EntrySession.tenantId(session), EntrySession.isPlatform(session));
+        request, EntrySession.tenantId(session), EntrySession.isPlatform(session),
+        clientIpResolver.resolve(request));
   }
 }

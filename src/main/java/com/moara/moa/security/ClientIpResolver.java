@@ -1,54 +1,83 @@
 package com.moara.moa.security;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 /**
- * 리버스 프록시 뒤에서 실제 클라이언트 IP를 최대한 복원한다.
- * 우선순위: X-Forwarded-For 체인의 <b>첫 공인 IP</b>(프록시·사설 대역 건너뜀) → 첫 항목 →
- * X-Real-IP → 원격주소(직접 연결/프록시 IP).
- * <p>프록시가 아무 헤더도 넘기지 않으면(예: nginx가 X-Real-IP/X-Forwarded-For 미설정) 원격주소만
- * 보이므로 게이트웨이(192.168.x)가 찍힌다 — 그 경우는 프록시 설정을 고쳐야 한다(앱 단독으론 불가).
+ * 요청의 실제 출발지를 정한다. 로그인 잠금과 감사 기록이 이 값을 쓴다.
+ *
+ * <h2>왜 홉 수를 설정으로 받나</h2>
+ *
+ * <p>{@code X-Forwarded-For} 는 <b>클라이언트가 보낼 수 있는 헤더</b>다. 그걸 그대로 믿으면 두
+ * 가지가 깨진다.
+ *
+ * <ul>
+ *   <li><b>출발지 잠금 우회</b> — 값을 바꿔 가며 보내면 매 시도가 다른 출발지로 집계된다
+ *   <li><b>감사 기록 오염</b> — 남의 IP 를 적어 보낼 수 있다. PAM 에서 감사는 산출물 자체이고,
+ *       지울 수 없게 지켜도 처음부터 거짓이 들어가면 의미가 없다
+ *   <li>반대로 프록시가 헤더를 안 넘기면 모든 요청이 프록시 IP 하나로 보여
+ *       <b>한 사람이 20번 틀리면 전체 사용자가 잠긴다</b>
+ * </ul>
+ *
+ * <p>그래서 "믿을 수 있는 프록시가 몇 홉인지"를 운영자가 명시한다
+ * ({@code moa.trusted-proxy-count}). <b>기본값은 0</b> — 설정하지 않은 환경은 헤더를 아예 믿지
+ * 않고 TCP 연결의 상대 주소만 쓴다. 안전한 쪽이 기본값이다.
+ *
+ * <h2>왜 뒤에서부터 세나</h2>
+ *
+ * <p>프록시는 자기가 받은 연결의 상대 주소를 체인 <b>끝에</b> 덧붙인다. 그래서 신뢰 홉이 N 이면
+ * 우리가 찾는 값은 끝에서 N 번째다.
+ *
+ * <pre>
+ *   N=1  "203.0.113.9"                  → 203.0.113.9
+ *   N=1  "1.2.3.4, 203.0.113.9"         → 203.0.113.9   (앞의 위조값은 무시된다)
+ *   N=2  "203.0.113.9, 10.0.0.8"        → 203.0.113.9
+ * </pre>
+ *
+ * <p>앞에서부터 고르면(예전 방식: "체인 중 첫 공인 IP") 클라이언트가 체인 앞에 아무 값이나
+ * 끼워 넣을 수 있어 구조적으로 위조에 열려 있다. 뒤에서 세는 방식은 nginx 가 덮어쓰든
+ * ({@code $remote_addr}) 덧붙이든({@code $proxy_add_x_forwarded_for}) 둘 다 안전하다.
+ *
+ * <p>체인이 기대한 홉 수보다 짧으면 설정과 실제가 어긋난 것이므로 헤더를 쓰지 않는다.
  */
-public final class ClientIpResolver {
-  private ClientIpResolver() {}
+@Component
+public class ClientIpResolver {
 
-  public static String resolve(HttpServletRequest request) {
-    String xff = request.getHeader("X-Forwarded-For");
-    if (xff != null && !xff.isBlank()) {
-      String first = null;
-      for (String part : xff.split(",")) {
-        String ip = part.trim();
-        if (ip.isEmpty()) {
-          continue;
-        }
-        if (first == null) {
-          first = ip;
-        }
-        if (!isPrivate(ip)) {
-          return ip; // 체인 중 첫 공인 IP = 원 클라이언트일 가능성이 가장 높다.
-        }
-      }
-      if (first != null) {
-        return first; // 전부 사설이면 최소한 맨 앞(원 클라이언트에 가장 가까움).
-      }
-    }
-    String real = request.getHeader("X-Real-IP");
-    if (real != null && !real.isBlank()) {
-      return real.trim();
-    }
-    return request.getRemoteAddr();
+  /** {@code login_failures.client_ip} 가 VARCHAR(64) 다. 그보다 긴 값은 출발지가 아니다. */
+  private static final int MAX_LENGTH = 64;
+
+  private final int trustedProxyCount;
+
+  public ClientIpResolver(@Value("${moa.trusted-proxy-count:0}") int trustedProxyCount) {
+    this.trustedProxyCount = Math.max(0, trustedProxyCount);
   }
 
-  /** 사설/루프백 대역인지(프록시 홉으로 간주). */
-  static boolean isPrivate(String ip) {
-    if (ip == null) {
-      return true;
+  public String resolve(HttpServletRequest request) {
+    String direct = trim(request.getRemoteAddr());
+    if (trustedProxyCount == 0) {
+      // 프록시가 없다고 선언한 환경. 헤더는 전부 클라이언트가 보낸 것으로 본다.
+      return direct;
     }
-    return ip.startsWith("10.")
-        || ip.startsWith("192.168.")
-        || ip.startsWith("127.")
-        || ip.equals("::1")
-        || ip.startsWith("fc") || ip.startsWith("fd") // IPv6 ULA
-        || ip.matches("172\\.(1[6-9]|2\\d|3[01])\\..*");
+    String forwarded = request.getHeader("X-Forwarded-For");
+    if (forwarded == null || forwarded.isBlank()) {
+      return direct;
+    }
+    String[] hops = forwarded.split(",");
+    int index = hops.length - trustedProxyCount;
+    if (index < 0) {
+      // 선언한 홉 수보다 체인이 짧다 — 설정과 실제가 어긋났다. 헤더를 믿지 않는다.
+      return direct;
+    }
+    String candidate = trim(hops[index]);
+    return candidate.isEmpty() ? direct : candidate;
+  }
+
+  private static String trim(String value) {
+    if (value == null) {
+      return "";
+    }
+    String trimmed = value.trim();
+    return trimmed.length() > MAX_LENGTH ? trimmed.substring(0, MAX_LENGTH) : trimmed;
   }
 }

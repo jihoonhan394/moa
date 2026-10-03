@@ -152,7 +152,18 @@ python scripts	estdata	est_lifecycle.py
 | 수락 성공을 `seed.ok` 로 판정 | 수락은 `/login?joined` 로 간다 → `/login` 포함을 실패로 보면 안 된다 |
 | 온보딩 작업을 `/portal` 에서 찾기 | 거기는 '내 접속 가능 자산'이다 → `/my/workspace` |
 
-## G. 권한 · 격리
+## G. 출발지 잠금 (자동)
+
+```
+python scripts	estdata	est_login_lockout.py
+```
+
+위조한 `X-Forwarded-For` 를 매번 바꿔 가며 22회 실패시킨 뒤, **올바른 비밀번호로 로그인되는지**로
+판정한다(화면은 "잠김"과 "비밀번호 오류"를 같은 문구로 보여 준다 — 잠금 상태를 알려 주지 않는다).
+
+⚠️ 돌리고 나면 **현재 출발지가 15분 잠긴다.** 로컬은 H2 메모리라 서버를 다시 띄우면 풀린다.
+
+## H. 권한 · 격리
 
 | | 시나리오 | 보는 것 |
 |---|---|---|
@@ -161,7 +172,7 @@ python scripts	estdata	est_lifecycle.py
 | ⬜ F3 | 기능 모듈을 끈 뒤 해당 메뉴 접근 | 403 |
 | ⬜ F4 | 퇴사 처리 후 세션 | 알려진 한계(끊기지 않는다) |
 
-## H. 성능 — 눈으로 보이는 느려짐
+## I. 성능 — 눈으로 보이는 느려짐
 
 | | 시나리오 | 보는 것 |
 |---|---|---|
@@ -185,3 +196,4 @@ python scripts	estdata	est_lifecycle.py
 | PC CSS | 폰 폭에서 메뉴가 세로로 쪼개지고 본문이 안 보임 | 고침 |
 | **스키마** | **H2 와 PostgreSQL 의 스키마가 달랐다** — `managed_users.username` 의 유일 제약이 H2 에만 남아 **동명이인 초대 수락이 로컬에서만 실패**. V2 의 이름 없는 UNIQUE 를 V16 이 PostgreSQL 이름으로만 지웠기 때문 | V75(Java 마이그레이션)로 이름과 무관하게 제거 |
 | 초대 수락 | 실패 시 **SQL 제약 이름이 그대로 화면에** 나왔다 | 서버 로그로 돌리고 안내 문구로 교체 |
+| **보안** | **출발지 잠금이 `X-Forwarded-For` 위조로 무한히 우회됐다.** 감사 기록에 남의 IP 를 적는 것도 가능 | 신뢰 홉 수(기본 0) + `forward-headers-strategy=none` |

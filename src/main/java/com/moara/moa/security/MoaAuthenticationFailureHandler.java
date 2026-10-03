@@ -25,13 +25,16 @@ public class MoaAuthenticationFailureHandler extends SimpleUrlAuthenticationFail
   private final AuditLogService auditLogService;
   private final ManagedUserRepository userRepository;
 
+  private final ClientIpResolver clientIpResolver;
+
   public MoaAuthenticationFailureHandler(
       LoginThrottle throttle, AuditLogService auditLogService,
-      ManagedUserRepository userRepository) {
+      ManagedUserRepository userRepository, ClientIpResolver clientIpResolver) {
     super("/login?error");
     this.throttle = throttle;
     this.auditLogService = auditLogService;
     this.userRepository = userRepository;
+    this.clientIpResolver = clientIpResolver;
   }
 
   @Override
@@ -40,7 +43,7 @@ public class MoaAuthenticationFailureHandler extends SimpleUrlAuthenticationFail
       throws IOException, jakarta.servlet.ServletException {
     // 폼 필드 이름은 username이지만, 기관 사용자가 실제로 넣는 값은 이메일이다.
     String submitted = request.getParameter("username");
-    String clientIp = ClientIpResolver.resolve(request);
+    String clientIp = clientIpResolver.resolve(request);
     UUID tenantId = EntrySession.tenantId(request.getSession(false));
 
     // 잠금에 막힌 시도는 다시 세지 않는다 — 세면 잠긴 문을 두드리는 것만으로 잠금이 무한히

@@ -24,9 +24,14 @@ public class MoaAuthenticationSuccessHandler implements AuthenticationSuccessHan
   private final AccessGroupService groupService;
   private final AuditLogService auditLogService;
 
-  public MoaAuthenticationSuccessHandler(AccessGroupService groupService, AuditLogService auditLogService) {
+  private final ClientIpResolver clientIpResolver;
+
+  public MoaAuthenticationSuccessHandler(
+      AccessGroupService groupService, AuditLogService auditLogService,
+      ClientIpResolver clientIpResolver) {
     this.groupService = groupService;
     this.auditLogService = auditLogService;
+    this.clientIpResolver = clientIpResolver;
   }
 
   @Override
@@ -39,7 +44,7 @@ public class MoaAuthenticationSuccessHandler implements AuthenticationSuccessHan
       if (user.getTenantId() != null) {
         auditLogService.recordTenantAction(
             user.getTenantId(), user.getUserId(), "USER_LOGIN", "ManagedUser", user.getUserId(),
-            AuditResult.SUCCESS, "ip=" + ClientIpResolver.resolve(request));
+            AuditResult.SUCCESS, "ip=" + clientIpResolver.resolve(request));
       }
       // 다중역할: 우선순위대로 착지(플랫폼 > 관리 역할 > 부서장 > 그 외). 모두 기능 게이트 없는 경로.
       if (user.hasRole(com.moara.moa.user.UserRole.SYSTEM_ADMIN)) {
