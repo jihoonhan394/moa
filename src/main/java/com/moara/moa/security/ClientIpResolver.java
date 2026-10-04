@@ -1,6 +1,8 @@
 package com.moara.moa.security;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +46,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class ClientIpResolver {
 
+  private static final Logger log = LoggerFactory.getLogger(ClientIpResolver.class);
+
   /** {@code login_failures.client_ip} 가 VARCHAR(64) 다. 그보다 긴 값은 출발지가 아니다. */
   private static final int MAX_LENGTH = 64;
 
@@ -71,6 +75,26 @@ public class ClientIpResolver {
     }
     String candidate = trim(hops[index]);
     return candidate.isEmpty() ? direct : candidate;
+  }
+
+  /**
+   * 홉 수를 맞출 때만 잠깐 켠다.
+   *
+   * <pre>
+   *   logging.level.com.moara.moa.security.ClientIpResolver=DEBUG
+   * </pre>
+   *
+   * <p>프록시·터널을 새로 붙이면 체인이 몇 칸인지 눈으로 봐야 {@code moa.trusted-proxy-count}
+   * 를 맞출 수 있다. <b>기본은 꺼져 있다</b> — 요청마다 출발지를 남기면 그 자체가 접속 기록이
+   * 되고 로그가 커진다. 맞춘 뒤에는 다시 끈다.
+   */
+  public void logChain(HttpServletRequest request) {
+    if (!log.isDebugEnabled()) {
+      return;
+    }
+    log.debug("[출발지] trustedProxyCount={} remoteAddr={} X-Forwarded-For={} -> {}",
+        trustedProxyCount, request.getRemoteAddr(),
+        request.getHeader("X-Forwarded-For"), resolve(request));
   }
 
   private static String trim(String value) {

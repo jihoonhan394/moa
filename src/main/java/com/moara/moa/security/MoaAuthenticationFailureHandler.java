@@ -44,6 +44,8 @@ public class MoaAuthenticationFailureHandler extends SimpleUrlAuthenticationFail
     // 폼 필드 이름은 username이지만, 기관 사용자가 실제로 넣는 값은 이메일이다.
     String submitted = request.getParameter("username");
     String clientIp = clientIpResolver.resolve(request);
+    // 홉 수를 맞출 때만 쓰는 진단. 기본은 꺼져 있다(위 javadoc 참고).
+    clientIpResolver.logChain(request);
     UUID tenantId = EntrySession.tenantId(request.getSession(false));
 
     // 잠금에 막힌 시도는 다시 세지 않는다 — 세면 잠긴 문을 두드리는 것만으로 잠금이 무한히
