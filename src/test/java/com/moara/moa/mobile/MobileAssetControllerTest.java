@@ -123,6 +123,46 @@ class MobileAssetControllerTest {
   }
 
   @Test
+  @DisplayName("⚠️ 한 자산에 번호를 두 개 붙일 수 없다 — 막지 않으면 DB 제약이 터져 500 이 나간다")
+  void 한_자산에_번호는_하나() throws Exception {
+    ManagedUser actor = assetManager();
+    AssetTag first = issueOne(actor);
+    AssetTag second = issueOne(actor);
+    String category = leafCategory(actor.getTenantId());
+
+    // 번호 하나를 붙여 둔 자산을 만든다
+    mockMvc.perform(post("/m/t/" + first.getCode()).with(authentication(auth(actor))).with(csrf())
+            .param("name", "중복시험-" + System.nanoTime()).param("category", category))
+        .andExpect(redirectedUrl("/m/t/" + first.getCode()));
+    UUID itemId = tagService.resolve(actor.getTenantId(), first.getCode()).getItemId();
+
+    // 같은 자산에 두 번째 번호 — 500 이 아니라 안내로 돌아와야 한다
+    mockMvc.perform(post("/m/t/" + second.getCode() + "/attach")
+            .with(authentication(auth(actor))).with(csrf())
+            .param("itemId", itemId.toString()))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/m/t/" + second.getCode() + "/attach?already=" + first.getCode()));
+
+    // 두 번째 번호는 여전히 비어 있다
+    assertThat(tagService.resolve(actor.getTenantId(), second.getCode()).isAttached()).isFalse();
+  }
+
+  @Test
+  @DisplayName("⚠️ 없는 분류로는 등록되지 않는다 — 최상위만 맞으면 통과하던 것")
+  void 없는_분류는_거부한다() throws Exception {
+    ManagedUser actor = assetManager();
+    AssetTag tag = issueOne(actor);
+
+    mockMvc.perform(post("/m/t/" + tag.getCode()).with(authentication(auth(actor))).with(csrf())
+            .param("name", "분류시험-" + System.nanoTime())
+            .param("category", "실물 / 없는분류 / 더없음"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(Matchers.containsString("없는 분류입니다")));
+
+    assertThat(tagService.resolve(actor.getTenantId(), tag.getCode()).isAttached()).isFalse();
+  }
+
+  @Test
   @DisplayName("홈과 내 자산 화면이 렌더링된다")
   void 홈과_내자산이_뜬다() throws Exception {
     ManagedUser actor = assetManager();

@@ -48,6 +48,10 @@ public class MobileAssetController {
   private final ManagedUserService userService;
   private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
+  private final com.moara.moa.notification.NotificationService notificationService;
+  private final com.moara.moa.access.AccessApprovalService approvalService;
+  private final com.moara.moa.consumable.ConsumableRequestService consumableRequestService;
+  private final com.moara.moa.inventory.InventoryCustodyService custodyService;
 
   public MobileAssetController(
       AssetTagService tagService,
@@ -55,23 +59,47 @@ public class MobileAssetController {
       CategoryService categoryService,
       ManagedUserService userService,
       TenantAuditRecorder auditRecorder,
-      TenantContext tenantContext) {
+      TenantContext tenantContext,
+      com.moara.moa.notification.NotificationService notificationService,
+      com.moara.moa.access.AccessApprovalService approvalService,
+      com.moara.moa.consumable.ConsumableRequestService consumableRequestService,
+      com.moara.moa.inventory.InventoryCustodyService custodyService) {
     this.tagService = tagService;
     this.inventoryService = inventoryService;
     this.categoryService = categoryService;
     this.userService = userService;
     this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
+    this.notificationService = notificationService;
+    this.approvalService = approvalService;
+    this.consumableRequestService = consumableRequestService;
+    this.custodyService = custodyService;
   }
 
-  /** 홈. 할 수 있는 일을 큼직하게 둘만 보여 준다. */
+  /**
+   * 홈. 현장에서 가장 많이 누르는 것(스캔) 하나만 크게 두고, 나머지는 <b>숫자가 붙은 줄</b>이다.
+   *
+   * <p>숫자가 없으면 열어 봐야 알 수 있고, 그러면 아무도 안 연다.
+   */
   @GetMapping("/m")
   public String home(Model model) {
     UUID tenantId = tenantContext.currentTenantId();
-    model.addAttribute("myItemCount", inventoryService.findAssignedTo(tenantId, tenantContext.currentUserId()).size());
+    UUID me = tenantContext.currentUserId();
+    model.addAttribute("myItemCount", inventoryService.findAssignedTo(tenantId, me).size());
     model.addAttribute("unattachedCount", tagService.unattachedCount(tenantId));
+    model.addAttribute("unreadCount", notificationService.unreadCount(tenantId, me));
+    model.addAttribute("approvalCount", pendingApprovalCount(tenantId, me));
+    // 솔루션은 인프라 관리자에게만 뜻이 있다. 일반 사용자에게는 줄을 만들지 않는다.
+    model.addAttribute("showSolutions",
+        tenantContext.currentUser().hasRole(com.moara.moa.user.UserRole.INFRA_MANAGER));
     model.addAttribute("currentMenu", "home");
     return "mobile/home";
+  }
+
+  private long pendingApprovalCount(UUID tenantId, UUID me) {
+    return (long) approvalService.pendingForApprover(tenantId, me).size()
+        + consumableRequestService.findOpen(tenantId).size()
+        + custodyService.awaitingConfirmation(tenantId).size();
   }
 
   /** 코드 입력. 앱에서는 카메라가 이 자리를 대신하고, 안 될 때 손으로 칠 수 있게 남겨 둔다. */
@@ -136,6 +164,10 @@ public class MobileAssetController {
     // 유형(실물/SW)은 카테고리 경로의 최상위에서 나온다. PC 등록과 같은 규칙을 쓴다.
     if (InventoryItemType.fromCategoryPath(form.category()) == null) {
       binding.rejectValue("category", "category.required", "분류를 선택하세요.");
+    } else if (!categoryExists(tenantId, form.category())) {
+      // ⚠️ 최상위만 보면 "실물 / 없는분류 / 더없음" 같은 값이 그대로 들어간다. 그러면 그 자산은
+      // 어느 분류에도 안 걸린다. 화면을 열어 둔 사이 분류가 지워진 경우가 실제로 그렇다.
+      binding.rejectValue("category", "category.unknown", "없는 분류입니다. 다시 선택하세요.");
     }
     if (binding.hasErrors()) {
       model.addAttribute("tag", tag);
@@ -159,7 +191,8 @@ public class MobileAssetController {
    */
   @GetMapping("/m/t/{code}/attach")
   public String attachForm(
-      @PathVariable String code, @RequestParam(required = false) String q, Model model) {
+      @PathVariable String code, @RequestParam(required = false) String q,
+      @RequestParam(required = false) String already, Model model) {
     UUID tenantId = tenantContext.currentTenantId();
     AssetTag tag = tagService.resolve(tenantId, code);
     if (tag.isAttached()) {
@@ -173,6 +206,7 @@ public class MobileAssetController {
     // 하나도 없을 때만 "이미 번호가 붙어서 안 보이는 것인지"를 따져 안내한다.
     model.addAttribute("allTagged",
         attachable.isEmpty() && !inventoryService.search(tenantId, q).isEmpty());
+    model.addAttribute("already", already);
     model.addAttribute("currentMenu", "scan");
     return "mobile/tag-attach";
   }
@@ -182,7 +216,12 @@ public class MobileAssetController {
     UUID tenantId = tenantContext.currentTenantId();
     AssetTag tag = tagService.resolve(tenantId, code);
     InventoryItem item = inventoryService.findById(tenantId, itemId);
-    tagService.attach(tenantId, tag.getCode(), item.getId(), tenantContext.currentUserId());
+    try {
+      tagService.attach(tenantId, tag.getCode(), item.getId(), tenantContext.currentUserId());
+    } catch (com.moara.moa.inventory.tag.ItemAlreadyTaggedException already) {
+      // 이미 붙어 있는 번호를 알려 준다 — 현장에서는 "그럼 이 장비 번호가 뭔데?" 가 다음 질문이다.
+      return "redirect:/m/t/" + tag.getCode() + "/attach?already=" + already.getExistingCode();
+    }
     audit("ASSET_TAG_ATTACH", item.getId(), tag.getCode() + " → " + item.getName());
     return "redirect:/m/t/" + tag.getCode();
   }
@@ -196,6 +235,11 @@ public class MobileAssetController {
     model.addAttribute("codes", tagService.codesFor(tenantId, items.stream().map(InventoryItem::getId).toList()));
     model.addAttribute("currentMenu", "me");
     return "mobile/mine";
+  }
+
+  private boolean categoryExists(UUID tenantId, String path) {
+    return categoryService.assetTree(tenantId).stream()
+        .anyMatch(node -> node.path().equals(path));
   }
 
   private static InventoryItemForm withDerivedType(InventoryItemForm form) {

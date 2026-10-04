@@ -41,6 +41,12 @@ public class SecurityConfig {
             // ⚠️ User-Agent 의 caps= 로 인가하지 않는다. 그 값은 클라이언트가 보낸 것이다.
             .requestMatchers("/m/scan", "/m/t/**")
             .hasRole("ASSET_MANAGER")
+            // 솔루션 상태·연락처는 인프라 관리자만. PC 의 /solutions/** 와 같은 기준이다.
+            .requestMatchers("/m/solutions", "/m/solutions/**")
+            .hasRole("INFRA_MANAGER")
+            // 승인·알림·내 것은 로그인한 사람 누구나 열 수 있고, **무엇이 보이고 무엇을 누를 수
+            // 있는지는 서비스·컨트롤러가 다시 막는다**(접근 승인은 maker-checker, 인수 확인은
+            // 받은 본인, 소모품 접수는 자산·기관 관리자).
             .requestMatchers("/m", "/m/**")
             .authenticated()
             // 플랫폼(기관 관리) 콘솔은 SYSTEM_ADMIN 전용. 아래 공통 관리 라우트보다 먼저 매칭돼야 한다.

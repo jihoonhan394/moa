@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments :: head('알림')}"></head>
+<body>
+<header th:replace="~{mobile/fragments :: top('알림', '/m')}"></header>
+
+<main>
+  <p class="m-empty" th:if="${#lists.isEmpty(items)}">알림이 없습니다.</p>
+
+  <form th:if="${!#lists.isEmpty(items)}" method="post" th:action="@{/m/notifications/read-all}">
+    <button class="m-action" type="submit" style="margin-bottom:20px">
+      <span class="icon">&#10003;</span>
+      <span><span class="label">모두 읽음</span></span>
+    </button>
+  </form>
+
+  <ul class="m-list" th:if="${!#lists.isEmpty(items)}">
+    <li th:each="n : ${items}">
+      <!-- 링크가 있으면 그 화면으로. 없으면 읽기만 한다. -->
+      <a class="m-row" th:if="${n.link != null}" th:href="@{${n.link}}">
+        <span class="title" th:text="${n.title}">알림</span>
+        <span class="meta" th:text="${n.body}">내용</span>
+      </a>
+      <span class="m-row" th:unless="${n.link != null}">
+        <span class="title" th:text="${n.title}">알림</span>
+        <span class="meta" th:text="${n.body}">내용</span>
+      </span>
+    </li>
+  </ul>
+</main>
+
+<nav th:replace="~{mobile/fragments :: tabs('home')}"></nav>
+</body>
+</html>

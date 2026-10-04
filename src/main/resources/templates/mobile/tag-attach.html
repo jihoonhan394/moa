@@ -17,6 +17,11 @@
     <button class="m-submit" type="submit">찾기</button>
   </form>
 
+  <p class="m-note" th:if="${already != null}" style="margin-top:24px">
+    그 자산에는 이미 <strong th:text="${already}">MOA-0000-0000</strong> 가 붙어 있습니다.
+    한 자산에 번호는 하나입니다.
+  </p>
+
   <p class="m-note" th:if="${allTagged}" style="margin-top:24px">
     찾은 자산에 이미 관리번호가 붙어 있습니다. 한 자산에 번호는 하나입니다.
   </p>

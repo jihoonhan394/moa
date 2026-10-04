@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments :: head('내 요청')}"></head>
+<body>
+<header th:replace="~{mobile/fragments :: top('내 요청', '/m/me')}"></header>
+
+<main>
+  <p class="m-empty" th:if="${#lists.isEmpty(accessRequests) and #lists.isEmpty(supplyRequests)}">
+    요청한 것이 없습니다.
+  </p>
+
+  <th:block th:if="${!#lists.isEmpty(accessRequests)}">
+    <p class="m-section">접근 요청</p>
+    <ul class="m-list">
+      <li th:each="r : ${accessRequests}">
+        <span class="m-row">
+          <span class="title" th:text="${assetNames.getOrDefault(r.assetId, '자산')}">자산</span>
+          <span class="meta" th:text="${r.status}">상태</span>
+        </span>
+      </li>
+    </ul>
+  </th:block>
+
+  <th:block th:if="${!#lists.isEmpty(supplyRequests)}">
+    <p class="m-section">소모품 요청</p>
+    <ul class="m-list">
+      <li th:each="s : ${supplyRequests}">
+        <span class="m-row">
+          <span class="title" th:text="${supplyNames.getOrDefault(s.itemId, '소모품')}">소모품</span>
+          <span class="meta" th:text="${s.status}">상태</span>
+        </span>
+      </li>
+    </ul>
+  </th:block>
+</main>
+
+<nav th:replace="~{mobile/fragments :: tabs('me')}"></nav>
+</body>
+</html>

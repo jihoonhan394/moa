@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments :: head('승인')}"></head>
+<body>
+<header th:replace="~{mobile/fragments :: top('승인', null)}"></header>
+
+<main>
+  <!-- 처리할 것 셋을 한 화면에 모은다. 따로 두면 어디에 뭐가 쌓였는지 보러 세 번 들어가야 한다. -->
+  <p class="m-empty" th:if="${total == 0}">처리할 것이 없습니다.</p>
+
+  <th:block th:if="${!#lists.isEmpty(accessRequests)}">
+    <p class="m-section">접근 요청</p>
+    <ul class="m-list">
+      <li th:each="r : ${accessRequests}" style="padding:16px 20px">
+        <p class="title" style="margin:0" th:text="${assetNames.getOrDefault(r.assetId, '자산')}">자산</p>
+        <p class="meta" style="margin:2px 0 0"
+           th:text="${requesterNames.getOrDefault(r.requesterUserId, '요청자')} + (${r.reason != null} ? ' · ' + ${r.reason} : '')">요청자</p>
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <form method="post" th:action="@{'/m/approvals/access/' + ${r.id} + '/approve'}" style="flex:1">
+            <button class="m-submit" type="submit" style="margin:0">승인</button>
+          </form>
+          <form method="post" th:action="@{'/m/approvals/access/' + ${r.id} + '/reject'}" style="flex:0 0 96px">
+            <button class="m-submit" type="submit" style="margin:0;background:#fff;color:var(--m-danger);border:1px solid var(--m-line)">거절</button>
+          </form>
+        </div>
+      </li>
+    </ul>
+  </th:block>
+
+  <th:block th:if="${!#lists.isEmpty(supplyRequests)}">
+    <p class="m-section">소모품 요청</p>
+    <ul class="m-list">
+      <li th:each="s : ${supplyRequests}" style="padding:16px 20px">
+        <p class="title" style="margin:0" th:text="${supplyNames.getOrDefault(s.itemId, '소모품')}">소모품</p>
+        <p class="meta" style="margin:2px 0 0"
+           th:text="${requesterNames.getOrDefault(s.requestedBy, '요청자')} + (${s.note != null} ? ' · ' + ${s.note} : '')">요청자</p>
+        <form method="post" th:action="@{'/m/approvals/supply/' + ${s.id} + '/ack'}">
+          <button class="m-submit" type="submit">확인함</button>
+        </form>
+      </li>
+    </ul>
+  </th:block>
+
+  <th:block th:if="${!#lists.isEmpty(receipts)}">
+    <p class="m-section">인수 확인</p>
+    <ul class="m-list">
+      <li th:each="c : ${receipts}" style="padding:16px 20px">
+        <p class="title" style="margin:0" th:text="${receiptNames.getOrDefault(c.itemId, '자산')}">자산</p>
+        <p class="meta" style="margin:2px 0 0" th:text="${c.holderName} + ' · ' + ${c.startedOn}">보유자</p>
+        <!-- 받은 본인만 누를 수 있다. 서비스가 막으므로 화면은 단순하게 둔다. -->
+        <form method="post" th:action="@{'/m/approvals/receipt/' + ${c.itemId} + '/confirm'}">
+          <button class="m-submit" type="submit">내가 받았습니다</button>
+        </form>
+      </li>
+    </ul>
+  </th:block>
+</main>
+
+<nav th:replace="~{mobile/fragments :: tabs('approvals')}"></nav>
+</body>
+</html>

@@ -59,10 +59,19 @@ public class AssetTagService {
         .orElseThrow(() -> new AssetTagNotFoundException(code));
   }
 
-  /** 스티커를 자산에 붙인다. */
+  /**
+   * 스티커를 자산에 붙인다.
+   *
+   * <p>⚠️ <b>한 자산에 번호는 하나다.</b> 화면이 이미 붙은 자산을 목록에서 빼지만, 뒤로 가서
+   * 다시 제출하거나 두 사람이 동시에 붙이면 그 화면을 지나 들어온다. 그때 막지 않으면 DB
+   * 유니크 제약이 터져 500 이 나간다(실제로 났다).
+   */
   @Transactional
   public AssetTag attach(UUID tenantId, String rawCode, UUID itemId, UUID actorId) {
     AssetTag tag = resolve(tenantId, rawCode);
+    repository.findByTenantIdAndItemId(tenantId, itemId).ifPresent(existing -> {
+      throw new ItemAlreadyTaggedException(existing.getCode());
+    });
     tag.attachTo(itemId, OffsetDateTime.now(), actorId);
     return repository.save(tag);
   }

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments :: head('솔루션')}"></head>
+<body>
+<header th:replace="~{mobile/fragments :: top('솔루션', '/m')}"></header>
+
+<main>
+  <!-- ⚠️ 제어 버튼이 없다. 앱은 승인 채널이지 제어 단말이 아니다(doc/01). -->
+  <p class="m-note" style="margin-bottom:20px">
+    상태 자동 점검은 아직 없습니다. 장애 때 <strong>담당자·업체 연락처</strong>를 찾는 화면입니다.
+  </p>
+
+  <p class="m-empty" th:if="${#lists.isEmpty(solutions)}">등록된 솔루션이 없습니다.</p>
+
+  <ul class="m-list" th:if="${!#lists.isEmpty(solutions)}">
+    <li th:each="s : ${solutions}">
+      <a class="m-row" th:href="@{'/m/solutions/' + ${s.id}}">
+        <span class="title" th:text="${s.name}">솔루션</span>
+        <span class="meta" th:text="${hostNames.getOrDefault(s.assetId, '')} + ' · ' + ${s.identifier}">서버</span>
+      </a>
+    </li>
+  </ul>
+</main>
+
+<nav th:replace="~{mobile/fragments :: tabs('home')}"></nav>
+</body>
+</html>

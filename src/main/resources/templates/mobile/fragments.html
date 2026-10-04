@@ -28,6 +28,9 @@
   <a th:href="@{/m/scan}" th:classappend="${current == 'scan'} ? 'active'">
     <span class="icon">&#9635;</span><span>스캔</span>
   </a>
+  <a th:href="@{/m/approvals}" th:classappend="${current == 'approvals'} ? 'active'">
+    <span class="icon">&#10003;</span><span>승인</span>
+  </a>
   <a th:href="@{/m/me}" th:classappend="${current == 'me'} ? 'active'">
     <span class="icon">&#9711;</span><span>내 것</span>
   </a>

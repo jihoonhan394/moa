@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments :: head('솔루션')}"></head>
+<body>
+<header th:replace="~{mobile/fragments :: top('솔루션', '/m/solutions')}"></header>
+
+<main>
+  <h2 class="m-headline" style="margin-top:0" th:text="${solution.name}">솔루션</h2>
+  <p class="m-lede" th:text="${host != null ? host : ''} + ' · ' + ${solution.identifier}">서버</p>
+
+  <!-- 연락이 이 화면의 목적이다. 가장 위에 큼직하게 둔다. -->
+  <p class="m-section">연락</p>
+
+  <div th:if="${ownerGroupName != null}" class="m-action" style="cursor:default">
+    <span class="icon">&#9787;</span>
+    <span><span class="label" th:text="${ownerGroupName}">담당</span>
+          <span class="sub">내부 담당 그룹</span></span>
+  </div>
+
+  <th:block th:if="${solution.vendorContact != null and !#strings.isEmpty(solution.vendorContact)}">
+    <!-- 전화번호면 바로 걸고, @ 가 있으면 메일을 연다. -->
+    <a class="m-action primary"
+       th:href="${#strings.contains(solution.vendorContact, '@')}
+                ? 'mailto:' + ${solution.vendorContact}
+                : 'tel:' + ${#strings.replace(solution.vendorContact, '-', '')}">
+      <span class="icon" th:text="${#strings.contains(solution.vendorContact, '@')} ? '✉' : '☎'">☎</span>
+      <span>
+        <span class="label" th:text="${solution.vendorName != null ? solution.vendorName : '업체'}">업체</span>
+        <span class="sub" th:text="${solution.vendorContact}">연락처</span>
+      </span>
+    </a>
+  </th:block>
+  <p class="m-empty" th:if="${solution.vendorContact == null or #strings.isEmpty(solution.vendorContact)}"
+     style="padding:24px 0">등록된 업체 연락처가 없습니다.</p>
+
+  <p class="m-section">정보</p>
+  <dl class="m-facts">
+    <div><dt>점검 방식</dt><dd th:text="${solution.healthCheckType}">-</dd></div>
+    <div th:if="${solution.healthCheckTarget != null}">
+      <dt>점검 대상</dt><dd th:text="${solution.healthCheckTarget}">-</dd>
+    </div>
+    <div><dt>유형</dt><dd th:text="${solution.type}">-</dd></div>
+    <div><dt>상태</dt><dd th:text="${solution.status}">-</dd></div>
+    <div th:if="${solution.vendorNote != null}">
+      <dt>비고</dt><dd th:text="${solution.vendorNote}">-</dd>
+    </div>
+  </dl>
+</main>
+
+<nav th:replace="~{mobile/fragments :: tabs('home')}"></nav>
+</body>
+</html>

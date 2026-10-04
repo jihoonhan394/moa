@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{mobile/fragments :: head('공지')}"></head>
+<body>
+<header th:replace="~{mobile/fragments :: top('공지', '/m/me')}"></header>
+
+<main>
+  <p class="m-empty" th:if="${#lists.isEmpty(notices)}">공지가 없습니다.</p>
+  <ul class="m-list" th:if="${!#lists.isEmpty(notices)}">
+    <li th:each="n : ${notices}">
+      <!-- 공지는 길다. 제목과 첫 줄만 보여 주고 본문은 PC 에서 본다. -->
+      <span class="m-row">
+        <span class="title" th:text="${n.pinned ? '[필독] ' : ''} + ${n.title}">제목</span>
+        <span class="meta" th:text="${#strings.abbreviate(n.body, 60)}">본문</span>
+      </span>
+    </li>
+  </ul>
+</main>
+
+<nav th:replace="~{mobile/fragments :: tabs('me')}"></nav>
+</body>
+</html>
