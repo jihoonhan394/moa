@@ -1,0 +1,34 @@
+# systemd 유닛. /etc/systemd/system/moa.service 로 복사한다.
+#
+#   sudo cp deploy/moa.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now moa
+#   sudo systemctl status moa
+#
+# 비밀은 이 파일에 쓰지 않는다. /etc/moa/moa.env 에 두고 root 만 읽게 한다(0600).
+[Unit]
+Description=MOA 자산·접근 관리
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=moa
+Group=moa
+WorkingDirectory=/opt/moa
+# 위키 첨부가 WorkingDirectory 아래 data/wiki-attachments 에 쌓인다 — 이 디렉터리는 보존 대상이다.
+EnvironmentFile=/etc/moa/moa.env
+ExecStart=/usr/bin/java -XX:MaxRAMPercentage=70 -jar /opt/moa/moa.jar
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=5
+
+# 최소 권한
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/moa/data
+
+[Install]
+WantedBy=multi-user.target
