@@ -43,15 +43,25 @@
     </p>
     <ul class="subcopy" style="margin:.2rem 0 .4rem 1rem;line-height:1.7">
       <li><b>이름</b>은 필수, 기관 내 중복 불가.</li>
-      <li><b>유형</b>은 <code>PHYSICAL</code>/<code>실물</code> 또는 <code>SOFTWARE</code>/<code>SW</code> (비우면 실물).</li>
+      <li><b>카테고리</b>는 전체 경로(<code>실물 / 사무기기 / 모니터</code>) 또는
+        <b>짧은 이름</b>(<code>모니터</code>)을 씁니다 — 짧은 이름은 전체 경로로 바꿔 저장합니다.
+        <b>없는 분류는 그 행을 거부합니다</b>(저장해 두면 그 자산이 어느 분류 필터에도 안 걸립니다).
+        같은 이름이 두 곳에 있으면 전체 경로로 적어 주세요.</li>
+      <li><b>유형</b>은 <b>카테고리에서 자동으로 정해집니다</b> — 유형 열은 비워 두면 됩니다.
+        적을 경우 카테고리와 <b>맞아야</b> 하고(<code>SW</code> + <code>실물 / …</code> 는 거부),
+        카테고리를 비웠을 때만 <code>PHYSICAL</code>/<code>실물</code>,
+        <code>SOFTWARE</code>/<code>SW</code> 로 직접 정합니다(비우면 실물).</li>
       <li>날짜는 모두 <code>yyyy-MM-dd</code> 형식, 비워도 됩니다.</li>
       <li>첫 줄이 헤더(<code>이름</code> 또는 <code>name</code>으로 시작)면 자동으로 건너뜁니다.</li>
       <li>쉼표가 든 값은 큰따옴표로 감싸세요: <code>"모니터, 27인치"</code></li>
     </ul>
     <pre style="white-space:pre-wrap;background:#f7f8fa;padding:.8rem;border-radius:8px;font-size:.82rem;line-height:1.6">이름,유형,카테고리,시리얼,만료일,구매일,보증만료,리스만료,비고
-영업 노트북,실물,노트북,SN-1001,,2026-01-15,2028-01-15,,영업1팀
-오피스 라이선스,SW,라이선스,,2027-03-31,2025-03-31,,,연간구독
-탕비실 정수기,실물,가전,,,,,2027-06-30,렌탈</pre>
+영업 노트북,,실물 / 사무기기 / 컴퓨터,SN-1001,,2026-01-15,2028-01-15,,영업1팀
+오피스 라이선스,,SW / 오피스,,2027-03-31,2025-03-31,,,연간구독
+탕비실 정수기,,가구,,,,,2027-06-30,렌탈</pre>
+    <p class="subcopy" style="margin:.2rem 0">
+      쓸 수 있는 분류는 <a th:href="@{/inventory/categories}">카테고리 관리</a>에서 보고 추가합니다.
+    </p>
   </section>
 
   <!-- 업로드 폼 -->
@@ -62,7 +72,7 @@
           style="display:grid;gap:.6rem;max-width:760px">
       <label>CSV 붙여넣기</label>
       <textarea name="csvText" rows="8" style="font-family:monospace;font-size:.85rem"
-                placeholder="이름,유형,카테고리,...&#10;영업 노트북,실물,노트북,..."></textarea>
+                placeholder="이름,유형,카테고리,...&#10;영업 노트북,,실물 / 사무기기 / 컴퓨터,..."></textarea>
       <label>또는 CSV 파일 (.csv, UTF-8)</label>
       <input type="file" name="csvFile" accept=".csv,text/csv">
       <p class="subcopy no-margin">붙여넣기와 파일을 모두 주면 붙여넣기 내용을 사용합니다.</p>

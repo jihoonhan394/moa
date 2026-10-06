@@ -5,6 +5,7 @@ import com.moara.moa.category.CategoryService;
 import com.moara.moa.inventory.InventoryItem;
 import com.moara.moa.inventory.InventoryItemForm;
 import com.moara.moa.inventory.InventoryItemService;
+import com.moara.moa.inventory.InventoryCategoryRule;
 import com.moara.moa.inventory.InventoryItemType;
 import com.moara.moa.inventory.tag.AssetTag;
 import com.moara.moa.inventory.tag.AssetTagCode;
@@ -45,6 +46,7 @@ public class MobileAssetController {
   private final AssetTagService tagService;
   private final InventoryItemService inventoryService;
   private final CategoryService categoryService;
+  private final InventoryCategoryRule categoryRule;
   private final ManagedUserService userService;
   private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
@@ -56,6 +58,7 @@ public class MobileAssetController {
       AssetTagService tagService,
       InventoryItemService inventoryService,
       CategoryService categoryService,
+      InventoryCategoryRule categoryRule,
       ManagedUserService userService,
       TenantAuditRecorder auditRecorder,
       TenantContext tenantContext,
@@ -65,6 +68,7 @@ public class MobileAssetController {
     this.tagService = tagService;
     this.inventoryService = inventoryService;
     this.categoryService = categoryService;
+    this.categoryRule = categoryRule;
     this.userService = userService;
     this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
@@ -155,13 +159,11 @@ public class MobileAssetController {
     if (tag.isAttached()) {
       return "redirect:/m/t/" + tag.getCode();
     }
-    // 유형(실물/SW)은 카테고리 경로의 최상위에서 나온다. PC 등록과 같은 규칙을 쓴다.
-    if (InventoryItemType.fromCategoryPath(form.category()) == null) {
-      binding.rejectValue("category", "category.required", "분류를 선택하세요.");
-    } else if (!categoryExists(tenantId, form.category())) {
-      // ⚠️ 최상위만 보면 "실물 / 없는분류 / 더없음" 같은 값이 그대로 들어간다. 그러면 그 자산은
-      // 어느 분류에도 안 걸린다. 화면을 열어 둔 사이 분류가 지워진 경우가 실제로 그렇다.
-      binding.rejectValue("category", "category.unknown", "없는 분류입니다. 다시 선택하세요.");
+    // 분류 판정과 유형 파생은 InventoryCategoryRule 한 곳에 있다 — PC 등록·수정·CSV 임포트와
+    // 같은 규칙이다. 넷이 각자 검사하다 실제로 어긋났었다(PC 는 최상위만 봤다).
+    InventoryCategoryRule.Resolution category = categoryRule.resolve(tenantId, form.category());
+    if (!category.ok()) {
+      binding.rejectValue("category", "category.invalid", category.error());
     }
     if (binding.hasErrors()) {
       model.addAttribute("tag", tag);
@@ -170,7 +172,7 @@ public class MobileAssetController {
       return "mobile/tag-register";
     }
 
-    InventoryItem created = inventoryService.create(tenantId, withDerivedType(form));
+    InventoryItem created = inventoryService.create(tenantId, resolved(form, category));
     tagService.attach(tenantId, tag.getCode(), created.getId(), tenantContext.currentUserId());
     audit("INVENTORY_CREATE", created.getId(), "모바일 등록 " + tag.getCode() + " " + created.getName());
     return "redirect:/m/t/" + tag.getCode();
@@ -231,14 +233,11 @@ public class MobileAssetController {
     return "mobile/mine";
   }
 
-  private boolean categoryExists(UUID tenantId, String path) {
-    return categoryService.assetTree(tenantId).stream()
-        .anyMatch(node -> node.path().equals(path));
-  }
-
-  private static InventoryItemForm withDerivedType(InventoryItemForm form) {
-    return new InventoryItemForm(form.name(), InventoryItemType.fromCategoryPath(form.category()),
-        form.category(), form.serialNo(), form.expiresAt(), form.purchaseDate(),
+  /** 유형과 <b>해석된 경로</b>를 폼에 싣는다. 짧은 이름을 받았으면 전체 경로로 저장한다. */
+  private static InventoryItemForm resolved(
+      InventoryItemForm form, InventoryCategoryRule.Resolution category) {
+    return new InventoryItemForm(form.name(), category.type(),
+        category.path(), form.serialNo(), form.expiresAt(), form.purchaseDate(),
         form.warrantyEnds(), form.leaseEnds(), form.note(), form.quantity());
   }
 

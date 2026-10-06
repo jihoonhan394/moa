@@ -37,6 +37,7 @@ public class InventoryController {
   private final ManagedUserService userService;
   private final com.moara.moa.group.AccessGroupService groupService;
   private final CategoryService categoryService;
+  private final InventoryCategoryRule categoryRule;
   private final InventoryCustodyService custodyService;
   private final InventoryPartService partService;
   private final CsvColumnMapper csvColumnMapper;
@@ -46,7 +47,8 @@ public class InventoryController {
   public InventoryController(
       InventoryItemService inventoryService, InventoryImportService importService,
       ManagedUserService userService, com.moara.moa.group.AccessGroupService groupService,
-      CategoryService categoryService, InventoryCustodyService custodyService,
+      CategoryService categoryService, InventoryCategoryRule categoryRule,
+      InventoryCustodyService custodyService,
       InventoryPartService partService, CsvColumnMapper csvColumnMapper,
       TenantAuditRecorder auditRecorder, TenantContext tenantContext) {
     this.inventoryService = inventoryService;
@@ -54,6 +56,7 @@ public class InventoryController {
     this.userService = userService;
     this.groupService = groupService;
     this.categoryService = categoryService;
+    this.categoryRule = categoryRule;
     this.custodyService = custodyService;
     this.partService = partService;
     this.csvColumnMapper = csvColumnMapper;
@@ -126,15 +129,16 @@ public class InventoryController {
       @Valid @ModelAttribute("inventoryForm") InventoryItemForm form, BindingResult binding,
       @RequestParam(required = false) String ownerGroupId,
       @RequestParam(required = false) String parentItemId, Model model) {
-    InventoryItemType type = deriveType(form.category());
-    if (type == null) {
-      binding.rejectValue("category", "category.required", "카테고리를 선택하세요(실물/SW 아래 경로).");
+    InventoryCategoryRule.Resolution category =
+        categoryRule.resolve(tenantContext.currentTenantId(), form.category());
+    if (!category.ok()) {
+      binding.rejectValue("category", "category.invalid", category.error());
     }
     if (binding.hasErrors()) {
       populate(model);
       return "inventory/list";
     }
-    InventoryItemForm form2 = withType(form, type);
+    InventoryItemForm form2 = resolved(form, category);
     try {
       InventoryItem created = inventoryService.create(tenantContext.currentTenantId(), form2);
       UUID owner = parseUuid(ownerGroupId);
@@ -188,9 +192,10 @@ public class InventoryController {
   public String update(
       @PathVariable UUID id, @Valid @ModelAttribute("inventoryForm") InventoryItemForm form,
       BindingResult binding, Model model) {
-    InventoryItemType type = deriveType(form.category());
-    if (type == null) {
-      binding.rejectValue("category", "category.required", "카테고리를 선택하세요(실물/SW 아래 경로).");
+    InventoryCategoryRule.Resolution category =
+        categoryRule.resolve(tenantContext.currentTenantId(), form.category());
+    if (!category.ok()) {
+      binding.rejectValue("category", "category.invalid", category.error());
     }
     if (binding.hasErrors()) {
       model.addAttribute("itemId", id);
@@ -198,7 +203,8 @@ public class InventoryController {
       return "inventory/form";
     }
     try {
-      inventoryService.update(tenantContext.currentTenantId(), id, withType(form, type));
+      inventoryService.update(
+          tenantContext.currentTenantId(), id, resolved(form, category));
       audit("INVENTORY_UPDATE", id, form.name());
       return "redirect:/inventory";
     } catch (DuplicateInventoryItemException exception) {
@@ -381,13 +387,15 @@ public class InventoryController {
     return categoryService.assetTree(tenantContext.currentTenantId());
   }
 
-  /** 카테고리 경로의 최상위(실물/SW)로 유형을 파생. 규칙은 모바일 등록과 공유한다. */
-  private static InventoryItemType deriveType(String categoryPath) {
-    return InventoryItemType.fromCategoryPath(categoryPath);
-  }
-
-  private static InventoryItemForm withType(InventoryItemForm form, InventoryItemType type) {
-    return new InventoryItemForm(form.name(), type, form.category(), form.serialNo(),
+  /**
+   * 판정 결과(유형 + <b>해석된 경로</b>)를 폼에 싣는다.
+   *
+   * <p>경로를 덮어쓰는 이유: 짧은 이름을 받았을 때 저장할 값은 입력이 아니라 해석된 전체
+   * 경로다. 입력을 그대로 두면 분류 필터에 안 걸리는, 고치려던 바로 그 상태가 된다.
+   */
+  private static InventoryItemForm resolved(
+      InventoryItemForm form, InventoryCategoryRule.Resolution category) {
+    return new InventoryItemForm(form.name(), category.type(), category.path(), form.serialNo(),
         form.expiresAt(), form.purchaseDate(), form.warrantyEnds(), form.leaseEnds(), form.note(),
         form.quantity());
   }
