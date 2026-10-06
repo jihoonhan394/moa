@@ -16,9 +16,13 @@ import com.moara.moa.inventory.InventoryItemService;
 import com.moara.moa.notice.NoticeService;
 import com.moara.moa.notification.NotificationService;
 import com.moara.moa.security.TenantContext;
+import com.moara.moa.solution.HealthState;
 import com.moara.moa.solution.ManagedSolution;
 import com.moara.moa.solution.ManagedSolutionService;
+import com.moara.moa.solution.SolutionHealth;
+import com.moara.moa.solution.SolutionHealthService;
 import com.moara.moa.user.ManagedUserService;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,9 +55,11 @@ public class MobileWorkController {
   private final NotificationService notificationService;
   private final NoticeService noticeService;
   private final ManagedSolutionService solutionService;
+  private final SolutionHealthService healthService;
   private final AssetService assetService;
   private final AccessGroupService groupService;
   private final ManagedUserService userService;
+  private final MobileInbox inbox;
   private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
 
@@ -66,9 +72,11 @@ public class MobileWorkController {
       NotificationService notificationService,
       NoticeService noticeService,
       ManagedSolutionService solutionService,
+      SolutionHealthService healthService,
       AssetService assetService,
       AccessGroupService groupService,
       ManagedUserService userService,
+      MobileInbox inbox,
       TenantAuditRecorder auditRecorder,
       TenantContext tenantContext) {
     this.approvalService = approvalService;
@@ -79,9 +87,11 @@ public class MobileWorkController {
     this.notificationService = notificationService;
     this.noticeService = noticeService;
     this.solutionService = solutionService;
+    this.healthService = healthService;
     this.assetService = assetService;
     this.groupService = groupService;
     this.userService = userService;
+    this.inbox = inbox;
     this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
   }
@@ -99,15 +109,11 @@ public class MobileWorkController {
     UUID tenantId = tenantContext.currentTenantId();
     UUID me = tenantContext.currentUserId();
 
-    List<AccessRequest> access = approvalService.pendingForApprover(tenantId, me);
-    // ⚠️ findOpen 은 기관 전체의 요청을 준다. 소모품 담당이 아닌 사람에게 보이면 남의 요청이
-    // 그대로 노출되고 누를 수도 없다. 역할로 거른다.
-    List<ConsumableRequest> supplies = canHandleSupplies() ? consumableRequestService.findOpen(tenantId) : List.of();
-    // ⚠️ awaitingConfirmation 도 기관 전체다. 인수 확인은 **받은 본인만** 할 수 있으므로
-    // (InventoryCustodyService.confirmReceipt) 내 것만 남긴다 — 남의 보유 내역을 보여 줄 이유가 없다.
-    List<InventoryCustody> receipts = custodyService.awaitingConfirmation(tenantId).stream()
-        .filter(custody -> me.equals(custody.getHolderId()))
-        .toList();
+    // 무엇이 내 일감인지는 MobileInbox 가 정한다 — 홈 뱃지도 같은 것을 센다.
+    MobileInbox.Pending pending = inbox.pendingFor(tenantId, me);
+    List<AccessRequest> access = pending.access();
+    List<ConsumableRequest> supplies = pending.supplies();
+    List<InventoryCustody> receipts = pending.receipts();
 
     model.addAttribute("accessRequests", access);
     model.addAttribute("assetNames", assetNames(tenantId, access));
@@ -116,7 +122,7 @@ public class MobileWorkController {
     model.addAttribute("supplyNames", supplyNames(tenantId, supplies));
     model.addAttribute("receipts", receipts);
     model.addAttribute("receiptNames", receiptNames(tenantId, receipts));
-    model.addAttribute("total", access.size() + supplies.size() + receipts.size());
+    model.addAttribute("total", pending.total());
     model.addAttribute("currentMenu", "approvals");
     return "mobile/approvals";
   }
@@ -161,14 +167,8 @@ public class MobileWorkController {
   }
 
   /** 소모품 요청을 처리할 수 있는 사람인가. PC 화면(MyConsumableController)과 같은 기준이다. */
-  private boolean canHandleSupplies() {
-    var user = tenantContext.currentUser();
-    return user.hasRole(com.moara.moa.user.UserRole.ASSET_MANAGER)
-        || user.hasRole(com.moara.moa.user.UserRole.TENANT_ADMIN);
-  }
-
   private void requireSupplyHandler() {
-    if (!canHandleSupplies()) {
+    if (!inbox.canHandleSupplies()) {
       throw new org.springframework.security.access.AccessDeniedException("소모품 요청 처리 권한이 없습니다.");
     }
   }
@@ -179,10 +179,18 @@ public class MobileWorkController {
   public String notifications(Model model) {
     UUID tenantId = tenantContext.currentTenantId();
     UUID me = tenantContext.currentUserId();
-    model.addAttribute("items", notificationService.list(tenantId, me));
+    // 링크는 PC 경로로 저장된다. 폰에서 누르면 PC 화면이 떠 글자가 깨알같아지므로
+    // 모바일 대응 화면이 있는 것만 /m/** 로 바꿔 띄운다({@link MobileLinks}).
+    List<NotificationRow> items = notificationService.list(tenantId, me).stream()
+        .map(n -> new NotificationRow(n.getTitle(), n.getBody(), MobileLinks.toMobile(n.getLink())))
+        .toList();
+    model.addAttribute("items", items);
     model.addAttribute("currentMenu", "home");
     return "mobile/notifications";
   }
+
+  /** 알림 한 줄. 엔티티를 그대로 넘기지 않는 이유는 링크를 모바일 경로로 바꿔야 해서다. */
+  public record NotificationRow(String title, String body, String link) {}
 
   @PostMapping("/m/notifications/read-all")
   public String readAll() {
@@ -193,20 +201,39 @@ public class MobileWorkController {
   // ── 상태 · 연락처 ─────────────────────────────────────────────────────
 
   /**
-   * 솔루션 목록. <b>제어 버튼은 없다.</b>
+   * 솔루션 목록. <b>제어 버튼은 없다</b> — 상태와 연락처만 본다.
    *
-   * <p>⚠️ 지금은 "설정된 점검 방식"만 보여 준다. 서버에 <b>헬스 체크를 실제로 실행하는 곳이
-   * 없어서</b>(moa-mobile doc/07 P19) 보여 줄 실시간 상태가 없다. 그 전까지 이 화면의 값어치는
-   * <b>장애 때 누구에게 연락할지 찾는 것</b>이다.
+   * <p><b>장애가 위로 온다.</b> 폰에서 이 화면을 여는 순간은 거의 항상 "뭔가 멈췄다"일 때이고,
+   * 그때 24개 중 멈춘 하나를 찾아 스크롤하게 두면 안 된다. 정렬 기준은 상태(DOWN→UNKNOWN→UP)
+   * 다음에 이름이다 — 같은 상태 안에서 순서가 매번 바뀌면 눈이 위치를 기억하지 못한다.
    */
   @GetMapping("/m/solutions")
   public String solutions(Model model) {
     UUID tenantId = tenantContext.currentTenantId();
-    List<ManagedSolution> solutions = solutionService.findAll(tenantId);
+    Map<UUID, SolutionHealth> health = healthService.statesOf(tenantId);
+    List<ManagedSolution> solutions = solutionService.findAll(tenantId).stream()
+        .sorted(Comparator
+            .comparingInt((ManagedSolution solution) -> severity(health.get(solution.getId())))
+            .thenComparing(ManagedSolution::getName))
+        .toList();
     model.addAttribute("solutions", solutions);
+    model.addAttribute("health", health);
+    model.addAttribute("downCount", healthService.downCount(tenantId));
     model.addAttribute("hostNames", hostNames(tenantId, solutions));
     model.addAttribute("currentMenu", "home");
     return "mobile/solutions";
+  }
+
+  /** 정렬 가중치. 작을수록 위다. 상태 행이 없는 솔루션(아직 안 재 봄)은 UNKNOWN 과 같이 둔다. */
+  private static int severity(SolutionHealth health) {
+    if (health == null) {
+      return 1;
+    }
+    return switch (health.getState()) {
+      case DOWN -> 0;
+      case UNKNOWN -> 1;
+      case UP -> 2;
+    };
   }
 
   @GetMapping("/m/solutions/{id}")
@@ -217,6 +244,7 @@ public class MobileWorkController {
     model.addAttribute("host", hostOf(tenantId, solution));
     model.addAttribute("ownerGroupName", solution.getOwnerGroupId() == null ? null
         : groupService.findById(tenantId, solution.getOwnerGroupId()).getName());
+    model.addAttribute("health", healthService.stateOf(tenantId, id));
     model.addAttribute("currentMenu", "home");
     return "mobile/solution";
   }

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  솔루션 헬스 상태 배지. PC 목록·상세와 모바일이 같은 조각을 쓴다 — 세 곳에 따로 쓰면
+  "점검 안 함"과 "확인 안 됨"을 구별하는 규칙이 금방 어긋난다.
+
+  인자
+    health : SolutionHealth (없을 수 있다 — 아직 한 번도 점검되지 않은 솔루션)
+    type   : HealthCheckType (NONE 이면 배지를 내지 않는다)
+
+  왜 NONE 에 아무 것도 안 내나: 점검하기로 하지 않은 솔루션에 "확인 안 됨"을 띄우면
+  설정이 빠진 것처럼 보인다. 끈 것과 못 잰 것은 다르다.
+-->
+<th:block th:fragment="badge(health, type)">
+  <span th:if="${type != null and type.name() != 'NONE'}">
+    <span th:if="${health == null}" class="health-badge unknown" title="아직 점검되지 않았습니다.">확인 안 됨</span>
+    <span th:unless="${health == null}"
+          class="health-badge"
+          th:classappend="${health.state.name() == 'UP'} ? 'up' : (${health.state.name() == 'DOWN'} ? 'down' : 'unknown')"
+          th:title="${health.detail}"
+          th:text="${health.state.label}">정상</span>
+  </span>
+</th:block>
+
+<!--
+  표의 한 칸. <b>언제나 요소 하나를 낸다.</b>
+
+  ⚠️ badge 를 표 칸에 바로 th:replace 하면 안 된다. 점검 방식이 NONE 일 때 badge 는 아무
+  것도 내지 않는데, .table-row 는 행마다 독립 grid(grid-auto-flow:column)이므로 칸이
+  하나 없어지면 <b>그 행만</b> 뒤 열이 전부 한 칸씩 밀린다. 표 정렬이 깨지는 전형적인 경우다.
+-->
+<span th:fragment="cell(health, type)">
+  <th:block th:replace="~{fragments/health :: badge(${health}, ${type})}"></th:block>
+  <span th:if="${type == null or type.name() == 'NONE'}" class="t-muted">&#8212;</span>
+</span>
+
+<!--
+  배지 + 사유/시각까지. 상세 화면처럼 자리가 있는 곳에서 쓴다.
+-->
+<th:block th:fragment="detail(health, type)">
+  <th:block th:replace="~{fragments/health :: badge(${health}, ${type})}"></th:block>
+  <span th:if="${type != null and type.name() == 'NONE'}" class="t-muted">헬스 체크를 사용하지 않습니다.</span>
+  <th:block th:if="${health != null and type != null and type.name() != 'NONE'}">
+    <span th:if="${health.detail != null}" class="t-muted" th:text="' · ' + ${health.detail}"></span>
+    <span th:if="${health.checkedAt != null}" class="t-muted"
+          th:text="' · 점검 ' + ${#temporals.format(health.checkedAt, 'MM-dd HH:mm')}"></span>
+    <span th:if="${health.state.name() == 'DOWN' and health.changedAt != null}" class="t-muted"
+          th:text="' · ' + ${#temporals.format(health.changedAt, 'MM-dd HH:mm')} + ' 부터'"></span>
+  </th:block>
+</th:block>
+
+</body>
+</html>

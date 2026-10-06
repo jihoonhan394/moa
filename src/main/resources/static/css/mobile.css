@@ -20,6 +20,7 @@
 	--m-accent: #1d4ed8;
 	--m-accent-soft: #eff4ff;
 	--m-danger: #b42318;
+	--m-danger-soft: #fef3f2;
 	--m-ok: #067647;
 	--m-ok-soft: #ecfdf3;
 	--m-warn: #b54708;
@@ -278,6 +279,34 @@ main {
 .m-pill.warn {
 	background: var(--m-warn-soft);
 	color: var(--m-warn);
+}
+
+/* 헬스 상태 배지. PC 의 style.css 에 같은 이름의 규칙이 있다 — 스타일시트가 분리돼
+   있어 값은 각자 갖지만, "언제 무엇을 보여 주나"는 fragments/health.html 한 곳이다.
+   드리프트가 생기는 쪽은 색이 아니라 그 판단이다.
+   색만으로 구분하지 않는다(글자를 함께 둔다) — 색각 이상인 사람에게는 같은 배지다. */
+.health-badge {
+	display: inline-block;
+	padding: 4px 11px;
+	border-radius: 999px;
+	font-size: 14px;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.health-badge.up {
+	background: var(--m-ok-soft);
+	color: var(--m-ok);
+}
+
+.health-badge.down {
+	background: var(--m-danger-soft);
+	color: var(--m-danger);
+}
+
+.health-badge.unknown {
+	background: #f3f4f6;
+	color: var(--m-muted);
 }
 
 /* ── 입력 ───────────────────────────────────────────────────────── */

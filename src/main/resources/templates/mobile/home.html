@@ -35,8 +35,14 @@
     </li>
     <li th:if="${showSolutions}">
       <a class="m-row" th:href="@{/m/solutions}">
-        <span class="title">솔루션</span>
-        <span class="meta">담당자·업체 연락처</span>
+        <span class="title">
+          솔루션
+          <!-- 장애가 있으면 숫자가 아니라 배지로 띄운다. "2건 대기"와 "2건 장애"는
+               같은 급으로 읽히면 안 된다. -->
+          <span th:if="${downCount > 0}" class="health-badge down"
+                th:text="${downCount} + '건 장애'">장애</span>
+        </span>
+        <span class="meta" th:text="${downCount > 0} ? '눌러서 담당자·업체 연락처' : '담당자·업체 연락처'">담당자·업체 연락처</span>
       </a>
     </li>
   </ul>

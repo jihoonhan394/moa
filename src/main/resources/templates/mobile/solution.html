@@ -6,7 +6,12 @@
 
 <main>
   <h2 class="m-headline" style="margin-top:0" th:text="${solution.name}">솔루션</h2>
+  <p style="margin:0 0 6px" th:if="${solution.healthCheckType.name() != 'NONE'}">
+    <th:block th:replace="~{fragments/health :: badge(${health}, ${solution.healthCheckType})}"></th:block>
+  </p>
   <p class="m-lede" th:text="${host != null ? host : ''} + ' · ' + ${solution.identifier}">서버</p>
+  <p class="m-note" th:if="${health != null and health.state.name() == 'DOWN'}" style="margin-top:12px"
+     th:text="${health.detail != null ? health.detail : '응답하지 않습니다.'}">사유</p>
 
   <!-- 연락이 이 화면의 목적이다. 가장 위에 큼직하게 둔다. -->
   <p class="m-section">연락</p>
@@ -36,6 +41,9 @@
   <p class="m-section">정보</p>
   <dl class="m-facts">
     <div><dt>점검 방식</dt><dd th:text="${solution.healthCheckType}">-</dd></div>
+    <div th:if="${health != null and health.checkedAt != null}">
+      <dt>마지막 점검</dt><dd th:text="${#temporals.format(health.checkedAt, 'MM-dd HH:mm')}">-</dd>
+    </div>
     <div th:if="${solution.healthCheckTarget != null}">
       <dt>점검 대상</dt><dd th:text="${solution.healthCheckTarget}">-</dd>
     </div>

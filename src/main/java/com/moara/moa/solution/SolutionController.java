@@ -44,6 +44,7 @@ public class SolutionController {
   private final AccessGroupService groupService;
   private final com.moara.moa.solution.SolutionSequenceService sequenceService;
   private final com.moara.moa.category.CategoryService categoryService;
+  private final SolutionHealthService healthService;
   private final TenantContext tenantContext;
 
   public SolutionController(
@@ -53,7 +54,8 @@ public class SolutionController {
       MaintenanceService maintenanceService, WikiSpaceService wikiSpaceService,
       LogAnalysisService logAnalysisService, AccessGroupService groupService,
       com.moara.moa.solution.SolutionSequenceService sequenceService,
-      com.moara.moa.category.CategoryService categoryService, TenantContext tenantContext) {
+      com.moara.moa.category.CategoryService categoryService, SolutionHealthService healthService,
+      TenantContext tenantContext) {
     this.solutionService = solutionService;
     this.controlService = controlService;
     this.accessService = accessService;
@@ -67,6 +69,7 @@ public class SolutionController {
     this.groupService = groupService;
     this.sequenceService = sequenceService;
     this.categoryService = categoryService;
+    this.healthService = healthService;
     this.tenantContext = tenantContext;
   }
 
@@ -100,6 +103,7 @@ public class SolutionController {
         : wikiSpaceService.findAll(tenantId).stream()
             .filter(s -> s.getId().equals(solution.getWikiSpaceId())).findFirst().orElse(null);
     model.addAttribute("solution", solution);
+    model.addAttribute("health", healthService.stateOf(tenantId, id));
     model.addAttribute("manualSpace", manualSpace);
     model.addAttribute("spaces", wikiSpaceService.findAll(tenantId));
     model.addAttribute("owners", maintenanceService.ownersFor(tenantId, MaintenanceTargetType.SOLUTION, id));
@@ -151,6 +155,7 @@ public class SolutionController {
       groupNames.put(g.getId(), g.getName());
     }
     model.addAttribute("solutions", solutions);
+    model.addAttribute("health", healthService.statesOf(tenantId));
     model.addAttribute("groups", groups);
     model.addAttribute("groupNames", groupNames);
     model.addAttribute("tenantUsers", userService.findByTenant(tenantId));

@@ -10,7 +10,12 @@
       <p class="subcopy">
         <span th:text="${solution.type}">유형</span> ·
         <span th:text="${solution.identifier}">식별자</span> ·
-        상태 <b th:text="${solution.status}">상태</b>
+        <!-- ACTIVE/DISABLED 는 '등록 상태'다. 아래 헬스 배지와 이름이 겹치면
+             "상태 ACTIVE / 정상"이 무슨 뜻인지 읽는 사람이 헷갈린다. -->
+        등록 <b th:text="${solution.status}">상태</b>
+      </p>
+      <p class="subcopy" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <th:block th:replace="~{fragments/health :: detail(${health}, ${solution.healthCheckType})}"></th:block>
       </p>
     </div>
     <div class="top-actions"><a class="button" th:href="@{/solutions}">목록으로</a></div>

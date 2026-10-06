@@ -595,6 +595,21 @@ button.primary,
 	color: var(--red);
 }
 
+/* 솔루션 헬스 상태 배지. 색만으로 구분하지 않는다 — 글자("정상/장애/확인 안 됨")를 함께
+   둔다. 색각 이상(남성 약 8%)인 사람에게 초록·빨강 배지는 같은 회색 두 개로 보인다. */
+.health-badge {
+	display: inline-block;
+	padding: 3px 9px;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	font-size: .72rem;
+	font-weight: 800;
+	white-space: nowrap;
+}
+.health-badge.up { border-color: #bfe3cf; background: #e0f2e7; color: var(--green); }
+.health-badge.down { border-color: #eec6c2; background: #f5dfdc; color: var(--red); }
+.health-badge.unknown { border-color: var(--line); background: var(--field); color: var(--muted); }
+
 .terminal.tall {
 	min-height: 420px;
 }

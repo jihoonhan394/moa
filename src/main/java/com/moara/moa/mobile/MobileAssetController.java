@@ -49,9 +49,8 @@ public class MobileAssetController {
   private final TenantAuditRecorder auditRecorder;
   private final TenantContext tenantContext;
   private final com.moara.moa.notification.NotificationService notificationService;
-  private final com.moara.moa.access.AccessApprovalService approvalService;
-  private final com.moara.moa.consumable.ConsumableRequestService consumableRequestService;
-  private final com.moara.moa.inventory.InventoryCustodyService custodyService;
+  private final MobileInbox inbox;
+  private final com.moara.moa.solution.SolutionHealthService healthService;
 
   public MobileAssetController(
       AssetTagService tagService,
@@ -61,9 +60,8 @@ public class MobileAssetController {
       TenantAuditRecorder auditRecorder,
       TenantContext tenantContext,
       com.moara.moa.notification.NotificationService notificationService,
-      com.moara.moa.access.AccessApprovalService approvalService,
-      com.moara.moa.consumable.ConsumableRequestService consumableRequestService,
-      com.moara.moa.inventory.InventoryCustodyService custodyService) {
+      MobileInbox inbox,
+      com.moara.moa.solution.SolutionHealthService healthService) {
     this.tagService = tagService;
     this.inventoryService = inventoryService;
     this.categoryService = categoryService;
@@ -71,9 +69,8 @@ public class MobileAssetController {
     this.auditRecorder = auditRecorder;
     this.tenantContext = tenantContext;
     this.notificationService = notificationService;
-    this.approvalService = approvalService;
-    this.consumableRequestService = consumableRequestService;
-    this.custodyService = custodyService;
+    this.inbox = inbox;
+    this.healthService = healthService;
   }
 
   /**
@@ -88,18 +85,15 @@ public class MobileAssetController {
     model.addAttribute("myItemCount", inventoryService.findAssignedTo(tenantId, me).size());
     model.addAttribute("unattachedCount", tagService.unattachedCount(tenantId));
     model.addAttribute("unreadCount", notificationService.unreadCount(tenantId, me));
-    model.addAttribute("approvalCount", pendingApprovalCount(tenantId, me));
+    model.addAttribute("approvalCount", inbox.pendingFor(tenantId, me).total());
     // 솔루션은 인프라 관리자에게만 뜻이 있다. 일반 사용자에게는 줄을 만들지 않는다.
-    model.addAttribute("showSolutions",
-        tenantContext.currentUser().hasRole(com.moara.moa.user.UserRole.INFRA_MANAGER));
+    boolean showSolutions =
+        tenantContext.currentUser().hasRole(com.moara.moa.user.UserRole.INFRA_MANAGER);
+    model.addAttribute("showSolutions", showSolutions);
+    // 장애 수는 그 줄을 띄우는 사람에게만 센다 — 안 보여 줄 숫자를 세느라 질의를 더 하지 않는다.
+    model.addAttribute("downCount", showSolutions ? healthService.downCount(tenantId) : 0L);
     model.addAttribute("currentMenu", "home");
     return "mobile/home";
-  }
-
-  private long pendingApprovalCount(UUID tenantId, UUID me) {
-    return (long) approvalService.pendingForApprover(tenantId, me).size()
-        + consumableRequestService.findOpen(tenantId).size()
-        + custodyService.awaitingConfirmation(tenantId).size();
   }
 
   /** 코드 입력. 앱에서는 카메라가 이 자리를 대신하고, 안 될 때 손으로 칠 수 있게 남겨 둔다. */
