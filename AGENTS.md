@@ -88,6 +88,9 @@ Codex와 Claude Code는 작업 전 이 파일과 `doc/1차-진행/AGENTS.md`를 
 - 로그·에러 응답에서 secret·PII·내부 경로·stack trace를 마스킹/제거한다.
 - 예외를 화면·API로 그대로 흘리지 않고 표준 에러 응답 형식으로 반환한다.
 - 도메인별 `NotFoundException`은 `GlobalExceptionHandler`에 등록해 **404**로 내린다(등록을 빠뜨리면 whitelabel 500이 나간다).
+- ⚠️ **서비스가 검사하는 범위와 DB 제약의 범위가 다르면 500이 나간다.** 이 패턴으로 세 번 물렸다 — 관리번호(한 자산에 둘), `managed_users.username`(동명이인), `managed_users.email`(두 기관에 같은 사람). 증상은 늘 같다: 서비스 검사를 통과한 요청이 DB 제약에 걸려 **whitelabel 500**이 사용자에게 간다.
+  - **유일 제약을 바꿀 때는 마이그레이션과 서비스 검사를 같은 커밋에서 맞춘다.** 범위가 어긋난 채로 두면 화면에는 아무 안내도 안 나온다.
+  - ⚠️ **엔진이 자동으로 붙인 제약 이름을 적어 `DROP CONSTRAINT IF EXISTS`로 지우면 안 된다.** PostgreSQL은 `<table>_<col>_key`, H2는 `CONSTRAINT_F8` 식이라 **한쪽에서만 지워지고 조용히 no-op**이 된다. 그래서 운영과 로컬의 스키마가 갈라지고, 버그가 **로컬에서만** 또는 **운영에서만** 난다. 이름을 모를 땐 `information_schema`로 찾아 지우는 Java 마이그레이션을 쓴다(V75·V77이 그 예다).
 
 ## 공통 지점 (중복하지 말 것)
 

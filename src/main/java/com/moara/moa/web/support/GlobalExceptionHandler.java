@@ -17,6 +17,7 @@ import com.moara.moa.reservation.ReservationNotFoundException;
 import com.moara.moa.reservation.SharedResourceNotFoundException;
 import com.moara.moa.solution.SolutionNotFoundException;
 import com.moara.moa.solution.SolutionSequenceNotFoundException;
+import com.moara.moa.tenant.TenantNotFoundException;
 import com.moara.moa.user.ManagedUserNotFoundException;
 import com.moara.moa.wiki.WikiAttachmentNotFoundException;
 import com.moara.moa.wiki.WikiPageNotFoundException;
@@ -39,7 +40,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * 화이트라벨 페이지가 나간다 — 목록에서 지운 항목의 오래된 링크를 누르는 흔한 상황에서
  * 사용자는 "시스템이 고장났다"고 읽는다. 실제로 세 개만 등록돼 있어
  * {@code /my/assets/{id}}가 500을 내던 것을 계기로 전 도메인을 채웠다.
- * 새 도메인을 만들 때 이 목록에 추가하는 것을 잊지 말 것.
+ * <p>⚠️ <b>잊어도 알 수 있게 테스트가 지킨다.</b> 그 뒤에도 실제로 빠뜨렸다 —
+ * {@code TenantNotFoundException} 이 등록되지 않아 {@code /admin/tenants/{없는 id}} 가
+ * 500 이었다(2026-10-07, 적대적 입력 시험에서 발견). 사람이 목록을 기억하는 방식은 다시
+ * 어긋나므로, {@code GlobalExceptionHandlerCoverageTest} 가 패키지를 훑어 빠진 것을 찾는다.
  */
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -61,6 +65,7 @@ public class GlobalExceptionHandler {
       SharedResourceNotFoundException.class,
       SolutionNotFoundException.class,
       SolutionSequenceNotFoundException.class,
+      TenantNotFoundException.class,
       WikiAttachmentNotFoundException.class,
       WikiPageNotFoundException.class,
       WikiSpaceNotFoundException.class,
