@@ -12,7 +12,7 @@
     <p th:if="${userMessage}" class="modal-note" th:text="${userMessage}">결과</p>
     <p th:if="${userError}" class="modal-note t-bad" th:text="${userError}">오류</p>
     <section class="panel">
-      <div class="panel-head"><div><p class="eyebrow">사용자 목록</p><h2>등록된 사용자</h2></div><span class="pill" th:text="${#lists.size(users)} + '명'">0명</span></div>
+      <div class="panel-head"><div><p class="eyebrow">사용자 목록</p><h2>등록된 사용자</h2></div><span class="pill" th:text="${pager != null ? pager.totalCount : #lists.size(users)} + '명'">0명</span></div>
       <!-- 검색·필터. 사람이 30명을 넘으면 목록에서 눈으로 찾는 것이 가장 느리다.
            거르기는 DB 가 한다(ManagedUserRepository.filter). -->
       <form method="get" th:action="@{/users}" class="asset-toolbar" style="margin-bottom:.6rem">
@@ -71,6 +71,7 @@
           </span>
         </div>
       </div>
+    <div th:replace="~{fragments/pager :: pager(${pager})}"></div>
     </section>
   </main>
 </div>

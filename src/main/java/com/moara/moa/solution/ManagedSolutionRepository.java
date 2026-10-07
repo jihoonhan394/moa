@@ -32,11 +32,12 @@ public interface ManagedSolutionRepository extends JpaRepository<ManagedSolution
              or lower(s.category) like lower(concat('%', :term, '%')) escape '!')
       order by s.name asc
       """)
-  List<ManagedSolution> filter(
+  org.springframework.data.domain.Page<ManagedSolution> filter(
       @org.springframework.data.repository.query.Param("tenantId") UUID tenantId,
       @org.springframework.data.repository.query.Param("term") String term,
       @org.springframework.data.repository.query.Param("category") String category,
-      @org.springframework.data.repository.query.Param("ownerGroupId") UUID ownerGroupId);
+      @org.springframework.data.repository.query.Param("ownerGroupId") UUID ownerGroupId,
+      org.springframework.data.domain.Pageable pageable);
 
   long countByTenantIdAndCredentialId(UUID tenantId, UUID credentialId);
 }

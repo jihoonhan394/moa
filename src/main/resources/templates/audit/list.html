@@ -72,13 +72,7 @@
     </div>
 
     <!-- 페이지 이동. 전체를 한 화면에 그리지 않는다 — 감사 로그는 지우지 않으므로 계속 는다. -->
-    <div class="asset-toolbar" th:if="${totalPages > 1}" style="margin-top:.6rem;align-items:center">
-      <a class="button" th:if="${pageNumber > 0}"
-         th:href="@{/audit(days=${days}, page=${pageNumber - 1})}">← 이전</a>
-      <span class="subcopy" th:text="${pageNumber + 1} + ' / ' + ${totalPages} + ' 페이지'">1 / 1</span>
-      <a class="button" th:if="${pageNumber + 1 < totalPages}"
-         th:href="@{/audit(days=${days}, page=${pageNumber + 1})}">다음 →</a>
-    </div>
+    <div th:replace="~{fragments/pager :: pager(${pager})}"></div>
   </section>
 </main></div>
 </body>

@@ -92,12 +92,13 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, UU
              or lower(i.category) like lower(concat('%', :term, '%')) escape '!')
       order by i.name asc
       """)
-  List<InventoryItem> filter(
+  org.springframework.data.domain.Page<InventoryItem> filter(
       @org.springframework.data.repository.query.Param("tenantId") UUID tenantId,
       @org.springframework.data.repository.query.Param("term") String term,
       @org.springframework.data.repository.query.Param("status") InventoryItemStatus status,
       @org.springframework.data.repository.query.Param("type") InventoryItemType type,
-      @org.springframework.data.repository.query.Param("includeRetired") boolean includeRetired);
+      @org.springframework.data.repository.query.Param("includeRetired") boolean includeRetired,
+      org.springframework.data.domain.Pageable pageable);
 
   /** 폐기 건수. 세는 것을 DB 가 한다 — 전체를 읽어 stream 으로 세면 목록과 같은 비용이 든다. */
   long countByTenantIdAndStatus(UUID tenantId, InventoryItemStatus status);

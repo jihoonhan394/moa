@@ -89,7 +89,7 @@
   </section>
 
   <section class="panel">
-    <div class="panel-head"><div><p class="eyebrow">등록된 솔루션</p><h2>제어</h2></div><span class="pill" th:text="${#lists.size(solutions)} + '개'">0개</span></div>
+    <div class="panel-head"><div><p class="eyebrow">등록된 솔루션</p><h2>제어</h2></div><span class="pill" th:text="${pager != null ? pager.totalCount : #lists.size(solutions)} + '개'">0개</span></div>
     <!-- 검색·필터. 거르기는 DB 가 한다(ManagedSolutionRepository.filter). -->
     <form method="get" th:action="@{/solutions}" class="asset-toolbar" style="margin-bottom:.6rem">
       <input type="search" name="q" th:value="${q}" placeholder="이름 · 식별자 · 분류 검색"
@@ -135,6 +135,7 @@
         </span>
       </div>
     </div>
+    <div th:replace="~{fragments/pager :: pager(${pager})}"></div>
   </section>
   </div><!-- /tab-control -->
 

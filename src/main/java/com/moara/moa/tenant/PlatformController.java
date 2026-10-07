@@ -135,9 +135,9 @@ public class PlatformController {
     org.springframework.data.domain.Page<com.moara.moa.audit.AuditLog> found =
         auditLogService.findGlobal(page);
     model.addAttribute("logs", found.getContent());
-    model.addAttribute("pageNumber", found.getNumber());
-    model.addAttribute("totalPages", found.getTotalPages());
     model.addAttribute("totalCount", found.getTotalElements());
+    model.addAttribute("pager", com.moara.moa.web.support.PageView.of(
+        found, "/admin/audit", java.util.Map.of()));
     return "admin/audit";
   }
 

@@ -60,9 +60,10 @@ public class AuditLogController {
     model.addAttribute("logs", logs);
     model.addAttribute("days", days);
     model.addAttribute("periods", PERIODS);
-    model.addAttribute("pageNumber", found.getNumber());
-    model.addAttribute("totalPages", found.getTotalPages());
     model.addAttribute("totalCount", found.getTotalElements());
+    // 페이저는 화면마다 복사하지 않는다 — fragments/pager 하나를 네 목록이 함께 쓴다.
+    model.addAttribute("pager", com.moara.moa.web.support.PageView.of(found, "/audit",
+        com.moara.moa.web.support.PageView.conditions("days", days)));
     // 어제 요약. 로그는 쌓이기만 하고 아무도 읽지 않는 것이 실제 문제라, 화면 맨 위에 둔다.
     model.addAttribute("digest", digestService.yesterday(tenantId));
     model.addAttribute("page", "audit");

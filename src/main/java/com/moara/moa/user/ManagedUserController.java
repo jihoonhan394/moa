@@ -41,9 +41,13 @@ public class ManagedUserController {
       @RequestParam(required = false) String q,
       @RequestParam(required = false) UserStatus status,
       @RequestParam(required = false) UserRole role,
+      @RequestParam(defaultValue = "0") int page,
       Model model) {
-    model.addAttribute("users",
-        userService.filter(tenantContext.currentTenantId(), q, status, role));
+    var found = userService.filter(tenantContext.currentTenantId(), q, status, role, page);
+    model.addAttribute("users", found.getContent());
+    model.addAttribute("pager", com.moara.moa.web.support.PageView.of(found, "/users",
+        com.moara.moa.web.support.PageView.conditions(
+            "q", q, "status", status, "role", role)));
     model.addAttribute("q", q);
     model.addAttribute("status", status);
     model.addAttribute("role", role);

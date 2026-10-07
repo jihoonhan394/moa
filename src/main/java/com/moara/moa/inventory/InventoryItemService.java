@@ -143,12 +143,16 @@ public class InventoryItemService {
    * <p>자산이 가벼워진 뒤 병목은 <b>찾는 일</b>로 옮겨 갔다 — 130줄에서 노트북 한 대를
    * 눈으로 찾는 것이 가장 느리다. 거르기는 DB 가 한다({@code InventoryItemRepository#filter}).
    */
+  /** 한 화면에 그릴 행 수. 조건 없이 1,000건을 열어도 화면이 버티게 한다. */
+  public static final int PAGE_SIZE = 50;
+
   @Transactional(readOnly = true)
-  public List<InventoryItem> filter(
+  public org.springframework.data.domain.Page<InventoryItem> filter(
       UUID tenantId, String keyword, InventoryItemStatus status, InventoryItemType type,
-      boolean includeRetired) {
+      boolean includeRetired, int page) {
     return repository.filter(
-        tenantId, com.moara.moa.support.Values.likeTerm(keyword), status, type, includeRetired);
+        tenantId, com.moara.moa.support.Values.likeTerm(keyword), status, type, includeRetired,
+        org.springframework.data.domain.PageRequest.of(Math.max(0, page), PAGE_SIZE));
   }
 
   /** 폐기 건수. 목록에 "폐기 N건 보기" 를 띄우는 데 쓴다. */

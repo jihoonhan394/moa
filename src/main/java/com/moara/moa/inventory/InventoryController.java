@@ -122,11 +122,12 @@ public class InventoryController {
       @RequestParam(required = false) String q,
       @RequestParam(required = false) InventoryItemStatus status,
       @RequestParam(required = false) InventoryItemType type,
+      @RequestParam(defaultValue = "0") int page,
       Model model) {
     if (!model.containsAttribute("inventoryForm")) {
       model.addAttribute("inventoryForm", new InventoryItemForm(null, null, null, null, null, null));
     }
-    populate(model, showRetired, q, status, type);
+    populate(model, showRetired, q, status, type, page);
     return "inventory/list";
   }
 
@@ -425,20 +426,25 @@ public class InventoryController {
   }
 
   private void populate(Model model) {
-    populate(model, false, null, null, null);
+    populate(model, false, null, null, null, 0);
   }
 
   private void populate(Model model, boolean showRetired) {
-    populate(model, showRetired, null, null, null);
+    populate(model, showRetired, null, null, null, 0);
   }
 
   private void populate(Model model, boolean showRetired, String keyword,
-      InventoryItemStatus status, InventoryItemType type) {
+      InventoryItemStatus status, InventoryItemType type, int page) {
     UUID tenantId = tenantContext.currentTenantId();
-    // 거르기를 DB 가 한다. 전체를 읽어 stream 으로 거르면 자산이 수천 건인 기관에서
-    // 매 요청마다 테이블을 통째로 읽는다 — 감사 로그에서 고친 것과 같은 패턴이다.
-    model.addAttribute("items",
-        inventoryService.filter(tenantId, keyword, status, type, showRetired));
+    // 거르기와 자르기를 모두 DB 가 한다. 전체를 읽어 stream 으로 거르면 자산이 수천 건인
+    // 기관에서 매 요청마다 테이블을 통째로 읽는다 — 감사 로그에서 고친 것과 같은 패턴이다.
+    var found = inventoryService.filter(tenantId, keyword, status, type, showRetired, page);
+    model.addAttribute("items", found.getContent());
+    // 페이지를 넘길 때 검색·필터 조건이 함께 따라가야 한다 — 안 그러면 2페이지에서 조건이 풀린다.
+    model.addAttribute("pager", com.moara.moa.web.support.PageView.of(found, "/inventory",
+        com.moara.moa.web.support.PageView.conditions(
+            "q", keyword, "status", status, "type", type,
+            "showRetired", showRetired ? "true" : null)));
     model.addAttribute("showRetired", showRetired);
     model.addAttribute("q", keyword);
     model.addAttribute("status", status);

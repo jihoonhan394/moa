@@ -33,11 +33,12 @@ public interface ManagedUserRepository extends JpaRepository<ManagedUser, UUID> 
              or lower(u.email) like lower(concat('%', :term, '%')) escape '!')
       order by u.name asc
       """)
-  List<ManagedUser> filter(
+  org.springframework.data.domain.Page<ManagedUser> filter(
       @Param("tenantId") UUID tenantId,
       @Param("term") String term,
       @Param("status") UserStatus status,
-      @Param("role") UserRole role);
+      @Param("role") UserRole role,
+      org.springframework.data.domain.Pageable pageable);
 
   @Query("SELECT u FROM ManagedUser u JOIN u.roles r WHERE r = :role ORDER BY u.name ASC")
   List<ManagedUser> findAllByRole(UserRole role);

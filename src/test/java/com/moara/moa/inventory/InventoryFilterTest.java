@@ -36,11 +36,11 @@ class InventoryFilterTest {
         "회계 모니터", InventoryItemType.PHYSICAL, "실물 / 사무기기 / 모니터", "SN-BBB2",
         null, null));
 
-    assertThat(names(inventoryService.filter(tenant, "노트북", null, null, false)))
+    assertThat(names(inventoryService.filter(tenant, "노트북", null, null, false, 0).getContent()))
         .containsExactly("영업 노트북");
-    assertThat(names(inventoryService.filter(tenant, "BBB2", null, null, false)))
+    assertThat(names(inventoryService.filter(tenant, "BBB2", null, null, false, 0).getContent()))
         .containsExactly("회계 모니터");
-    assertThat(names(inventoryService.filter(tenant, "모니터", null, null, false)))
+    assertThat(names(inventoryService.filter(tenant, "모니터", null, null, false, 0).getContent()))
         .as("분류 경로에도 '모니터' 가 있다")
         .containsExactly("회계 모니터");
   }
@@ -52,8 +52,8 @@ class InventoryFilterTest {
     inventoryService.create(tenant, new InventoryItemForm(
         "Dell Latitude", InventoryItemType.PHYSICAL, "실물 / 가구", "sn-lower-1", null, null));
 
-    assertThat(inventoryService.filter(tenant, "dell", null, null, false)).hasSize(1);
-    assertThat(inventoryService.filter(tenant, "SN-LOWER", null, null, false)).hasSize(1);
+    assertThat(inventoryService.filter(tenant, "dell", null, null, false, 0).getContent()).hasSize(1);
+    assertThat(inventoryService.filter(tenant, "SN-LOWER", null, null, false, 0).getContent()).hasSize(1);
   }
 
   @Test
@@ -63,9 +63,9 @@ class InventoryFilterTest {
     inventoryService.create(tenant, new InventoryItemForm(
         "자산1", InventoryItemType.PHYSICAL, "실물 / 가구", null, null, null));
 
-    assertThat(inventoryService.filter(tenant, null, null, null, false)).hasSize(1);
-    assertThat(inventoryService.filter(tenant, "", null, null, false)).hasSize(1);
-    assertThat(inventoryService.filter(tenant, "   ", null, null, false)).hasSize(1);
+    assertThat(inventoryService.filter(tenant, null, null, null, false, 0).getContent()).hasSize(1);
+    assertThat(inventoryService.filter(tenant, "", null, null, false, 0).getContent()).hasSize(1);
+    assertThat(inventoryService.filter(tenant, "   ", null, null, false, 0).getContent()).hasSize(1);
   }
 
   @Test
@@ -76,8 +76,8 @@ class InventoryFilterTest {
         "폐기대상", InventoryItemType.PHYSICAL, "실물 / 가구", null, null, null));
     inventoryService.retire(tenant, item.getId());
 
-    assertThat(inventoryService.filter(tenant, null, null, null, false)).isEmpty();
-    assertThat(names(inventoryService.filter(tenant, null, null, null, true)))
+    assertThat(inventoryService.filter(tenant, null, null, null, false, 0).getContent()).isEmpty();
+    assertThat(names(inventoryService.filter(tenant, null, null, null, true, 0).getContent()))
         .containsExactly("폐기대상");
     assertThat(inventoryService.retiredCount(tenant)).isEqualTo(1);
   }
@@ -91,13 +91,13 @@ class InventoryFilterTest {
     inventoryService.create(tenant, new InventoryItemForm(
         "노트북 라이선스", InventoryItemType.SOFTWARE, "SW / 오피스", null, null, null));
 
-    assertThat(names(inventoryService.filter(tenant, "노트북", null, null, false)))
+    assertThat(names(inventoryService.filter(tenant, "노트북", null, null, false, 0).getContent()))
         .hasSize(2);
     assertThat(names(inventoryService.filter(
-        tenant, "노트북", null, InventoryItemType.SOFTWARE, false)))
+        tenant, "노트북", null, InventoryItemType.SOFTWARE, false, 0).getContent()))
         .containsExactly("노트북 라이선스");
     assertThat(names(inventoryService.filter(
-        tenant, null, InventoryItemStatus.AVAILABLE, InventoryItemType.PHYSICAL, false)))
+        tenant, null, InventoryItemStatus.AVAILABLE, InventoryItemType.PHYSICAL, false, 0).getContent()))
         .containsExactly("공용 노트북");
   }
 
@@ -109,9 +109,9 @@ class InventoryFilterTest {
     inventoryService.create(other, new InventoryItemForm(
         "남의 노트북", InventoryItemType.PHYSICAL, "실물 / 가구", "SN-OTHER", null, null));
 
-    assertThat(inventoryService.filter(mine, "노트북", null, null, false)).isEmpty();
-    assertThat(inventoryService.filter(mine, "SN-OTHER", null, null, false)).isEmpty();
-    assertThat(inventoryService.filter(other, "노트북", null, null, false)).hasSize(1);
+    assertThat(inventoryService.filter(mine, "노트북", null, null, false, 0).getContent()).isEmpty();
+    assertThat(inventoryService.filter(mine, "SN-OTHER", null, null, false, 0).getContent()).isEmpty();
+    assertThat(inventoryService.filter(other, "노트북", null, null, false, 0).getContent()).hasSize(1);
   }
 
   @Test
@@ -122,10 +122,10 @@ class InventoryFilterTest {
         "보통자산", InventoryItemType.PHYSICAL, "실물 / 가구", null, null, null));
 
     // '%' 를 그대로 넘기면 전체가 매치된다. 이름에 '%' 가 든 자산은 없으므로 0건이어야 한다.
-    assertThat(inventoryService.filter(tenant, "%", null, null, false))
+    assertThat(inventoryService.filter(tenant, "%", null, null, false, 0).getContent())
         .as("LIKE 와일드카드가 글자로 취급되지 않으면 전체가 쏟아진다")
         .isEmpty();
-    assertThat(inventoryService.filter(tenant, "_", null, null, false)).isEmpty();
+    assertThat(inventoryService.filter(tenant, "_", null, null, false, 0).getContent()).isEmpty();
   }
 
   private static List<String> names(List<InventoryItem> items) {

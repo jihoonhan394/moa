@@ -41,7 +41,11 @@ class ManagedUserControllerTest {
     ManagedUser admin = createMoaUser();
     ManagedUser listed = createMoaUser();
 
-    mockMvc.perform(get("/users").with(authentication(auth(admin))))
+    // ⚠️ 목록은 페이지당 50명이다. 기본 기관에는 샘플·다른 테스트가 만든 사용자가 쌓여
+    // 있어서 "방금 만든 사람이 1페이지에 있다"는 더 이상 보장되지 않는다 — 그게 맞는
+    // 동작이고(50명 넘는 기관은 2페이지가 필요하다), 찾는 수단은 검색이다.
+    mockMvc.perform(get("/users").param("q", listed.getUsername())
+            .with(authentication(auth(admin))))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString(listed.getUsername())));
   }

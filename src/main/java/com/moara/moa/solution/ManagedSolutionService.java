@@ -58,13 +58,17 @@ public class ManagedSolutionService {
 
   /** 목록 화면의 검색·필터. 빈 문자열은 "조건 없음"으로 본다. */
   @Transactional(readOnly = true)
-  public List<ManagedSolution> filter(
-      UUID tenantId, String keyword, String category, UUID ownerGroupId) {
+  public org.springframework.data.domain.Page<ManagedSolution> filter(
+      UUID tenantId, String keyword, String category, UUID ownerGroupId, int page) {
     return solutionRepository.filter(tenantId,
         com.moara.moa.support.Values.likeTerm(keyword),
         com.moara.moa.support.Values.blankToNull(category),
-        ownerGroupId);
+        ownerGroupId,
+        org.springframework.data.domain.PageRequest.of(Math.max(0, page), PAGE_SIZE));
   }
+
+  /** 한 화면에 그릴 행 수. */
+  public static final int PAGE_SIZE = 50;
 
   public List<ManagedSolution> findByAsset(UUID tenantId, UUID assetId) {
     return solutionRepository.findAllByTenantIdAndAssetIdOrderByNameAsc(tenantId, assetId);

@@ -156,11 +156,16 @@ public class SolutionController {
       @RequestParam(required = false) String q,
       @RequestParam(required = false) String category,
       @RequestParam(required = false) String ownerGroupId,
+      @RequestParam(defaultValue = "0") int page,
       Model model) {
     UUID tenantId = tenantContext.currentTenantId();
     UUID ownerGroup = parseUuid(ownerGroupId);
-    // 거르기는 DB 가 한다. 기동 순서 탭은 전체 솔루션 이름이 필요하므로 따로 읽는다.
-    var solutions = solutionService.filter(tenantId, q, category, ownerGroup);
+    // 거르기와 자르기를 DB 가 한다. 기동 순서 탭은 전체 솔루션 이름이 필요하므로 따로 읽는다.
+    var found = solutionService.filter(tenantId, q, category, ownerGroup, page);
+    var solutions = found.getContent();
+    model.addAttribute("pager", com.moara.moa.web.support.PageView.of(found, "/solutions",
+        com.moara.moa.web.support.PageView.conditions(
+            "q", q, "category", category, "ownerGroupId", ownerGroupId)));
     model.addAttribute("q", q);
     model.addAttribute("filterCategory", category);
     model.addAttribute("filterOwnerGroupId", ownerGroupId);
