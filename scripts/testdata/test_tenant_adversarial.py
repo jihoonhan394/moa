@@ -11,7 +11,16 @@
 
     python scripts\\testdata\\test_tenant_adversarial.py
 
-만든 기관은 코드가 `ZZ` 로 시작한다 — 목록에서 골라 지우기 쉽게.
+만든 기관은 코드가 `ZZ` 로 시작하고, **끝나면 전부 비활성 처리한다.**
+
+⚠️ 기관 **삭제는 없다.** 감사 로그가 append-only 이고 자산·사용자가 딸려 있어 의도적으로
+두지 않았다(비활성/활성만 있다). 비활성이면 `/enter` 에서 "비활성화된 기관입니다" 로 막히고
+목록에서도 그렇게 보이므로, 남아 있어도 테스트와 섞이지 않는다. 로컬 H2 는 재기동하면
+어차피 사라진다.
+
+지난 실행이 남긴 것까지 정리만 하려면:
+
+    python scripts\testdata\test_tenant_adversarial.py --cleanup
 """
 import re
 import sys
@@ -198,8 +207,57 @@ def features_on_by_default(client, tenant_id):
           f"켜진 것 {sorted(checked)} / 전체 {sorted(offered)}")
 
 
+def disable_leftovers(client, label="정리"):
+    """
+    코드가 ZZ 로 시작하는 기관을 전부 비활성 처리한다.
+
+    목록 마크업이 `<a href="/admin/tenants/{id}">{코드}</a>` 라서 **링크 텍스트가 곧 코드**다
+    — 행 전체를 긁어 코드처럼 보이는 글자를 찾지 않는다(그 방식으로 한 번 아무것도 못 찾았다).
+    """
+    print(f"\n{label}) ZZ* 기관 비활성 처리")
+    _, listing = client.get("/admin/tenants")
+    pairs = re.findall(r'/admin/tenants/([0-9a-f-]{36})"[^>]*>([^<]+)</a>', listing)
+
+    targets, seen = [], set()
+    for tenant_id, code in pairs:
+        code = code.strip()
+        if code.startswith("ZZ") and tenant_id not in seen:
+            seen.add(tenant_id)
+            targets.append((tenant_id, code))
+
+    if not targets:
+        print("  남은 ZZ* 기관이 없다")
+        return 0
+
+    disabled = 0
+    for tenant_id, code in targets:
+        status, location, _ = client.post(
+            f"/admin/tenants/{tenant_id}/disable",
+            [("_csrf", client.csrf(f"/admin/tenants/{tenant_id}"))])
+        if ok(status, location):
+            disabled += 1
+        else:
+            print(f"  [FAIL] {code} 비활성 실패 -- {status} -> {location}")
+    print(f"  {disabled}/{len(targets)}개 비활성 처리")
+    return disabled
+
+
+def verify_disabled_blocks_entry(code):
+    """비활성 기관은 /enter 에서 막혀야 한다 — 정리가 실제로 효과가 있는지 본다."""
+    c = Client()
+    status, location, body = c.post("/enter", [("code", code), ("_csrf", c.csrf("/enter"))])
+    check("비활성 기관은 진입이 막힌다", status == 200 and "비활성화된 기관" in body,
+          f"{status} -> {location}")
+
+
 def main():
     client = platform()
+
+    # 정리만 하고 끝내는 모드. 지난 실행이 남긴 것까지 걷어낸다.
+    if "--cleanup" in sys.argv:
+        disable_leftovers(client, label="단독 정리")
+        sys.exit(0)
+
     rejected_inputs(client)
     created = odd_but_allowed(client)
     xss_is_escaped(client, created)
@@ -207,11 +265,17 @@ def main():
     tenant_id = entry_flow(created)
     features_on_by_default(client, tenant_id)
 
+    # ⚠️ 정리는 **검사가 끝난 뒤**에 한다. 먼저 비활성으로 돌려 놓으면 위의 진입 시험이
+    # "비활성화된 기관입니다" 로 막혀 통과하지 못한다.
+    disable_leftovers(client, label="7")
+    if created:
+        verify_disabled_blocks_entry(created[0][2])
+
     print(f"\n결과: {len(PASS)} 통과 / {len(FAIL)} 실패 / 참고 {len(NOTES)}건")
     for failure in FAIL:
         print(f"  - 실패: {failure}")
     if created:
-        print(f"\n만든 기관 {len(created)}개(코드가 ZZ 로 시작):")
+        print(f"\n만든 기관 {len(created)}개 — 전부 비활성 처리했다(삭제는 없다):")
         for label, _, code, tenant_id in created:
             print(f"  {code:16} {label}")
     sys.exit(1 if FAIL else 0)
