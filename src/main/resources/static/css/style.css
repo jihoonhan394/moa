@@ -597,6 +597,24 @@ button.primary,
 
 /* 솔루션 헬스 상태 배지. 색만으로 구분하지 않는다 — 글자("정상/장애/확인 안 됨")를 함께
    둔다. 색각 이상(남성 약 8%)인 사람에게 초록·빨강 배지는 같은 회색 두 개로 보인다. */
+/* 진입 화면의 "기억하기" 체크박스. 라벨 전체가 누를 수 있어야 한다 — 체크박스만
+   정확히 찍게 두면 폰에서 안 눌린다. */
+.login-remember {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 2px 0 10px;
+	color: var(--muted);
+	font-size: .86rem;
+	cursor: pointer;
+}
+.login-remember input {
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	cursor: pointer;
+}
+
 .health-badge {
 	display: inline-block;
 	padding: 3px 9px;

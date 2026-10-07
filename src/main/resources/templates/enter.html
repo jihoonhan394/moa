@@ -8,10 +8,22 @@
     <h1>기관 선택</h1>
     <p class="subcopy">소속 기관 코드를 입력하고, 다음 단계에서 해당 기관 계정으로 로그인하세요.</p>
     <p th:if="${error}" th:text="${error}" class="subcopy t-bad">오류</p>
+    <!-- 역할이 바뀌어 세션이 만료된 경우. 아무 말 없이 로그인 화면이 나오면
+         사용자는 "왜 로그아웃됐나"를 모른다. -->
+    <p th:if="${param.expired != null}" class="subcopy t-warn">
+      권한이 변경되어 다시 로그인해야 합니다. 변경된 권한은 로그인 직후부터 적용됩니다.
+    </p>
+    <p th:if="${param.logout != null}" class="subcopy">로그아웃되었습니다.</p>
     <form method="post" th:action="@{/enter}">
       <label for="code">기관 코드</label>
       <input id="code" name="code" th:value="${code}" placeholder="예: MTCM" required autofocus
              style="text-transform:uppercase" autocomplete="organization">
+      <!-- 기억은 opt-in 이다. 기관 코드는 비밀이 아니지만 "이 기기를 어느 회사가 쓰는가"는
+           남는다 — 공용 PC 에서 그게 남으면 안 되는 경우가 있다. -->
+      <label class="login-remember">
+        <input type="checkbox" name="remember" value="1">
+        이 기기에서 기관 코드를 기억
+      </label>
       <button class="button primary" type="submit">다음</button>
     </form>
     <p class="subcopy login-help">기관 코드를 모르면 소속 기관의 관리자에게 문의하세요.</p>

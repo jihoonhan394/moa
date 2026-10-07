@@ -25,6 +25,11 @@
       <button class="button primary" type="submit">콘솔 로그인</button>
     </form>
     <p class="subcopy login-help" th:unless="${platform}">계정은 기관 관리자의 초대 메일로 발급됩니다.</p>
+    <!-- 기억해 둔 기관으로 바로 들어오므로, 빠져나갈 길이 반드시 있어야 한다.
+         이 링크가 없으면 공용 PC 에서 남의 기관 로그인 화면에 갇힌다. -->
+    <p class="subcopy login-help" th:unless="${platform}">
+      <a th:href="@{/enter(change=1)}">다른 기관으로 로그인</a>
+    </p>
   </section>
 </main>
   <script th:src="@{/js/console-preview.js}" defer></script>

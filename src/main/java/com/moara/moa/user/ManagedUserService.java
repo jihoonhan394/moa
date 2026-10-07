@@ -20,10 +20,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class ManagedUserService {
   private final ManagedUserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
+  private final com.moara.moa.security.SessionTerminator sessionTerminator;
 
-  public ManagedUserService(ManagedUserRepository userRepository, PasswordEncoder passwordEncoder) {
+  public ManagedUserService(
+      ManagedUserRepository userRepository, PasswordEncoder passwordEncoder,
+      com.moara.moa.security.SessionTerminator sessionTerminator) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
+    this.sessionTerminator = sessionTerminator;
   }
 
   public List<ManagedUser> findAll() {
@@ -131,7 +135,16 @@ public class ManagedUserService {
     if (user.hasRole(UserRole.SYSTEM_ADMIN)) {
       return;
     }
-    user.setRoles(assignable(roles), OffsetDateTime.now());
+    Set<UserRole> next = assignable(roles);
+    boolean changed = !next.equals(user.getRoles());
+    user.setRoles(next, OffsetDateTime.now());
+    if (changed) {
+      // ⚠️ 권한은 로그인 시점에 세션으로 **복사**된다. 세션을 끊지 않으면
+      //   · 준 권한은 그 사람이 로그아웃할 때까지 안 먹고(계속 403 → "고장났다"로 읽힌다)
+      //   · 뺀 권한은 그 사람이 로그아웃할 때까지 계속 먹는다(이쪽이 더 위험하다).
+      // 역할 변경은 드물므로 다시 로그인하는 비용이 매 요청에 질의를 붙이는 것보다 싸다.
+      sessionTerminator.expireSessionsOf(id);
+    }
   }
 
   /**

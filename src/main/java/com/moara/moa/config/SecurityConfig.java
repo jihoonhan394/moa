@@ -3,16 +3,20 @@ package com.moara.moa.config;
 import com.moara.moa.security.MoaAuthenticationFailureHandler;
 import com.moara.moa.security.MoaAuthenticationSuccessHandler;
 import com.moara.moa.security.PlatformEntryFilter;
+import com.moara.moa.security.SessionTerminator;
 import com.moara.moa.security.TenantAuthenticationDetailsSource;
 import com.moara.moa.security.TenantAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 @Configuration
 public class SecurityConfig {
@@ -23,7 +27,8 @@ public class SecurityConfig {
       TenantAuthenticationDetailsSource tenantAuthenticationDetailsSource,
       PlatformEntryFilter platformEntryFilter,
       MoaAuthenticationSuccessHandler successHandler,
-      MoaAuthenticationFailureHandler failureHandler)
+      MoaAuthenticationFailureHandler failureHandler,
+      SessionRegistry sessionRegistry)
       throws Exception {
     // 인증은 기관(테넌트) 컨텍스트를 반영하는 TenantAuthenticationProvider가 처리한다.
     // (아이디만으로 조회하는 기본 DaoAuthenticationProvider는 이 빈이 있으면 자동구성에서 물러난다.)
@@ -94,7 +99,30 @@ public class SecurityConfig {
             .failureHandler(failureHandler)
             .permitAll())
         .logout(logout -> logout.logoutSuccessUrl("/enter?logout").invalidateHttpSession(true))
+        // 세션 레지스트리를 붙인다. 동시 로그인을 제한하려는 것이 아니라(-1 = 무제한),
+        // **역할이 바뀐 사람의 세션을 만료시키기 위해** 누가 어떤 세션을 열었는지 알아야 한다.
+        // SessionTerminator 가 그 일을 한다 — 왜 권한만 갈아끼우지 않는지는 그 클래스 주석에.
+        .sessionManagement(session -> session
+            .maximumSessions(-1)
+            .sessionRegistry(sessionRegistry)
+            .expiredUrl("/enter?expired"))
         .build();
+  }
+
+  /**
+   * 열린 세션을 추적한다. {@link SessionTerminator} 가 역할 변경 시 이걸 보고 만료시킨다.
+   *
+   * <p>⚠️ {@link HttpSessionEventPublisher} 가 **반드시 함께 있어야 한다.** 없으면 세션이
+   * 끝나도 레지스트리가 모르고 죽은 세션이 계속 쌓인다(메모리 누수 + 엉뚱한 만료 대상).
+   */
+  @Bean
+  SessionRegistry sessionRegistry() {
+    return new SessionRegistryImpl();
+  }
+
+  @Bean
+  HttpSessionEventPublisher httpSessionEventPublisher() {
+    return new HttpSessionEventPublisher();
   }
 
   @Bean
