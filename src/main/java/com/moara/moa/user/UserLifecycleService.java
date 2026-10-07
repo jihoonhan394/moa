@@ -21,10 +21,14 @@ public class UserLifecycleService {
 
   private final ManagedUserRepository userRepository;
   private final List<OffboardHandler> offboardHandlers;
+  private final com.moara.moa.security.SessionTerminator sessionTerminator;
 
-  public UserLifecycleService(ManagedUserRepository userRepository, List<OffboardHandler> offboardHandlers) {
+  public UserLifecycleService(
+      ManagedUserRepository userRepository, List<OffboardHandler> offboardHandlers,
+      com.moara.moa.security.SessionTerminator sessionTerminator) {
     this.userRepository = userRepository;
     this.offboardHandlers = offboardHandlers;
+    this.sessionTerminator = sessionTerminator;
   }
 
   @Transactional
@@ -53,6 +57,14 @@ public class UserLifecycleService {
     }
     user.changeStatus(UserStatus.OFFBOARDED, OffsetDateTime.now());
     userRepository.save(user);
+    // ⚠️ 상태만 바꾸면 **새 로그인만** 막힌다. MoaUserDetails 가 로그인 시점의 enabled 를
+    // 복사해 두므로, 이미 열린 세션은 그 사람이 로그아웃할 때까지 계속 동작했다
+    // (moa-mobile doc/07 P18 · 시나리오 F4 의 "알려진 한계"가 이것이다).
+    //
+    // 핸들러(OffboardHandler)로 두지 않은 이유: 핸들러 하나가 실패하면 전체를 롤백하는데,
+    // 세션 종료는 DB 밖이라 되돌려지지 않는다. 회수가 **전부 끝난 뒤**에 끊어야
+    // "퇴사가 취소됐는데 로그아웃만 당했다"가 생기지 않는다.
+    sessionTerminator.expireSessionsOf(userId);
     return new OffboardResult(outcomes);
   }
 }

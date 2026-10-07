@@ -243,10 +243,10 @@ public class ManagedUserService {
     findById(tenantId, id).changeStatus(UserStatus.ACTIVE, OffsetDateTime.now());
   }
 
-  /** 사용자를 비활성(DISABLED)으로 전환한다(로그인 차단). */
+  /** 사용자를 비활성(DISABLED)으로 전환한다(로그인 차단 + 열린 세션 종료). */
   @Transactional
   public void deactivate(UUID tenantId, UUID id) {
-    findById(tenantId, id).changeStatus(UserStatus.DISABLED, OffsetDateTime.now());
+    blockAccess(findById(tenantId, id), UserStatus.DISABLED);
   }
 
   /**
@@ -259,6 +259,8 @@ public class ManagedUserService {
     ManagedUser user = findById(id);
     userRepository.delete(user);
     userRepository.flush();
+    // 지운 계정의 세션이 살아 있으면 그 사람은 "없는 사용자"로 계속 돌아다닌다.
+    sessionTerminator.expireSessionsOf(id);
   }
 
   /** 특정 기관의 대표 관리자(TENANT_ADMIN)를 생성한다(연락처 필수). 플랫폼 콘솔의 기관 상세에서 프로비저닝. */
@@ -365,7 +367,7 @@ public class ManagedUserService {
 
   @Transactional
   public void disable(UUID tenantId, UUID id) {
-    findById(tenantId, id).changeStatus(UserStatus.DISABLED, OffsetDateTime.now());
+    blockAccess(findById(tenantId, id), UserStatus.DISABLED);
   }
 
   /**
@@ -378,7 +380,23 @@ public class ManagedUserService {
     if (user.getTenantId() != null || !user.hasRole(UserRole.SYSTEM_ADMIN)) {
       throw new ManagedUserNotFoundException(id);
     }
-    user.changeStatus(UserStatus.DISABLED, OffsetDateTime.now());
+    blockAccess(user, UserStatus.DISABLED);
+  }
+
+  /**
+   * 접근을 막는다 — 상태를 바꾸고 <b>열린 세션까지 끊는다.</b>
+   *
+   * <p>⚠️ {@link MoaUserDetails} 는 로그인 시점의 {@code enabled} 를 <b>복사</b>해 둔다
+   * ({@code status == ACTIVE}). 그래서 상태만 바꾸면 <b>새 로그인만 막히고</b> 이미 열린
+   * 세션은 그 사람이 스스로 로그아웃할 때까지 계속 동작했다. 정지·퇴사는 "지금 막아야"
+   * 하는 행위이므로 그 창이 있으면 안 된다.
+   *
+   * <p>세 경로(정지 둘·운영자 정지)가 각자 {@code changeStatus} 를 부르고 있었다.
+   * 한 곳으로 모아야 다음 경로가 생겨도 세션 종료를 빠뜨리지 않는다.
+   */
+  private void blockAccess(ManagedUser user, UserStatus status) {
+    user.changeStatus(status, OffsetDateTime.now());
+    sessionTerminator.expireSessionsOf(user.getId());
   }
 
   private void validateDuplicates(UUID tenantId, UserForm form) {

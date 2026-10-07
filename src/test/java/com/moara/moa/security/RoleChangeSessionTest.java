@@ -33,6 +33,7 @@ class RoleChangeSessionTest {
   @Autowired private TenantService tenantService;
   @Autowired private SessionRegistry sessionRegistry;
   @Autowired private SessionTerminator sessionTerminator;
+  @Autowired private com.moara.moa.user.UserLifecycleService lifecycleService;
 
   @Test
   @DisplayName("⚠️ 역할을 바꾸면 그 사람의 세션이 만료된다")
@@ -108,6 +109,44 @@ class RoleChangeSessionTest {
   void 세션이_없어도_된다() {
     assertThat(sessionTerminator.expireSessionsOf(UUID.randomUUID())).isZero();
     assertThat(sessionTerminator.expireSessionsOf(null)).isZero();
+  }
+
+  @Test
+  @DisplayName("⚠️ 퇴사 처리하면 열린 세션이 끊긴다 — 상태만 바꾸면 새 로그인만 막힌다")
+  void 퇴사가_세션을_끊는다() {
+    UUID tenant = newTenant();
+    ManagedUser user = newUser(tenant, Set.of(UserRole.USER));
+    String sessionId = openSession(user);
+
+    lifecycleService.offboard(tenant, user.getId());
+
+    assertThat(sessionRegistry.getSessionInformation(sessionId).isExpired())
+        .as("퇴사자가 로그아웃할 때까지 계속 쓸 수 있으면 안 된다")
+        .isTrue();
+  }
+
+  @Test
+  @DisplayName("⚠️ 계정을 정지하면 열린 세션이 끊긴다")
+  void 정지가_세션을_끊는다() {
+    UUID tenant = newTenant();
+    ManagedUser user = newUser(tenant, Set.of(UserRole.USER));
+    String sessionId = openSession(user);
+
+    userService.deactivate(tenant, user.getId());
+
+    assertThat(sessionRegistry.getSessionInformation(sessionId).isExpired()).isTrue();
+  }
+
+  @Test
+  @DisplayName("⚠️ 계정을 지우면 열린 세션이 끊긴다 — 없는 사용자로 돌아다니면 안 된다")
+  void 삭제가_세션을_끊는다() {
+    UUID tenant = newTenant();
+    ManagedUser user = newUser(tenant, Set.of(UserRole.USER));
+    String sessionId = openSession(user);
+
+    userService.delete(user.getId());
+
+    assertThat(sessionRegistry.getSessionInformation(sessionId).isExpired()).isTrue();
   }
 
   /**
