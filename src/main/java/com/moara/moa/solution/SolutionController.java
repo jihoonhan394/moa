@@ -104,6 +104,23 @@ public class SolutionController {
             .filter(s -> s.getId().equals(solution.getWikiSpaceId())).findFirst().orElse(null);
     model.addAttribute("solution", solution);
     model.addAttribute("health", healthService.stateOf(tenantId, id));
+    // 소유팀·사용자 배정을 목록 행에서 여기로 옮겼다. 전에는 표의 **행마다** 그룹·사용자
+    // 드롭다운이 들어 있어서 목록 HTML 이 행수 × (사용자수+그룹수) 로 커졌다
+    // (실측 솔루션 24건에 option 1,035개·208KB). 운영 콘솔이 원래 담당자·업체·이력을
+    // 다루는 자리이므로 접근도 여기 둔다.
+    java.util.List<AccessGroup> groups = groupService.findAll(tenantId);
+    Map<UUID, String> groupNames = new HashMap<>();
+    for (AccessGroup group : groups) {
+      groupNames.put(group.getId(), group.getName());
+    }
+    model.addAttribute("groups", groups);
+    model.addAttribute("groupNames", groupNames);
+    model.addAttribute("tenantUsers", userService.findByTenant(tenantId));
+    model.addAttribute("assignedUsers", accessService.assignedUserIds(tenantId, id).stream()
+        .map(userId -> userNames.getOrDefault(userId, "(삭제된 사용자)"))
+        .sorted()
+        .toList());
+    model.addAttribute("assignedUserIds", accessService.assignedUserIds(tenantId, id));
     model.addAttribute("manualSpace", manualSpace);
     model.addAttribute("spaces", wikiSpaceService.findAll(tenantId));
     model.addAttribute("owners", maintenanceService.ownersFor(tenantId, MaintenanceTargetType.SOLUTION, id));

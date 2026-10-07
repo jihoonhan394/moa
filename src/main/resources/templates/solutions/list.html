@@ -106,40 +106,8 @@
             <input type="hidden" name="action" th:value="${act}">
             <button class="button" type="submit" th:text="${act}">START</button>
           </form>
-          <details style="display:inline-block;margin-left:.4rem">
-            <summary class="button" style="list-style:none;cursor:pointer">소유팀</summary>
-            <div style="margin-top:.5rem;text-align:left;min-width:240px">
-              <form method="post" th:action="@{'/solutions/' + ${sol.id} + '/owner'}" style="display:flex;gap:.4rem">
-                <select class="fill" name="ownerGroupId">
-                  <option value="" th:selected="${sol.ownerGroupId == null}">소유팀 없음 (인프라 전용)</option>
-                  <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}"
-                          th:selected="${g.id == sol.ownerGroupId}">부서</option>
-                </select>
-                <button class="button primary" type="submit">적용</button>
-              </form>
-              <p class="subcopy" style="margin:.3rem 0 0">소유팀 지정 시 그 팀원 전원이 운영 가능(인프라는 전체 조회).</p>
-            </div>
-          </details>
-          <details style="display:inline-block;margin-left:.4rem">
-            <summary class="button" style="list-style:none;cursor:pointer">사용자 배정</summary>
-            <div style="margin-top:.5rem;text-align:left;min-width:240px">
-              <p class="subcopy" th:if="${#lists.isEmpty(solutionUsers.get(sol.id))}">배정된 사용자가 없습니다.</p>
-              <div th:each="u : ${solutionUsers.get(sol.id)}" style="display:flex;gap:.4rem;align-items:center;margin-bottom:.3rem">
-                <span class="fill" th:text="${u.name + ' (' + u.username + ')'}">사용자</span>
-                <form class="no-margin" method="post" th:action="@{'/solutions/' + ${sol.id} + '/users/delete'}">
-                  <input type="hidden" name="userId" th:value="${u.id}">
-                  <button class="button" type="submit">해제</button>
-                </form>
-              </div>
-              <form method="post" th:action="@{'/solutions/' + ${sol.id} + '/users'}" style="display:flex;gap:.4rem;margin-top:.4rem">
-                <select class="fill" name="userId" required>
-                  <option value="" disabled selected>사용자 선택</option>
-                  <option th:each="tu : ${tenantUsers}" th:value="${tu.id}" th:text="${tu.name + ' (' + tu.username + ')'}">사용자</option>
-                </select>
-                <button class="button primary" type="submit">배정</button>
-              </form>
-            </div>
-          </details>
+          <!-- 소유팀·사용자 배정은 운영 콘솔(상세)에 있다 — 행마다 드롭다운을 두면
+               목록 HTML 이 행수 × (사용자수+그룹수) 로 커진다. 위 "콘솔" 버튼. -->
           <form class="inline" method="post" th:action="@{'/solutions/' + ${sol.id} + '/delete'}">
             <button class="button" type="submit">삭제</button>
           </form>

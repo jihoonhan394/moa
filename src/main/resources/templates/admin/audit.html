@@ -11,7 +11,7 @@
     </div>
   </header>
   <section class="panel">
-    <div class="panel-head"><div><p class="eyebrow">이력</p><h2>전역 행위 기록</h2></div><span class="pill" th:text="${#lists.size(logs)} + '건'">0건</span></div>
+    <div class="panel-head"><div><p class="eyebrow">이력</p><h2>전역 행위 기록</h2></div><span class="pill" th:text="${totalCount} + '건'">0건</span></div>
     <p th:if="${#lists.isEmpty(logs)}" class="subcopy">기록된 플랫폼 감사 로그가 없습니다.</p>
     <div th:unless="${#lists.isEmpty(logs)}" class="data-table table-scroll">
       <div class="table-row table-head"><span>시각</span><span>행위</span><span>대상</span><span>결과</span><span>상세</span></div>
@@ -22,6 +22,12 @@
         <b th:classappend="${log.result.name() == 'SUCCESS'} ? 'good' : 'warn'" th:text="${log.result}">SUCCESS</b>
         <span th:text="${log.message}" class="t-muted">상세</span>
       </div>
+    </div>
+  
+    <div class="asset-toolbar" th:if="${totalPages > 1}" style="margin-top:.6rem;align-items:center">
+      <a class="button" th:if="${pageNumber > 0}" th:href="@{/admin/audit(page=${pageNumber - 1})}">← 이전</a>
+      <span class="subcopy" th:text="${pageNumber + 1} + ' / ' + ${totalPages} + ' 페이지'">1 / 1</span>
+      <a class="button" th:if="${pageNumber + 1 < totalPages}" th:href="@{/admin/audit(page=${pageNumber + 1})}">다음 →</a>
     </div>
   </section>
 </main></div>

@@ -186,14 +186,16 @@ def entry_flow(created):
     return tenant_id
 
 
-def isolation(client, tenant_id):
-    print("\n6) 새 기관은 기능이 꺼진 채로 생성된다 + 격리")
+def features_on_by_default(client, tenant_id):
+    print("\n6) 새 기관은 기능이 켜진 채로 생성된다")
     if tenant_id is None:
         return
     _, detail = client.get(f"/admin/tenants/{tenant_id}")
-    checked = re.findall(r'name="features"[^>]*value="(\w+)"[^>]*checked', detail)
-    check("기능 모듈이 전부 꺼져 있다", not checked, f"켜져 있는 것: {checked}")
-    note("신규 기관은 기능이 꺼진 채 생성된다 — 플랫폼 콘솔에서 켜야 메뉴가 보인다(설계)")
+    checked = set(re.findall(r'name="features"[^>]*value="(\w+)"[^>]*checked', detail))
+    offered = set(re.findall(r'name="features"[^>]*value="(\w+)"', detail))
+    # 전에는 전부 꺼진 채로 생성돼, 관리자가 로그인해도 자산·서버·솔루션이 모두 403 이었다.
+    check("기능 모듈이 전부 켜져 있다", bool(offered) and checked == offered,
+          f"켜진 것 {sorted(checked)} / 전체 {sorted(offered)}")
 
 
 def main():
@@ -203,7 +205,7 @@ def main():
     xss_is_escaped(client, created)
     odd_methods(client, created)
     tenant_id = entry_flow(created)
-    isolation(client, tenant_id)
+    features_on_by_default(client, tenant_id)
 
     print(f"\n결과: {len(PASS)} 통과 / {len(FAIL)} 실패 / 참고 {len(NOTES)}건")
     for failure in FAIL:

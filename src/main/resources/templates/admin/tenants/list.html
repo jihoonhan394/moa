@@ -21,6 +21,11 @@
       <p class="subcopy t-bad" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">이름 오류</p>
       <p class="subcopy t-bad" th:if="${#fields.hasErrors('code')}" th:errors="*{code}">코드 오류</p>
     </form>
+    <p class="subcopy">
+      기관 코드는 사용자가 <strong>로그인 1단계에서 직접 입력</strong>합니다 — 짧고 외우기 쉬운 영문으로.
+      <br>
+      <strong>기능 모듈은 전부 켜진 상태로 생성됩니다.</strong> 안 산 기능은 기관 상세에서 내리세요.
+    </p>
   </section>
 
   <section class="panel">

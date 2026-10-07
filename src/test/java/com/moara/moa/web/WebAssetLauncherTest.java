@@ -63,9 +63,8 @@ class WebAssetLauncherTest {
     mockMvc.perform(get("/portal/assets/" + web.getId() + "/open").with(authentication(auth(user))))
         .andExpect(redirectedUrl("https://example.com/portal"));
 
-    assertTrue(auditLogService.findByActor(user.getId()).stream()
-        .anyMatch(log -> log.getAction().equals("WEB_ASSET_OPEN")
-            && log.getResult() == AuditResult.SUCCESS
+    assertTrue(auditLogService.findRecentByActor(user.getId(), "WEB_ASSET_OPEN").stream()
+        .anyMatch(log -> log.getResult() == AuditResult.SUCCESS
             && log.getTargetId().equals(web.getId())));
   }
 
@@ -78,8 +77,8 @@ class WebAssetLauncherTest {
     mockMvc.perform(get("/portal/assets/" + web.getId() + "/open").with(authentication(auth(stranger))))
         .andExpect(redirectedUrl("/portal?error=denied"));
 
-    assertTrue(auditLogService.findByActor(stranger.getId()).stream()
-        .anyMatch(log -> log.getAction().equals("WEB_ASSET_OPEN") && log.getResult() == AuditResult.FAILURE));
+    assertTrue(auditLogService.findRecentByActor(stranger.getId(), "WEB_ASSET_OPEN").stream()
+        .anyMatch(log -> log.getResult() == AuditResult.FAILURE));
   }
 
   @Test

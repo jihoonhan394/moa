@@ -37,8 +37,10 @@ class AuditLogServiceTest {
 
     assertEquals(AuditActionScope.TENANT, log.getActionScope());
     assertEquals(MOA, log.getTenantId());
-    assertTrue(auditLogService.findByTenant(MOA).stream().anyMatch(a -> a.getId().equals(log.getId())));
-    assertTrue(auditLogService.findByActor(actor).stream().anyMatch(a -> a.getId().equals(log.getId())));
+    assertTrue(auditLogService.findByTenant(MOA, null, 0).getContent().stream()
+        .anyMatch(a -> a.getId().equals(log.getId())));
+    assertTrue(auditLogService.findRecentByActor(actor, "USER_DISABLE").stream()
+        .anyMatch(a -> a.getId().equals(log.getId())));
   }
 
   @Test
@@ -50,7 +52,8 @@ class AuditLogServiceTest {
 
     assertEquals(AuditActionScope.GLOBAL, log.getActionScope());
     assertNull(log.getTenantId());
-    assertTrue(auditLogService.findGlobal().stream().anyMatch(a -> a.getId().equals(log.getId())));
+    assertTrue(auditLogService.findGlobal(0).getContent().stream()
+        .anyMatch(a -> a.getId().equals(log.getId())));
   }
 
   @Test
@@ -62,7 +65,7 @@ class AuditLogServiceTest {
         new CreateTenantCommand("Other " + System.nanoTime(), "OTH" + System.nanoTime()));
 
     // 다른 테넌트 조회에는 MOA 로그가 포함되지 않는다.
-    assertFalse(auditLogService.findByTenant(other.getId()).stream()
+    assertFalse(auditLogService.findByTenant(other.getId(), null, 0).getContent().stream()
         .anyMatch(a -> a.getId().equals(moaLog.getId())));
   }
 

@@ -40,8 +40,23 @@
       사실에 없는 내용은 요약에도 나오지 않습니다.</p>
   </section>
   <section class="panel">
-    <div class="panel-head"><div><p class="eyebrow">이력</p><h2>관리 행위 기록</h2></div><span class="pill" th:text="${#lists.size(logs)} + '건'">0건</span></div>
-    <p th:if="${#lists.isEmpty(logs)}" class="subcopy">기록된 감사 로그가 없습니다.</p>
+    <div class="panel-head">
+      <div><p class="eyebrow">이력</p><h2>관리 행위 기록</h2></div>
+      <span class="pill" th:text="${totalCount} + '건'">0건</span>
+    </div>
+
+    <!-- 기간을 먼저 고른다. 감사 로그를 여는 이유는 거의 항상 "요즘 무슨 일이 있었나"다. -->
+    <div class="asset-toolbar" style="margin-bottom:.6rem">
+      <a th:each="d : ${periods}" class="button"
+         th:classappend="${d == days} ? 'primary'"
+         th:href="@{/audit(days=${d})}"
+         th:text="${d == 0} ? '전 기간' : ('최근 ' + ${d} + '일')">기간</a>
+    </div>
+
+    <p th:if="${#lists.isEmpty(logs)}" class="subcopy"
+       th:text="${days > 0}
+         ? '최근 ' + ${days} + '일 안에 기록된 감사 로그가 없습니다. 기간을 넓혀 보세요.'
+         : '기록된 감사 로그가 없습니다.'">기록된 감사 로그가 없습니다.</p>
     <div th:unless="${#lists.isEmpty(logs)}" class="data-table table-scroll">
       <div class="table-row table-head"><span>시각</span><span>행위자</span><span>행위</span><span>대상</span><span>결과</span></div>
       <div class="table-row" th:each="log : ${logs}">
@@ -54,6 +69,15 @@
         <span th:text="${log.target}">대상</span>
         <b th:classappend="${log.result.name() == 'SUCCESS'} ? 'good' : 'warn'" th:text="${log.result}">SUCCESS</b>
       </div>
+    </div>
+
+    <!-- 페이지 이동. 전체를 한 화면에 그리지 않는다 — 감사 로그는 지우지 않으므로 계속 는다. -->
+    <div class="asset-toolbar" th:if="${totalPages > 1}" style="margin-top:.6rem;align-items:center">
+      <a class="button" th:if="${pageNumber > 0}"
+         th:href="@{/audit(days=${days}, page=${pageNumber - 1})}">← 이전</a>
+      <span class="subcopy" th:text="${pageNumber + 1} + ' / ' + ${totalPages} + ' 페이지'">1 / 1</span>
+      <a class="button" th:if="${pageNumber + 1 < totalPages}"
+         th:href="@{/audit(days=${days}, page=${pageNumber + 1})}">다음 →</a>
     </div>
   </section>
 </main></div>

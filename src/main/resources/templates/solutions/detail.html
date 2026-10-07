@@ -31,6 +31,47 @@
     </form>
   </section>
 
+  <!-- 접근 — 소유팀과 사용자 배정. 목록 행에서 여기로 옮겼다(행마다 드롭다운이 들어가
+       목록이 행수 × 사용자수로 커졌다). -->
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">접근</p><h2>소유팀 · 사용자 배정</h2></div></div>
+
+    <form method="post" th:action="@{'/solutions/' + ${solution.id} + '/owner'}" class="inline-form">
+      <label for="ownerGroupId">소유팀</label>
+      <select id="ownerGroupId" name="ownerGroupId">
+        <option value="" th:selected="${solution.ownerGroupId == null}">소유팀 없음 (인프라 전용)</option>
+        <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}"
+                th:selected="${g.id == solution.ownerGroupId}">부서</option>
+      </select>
+      <button class="button primary" type="submit">적용</button>
+    </form>
+    <p class="subcopy">소유팀을 지정하면 그 팀원은 개인 배정 없이도 운영(제어)할 수 있습니다. 인프라 관리자는 전체 조회.</p>
+
+    <p class="subcopy" style="margin-top:.8rem"><strong>배정된 사용자</strong></p>
+    <p th:if="${#lists.isEmpty(assignedUserIds)}" class="subcopy">개인 배정이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(assignedUserIds)}" class="data-table compact">
+      <div class="table-row" th:each="uid : ${assignedUserIds}">
+        <span th:text="${userNames.getOrDefault(uid, '(삭제된 사용자)')}">사용자</span>
+        <span class="table-actions">
+          <form class="inline" method="post" th:action="@{'/solutions/' + ${solution.id} + '/users/delete'}">
+            <input type="hidden" name="userId" th:value="${uid}">
+            <button class="button" type="submit">해제</button>
+          </form>
+        </span>
+      </div>
+    </div>
+
+    <form method="post" th:action="@{'/solutions/' + ${solution.id} + '/users'}" class="inline-form"
+          style="margin-top:.6rem">
+      <select name="userId" required aria-label="배정할 사용자">
+        <option value="" disabled selected>사용자 선택</option>
+        <option th:each="tu : ${tenantUsers}" th:value="${tu.id}"
+                th:text="${tu.name + ' (' + tu.username + ')'}">사용자</option>
+      </select>
+      <button class="button" type="submit">배정</button>
+    </form>
+  </section>
+
   <!-- 위키 매뉴얼 + 유지보수 업체 (운영 정보 편집) -->
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">운영 정보</p><h2>매뉴얼 · 유지보수 업체</h2></div></div>

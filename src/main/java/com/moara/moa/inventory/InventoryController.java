@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -220,6 +222,85 @@ public class InventoryController {
     inventoryService.delete(tenantContext.currentTenantId(), id);
     audit("INVENTORY_DELETE", id, null);
     return "redirect:/inventory";
+  }
+
+  /**
+   * 여러 자산을 한 번에 배정한다.
+   *
+   * <h2>왜 생겼나 — 목록 화면이 무거웠다</h2>
+   *
+   * 전에는 표의 <b>행마다</b> 사용자 드롭다운이 들어 있었다. 그래서 목록 HTML 크기가
+   * {@code 행수 × 사용자수} 로 커졌다 — 실측 자산 130건·사용자 33명에서 option 3,952개,
+   * <b>696KB</b> 였다. 자산 1,000건·사용자 100명이면 멈추는 쪽이다.
+   *
+   * <p>그리고 사람 입장에서도 느렸다. 자산 10건을 한 사람에게 주려면 <b>드롭다운을 10번</b>
+   * 열어야 했다. 체크해서 한 번에 주는 쪽이 가볍고 빠르다.
+   *
+   * <p>⚠️ 한 건이 실패해도 나머지는 진행한다. 배정은 건별로 독립이고, 중간에 멈추면
+   * "어디까지 됐나"를 사람이 다시 확인해야 한다. 실패 건수는 안내로 돌려준다.
+   */
+  @PostMapping("/inventory/bulk/assign")
+  public String bulkAssign(
+      @RequestParam(required = false) List<UUID> itemIds,
+      @RequestParam UUID userId,
+      RedirectAttributes redirectAttributes) {
+    if (itemIds == null || itemIds.isEmpty()) {
+      redirectAttributes.addFlashAttribute("bulkError", "먼저 자산을 선택하세요.");
+      return "redirect:/inventory";
+    }
+    UUID tenantId = tenantContext.currentTenantId();
+    int done = 0;
+    List<String> failed = new ArrayList<>();
+    for (UUID itemId : itemIds) {
+      try {
+        inventoryService.assign(tenantId, itemId, userId, tenantContext.currentUserId());
+        audit("INVENTORY_ASSIGN", itemId, "user=" + userId + " (일괄)");
+        done++;
+      } catch (RuntimeException exception) {
+        failed.add(itemId.toString());
+      }
+    }
+    flashBulkResult(redirectAttributes, done + "건을 배정했습니다.", failed);
+    return "redirect:/inventory";
+  }
+
+  /** 여러 자산의 소유팀을 한 번에 바꾼다. 비우면 해제. */
+  @PostMapping("/inventory/bulk/owner")
+  public String bulkOwner(
+      @RequestParam(required = false) List<UUID> itemIds,
+      @RequestParam(required = false) String ownerGroupId,
+      RedirectAttributes redirectAttributes) {
+    if (itemIds == null || itemIds.isEmpty()) {
+      redirectAttributes.addFlashAttribute("bulkError", "먼저 자산을 선택하세요.");
+      return "redirect:/inventory";
+    }
+    UUID tenantId = tenantContext.currentTenantId();
+    UUID groupId = parseUuid(ownerGroupId);
+    int done = 0;
+    List<String> failed = new ArrayList<>();
+    for (UUID itemId : itemIds) {
+      try {
+        inventoryService.assignOwnerGroup(tenantId, itemId, groupId);
+        audit("INVENTORY_SET_OWNER", itemId, (groupId == null ? "해제" : "group=" + groupId) + " (일괄)");
+        done++;
+      } catch (RuntimeException exception) {
+        failed.add(itemId.toString());
+      }
+    }
+    flashBulkResult(redirectAttributes,
+        done + "건의 소유팀을 " + (groupId == null ? "해제" : "변경") + "했습니다.", failed);
+    return "redirect:/inventory";
+  }
+
+  /** 일괄 작업 결과 안내. 실패한 id 는 화면에 쏟지 않는다 — 건수와 다음 행동만 알려 준다. */
+  private static void flashBulkResult(
+      RedirectAttributes redirectAttributes, String message, List<String> failed) {
+    if (failed.isEmpty()) {
+      redirectAttributes.addFlashAttribute("bulkMessage", message);
+      return;
+    }
+    redirectAttributes.addFlashAttribute("bulkError",
+        message + " " + failed.size() + "건은 상태가 맞지 않아 건너뛰었습니다(이미 배정·폐기 등).");
   }
 
   @PostMapping("/inventory/{id}/assign")

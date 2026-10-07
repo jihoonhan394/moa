@@ -129,9 +129,15 @@ public class PlatformController {
     return "redirect:/admin/operators";
   }
 
+  /** 플랫폼 전역 행위 기록. 페이지당 50건 — 전부 읽어 그리면 쌓일수록 열리지 않는다. */
   @GetMapping("/audit")
-  public String audit(Model model) {
-    model.addAttribute("logs", auditLogService.findGlobal());
+  public String audit(@RequestParam(defaultValue = "0") int page, Model model) {
+    org.springframework.data.domain.Page<com.moara.moa.audit.AuditLog> found =
+        auditLogService.findGlobal(page);
+    model.addAttribute("logs", found.getContent());
+    model.addAttribute("pageNumber", found.getNumber());
+    model.addAttribute("totalPages", found.getTotalPages());
+    model.addAttribute("totalCount", found.getTotalElements());
     return "admin/audit";
   }
 

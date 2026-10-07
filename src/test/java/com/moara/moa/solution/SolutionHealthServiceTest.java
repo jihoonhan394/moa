@@ -199,7 +199,9 @@ class SolutionHealthServiceTest {
     Tenant other = tenantService.createTenant(new CreateTenantCommand(
         "헬스미사용-" + System.nanoTime(),
         "H" + Long.toString(System.nanoTime(), 36).toUpperCase()));
-    // 신규 기관은 기능 모듈이 전부 꺼진 채로 생성된다.
+    // 신규 기관은 **전 기능이 켜진 채로** 생성된다(온보딩 절벽 때문에 바꿨다). 그래서
+    // 솔루션을 안 쓰는 기관을 만들려면 여기서 명시적으로 내린다 — 전제가 드러나 있는 편이 낫다.
+    tenantService.updateDetail(other.getId(), null, null, java.util.Set.of());
     assertThat(tenantService.getById(other.getId())
         .hasFeature(com.moara.moa.tenant.FeatureModule.SOLUTIONS)).isFalse();
 

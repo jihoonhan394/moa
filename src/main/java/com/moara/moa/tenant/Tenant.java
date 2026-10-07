@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -60,11 +61,22 @@ public class Tenant {
 
   protected Tenant() {}
 
+  /**
+   * 새 기관. <b>기능 모듈은 전부 켠 채로 시작한다.</b>
+   *
+   * <p>전에는 꺼진 채로 생성됐다. 그래서 기관을 만들고 관리자 계정을 줘도 그 관리자가
+   * 로그인하면 자산·서버·솔루션이 <b>전부 403</b> 이었고, 켜라는 안내가 어디에도 없었다 —
+   * 새 고객이 처음 보는 화면이 "로그인은 되는데 아무것도 없다"였다.
+   *
+   * <p>끄는 쪽이 켜는 쪽보다 쉽다. 플랫폼 콘솔의 기관 상세에서 안 산 기능을 내리면 된다.
+   * 구독 등급이 생기면 그때 등급별 기본 집합으로 바꾼다({@link FeatureModule} 전체가 아니라).
+   */
   public Tenant(UUID id, CreateTenantCommand command, OffsetDateTime now) {
     this.id = id;
     this.name = command.name().trim();
     this.code = command.code().trim();
     this.status = TenantStatus.ACTIVE;
+    this.features = EnumSet.allOf(FeatureModule.class);
     this.createdAt = now;
     this.updatedAt = now;
   }

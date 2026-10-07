@@ -88,11 +88,14 @@ public class PortalController {
     return "redirect:" + url;
   }
 
+  /**
+   * 최근 웹 접속 10건.
+   *
+   * <p>⚠️ 전에는 이 사람의 감사 로그를 <b>전부</b> 읽어 메모리에서 action 을 거르고 10건을
+   * 잘랐다. 많이 쓰는 사람일수록 느려지는, 거꾸로 된 구조였다 — 거르기와 자르기를 질의가 한다.
+   */
   private List<AuditLog> recentWebOpens(UUID userId) {
-    return auditLogService.findByActor(userId).stream()
-        .filter(log -> WEB_OPEN_ACTION.equals(log.getAction()))
-        .limit(10)
-        .toList();
+    return auditLogService.findRecentByActor(userId, WEB_OPEN_ACTION);
   }
 
   private List<ConnectionSession> recentSessions(UUID tenantId, UUID userId) {

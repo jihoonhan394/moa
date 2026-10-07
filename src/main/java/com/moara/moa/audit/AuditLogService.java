@@ -5,6 +5,9 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,16 +51,32 @@ public class AuditLogService {
         result, message, OffsetDateTime.now(clock)));
   }
 
-  public List<AuditLog> findByTenant(UUID tenantId) {
-    return auditLogRepository.findAllByTenantIdOrderByCreatedAtDesc(tenantId);
+  /** 화면에 보여 줄 페이지 크기. 한 화면에 전부 그리지 않는다. */
+  public static final int PAGE_SIZE = 50;
+
+  /**
+   * 기관의 감사 로그 한 페이지.
+   *
+   * @param since 이 시각 이후만. {@code null} 이면 전 기간(그래도 페이지로만 나간다)
+   */
+  public Page<AuditLog> findByTenant(UUID tenantId, OffsetDateTime since, int page) {
+    Pageable pageable = PageRequest.of(Math.max(0, page), PAGE_SIZE);
+    return since == null
+        ? auditLogRepository.findAllByTenantIdOrderByCreatedAtDesc(tenantId, pageable)
+        : auditLogRepository.findAllByTenantIdAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
+            tenantId, since, pageable);
   }
 
-  public List<AuditLog> findGlobal() {
-    return auditLogRepository.findAllByActionScopeOrderByCreatedAtDesc(AuditActionScope.GLOBAL);
+  /** 플랫폼 전역 행위 한 페이지. */
+  public Page<AuditLog> findGlobal(int page) {
+    return auditLogRepository.findAllByActionScopeOrderByCreatedAtDesc(
+        AuditActionScope.GLOBAL, PageRequest.of(Math.max(0, page), PAGE_SIZE));
   }
 
-  public List<AuditLog> findByActor(UUID actorUserId) {
-    return auditLogRepository.findAllByActorUserIdOrderByCreatedAtDesc(actorUserId);
+  /** 한 사람의 특정 행위 최근 10건. 거르기와 자르기를 모두 질의가 한다. */
+  public List<AuditLog> findRecentByActor(UUID actorUserId, String action) {
+    return auditLogRepository.findTop10ByActorUserIdAndActionOrderByCreatedAtDesc(
+        actorUserId, action);
   }
 
   /** 특정 대상(자원)의 변경 이력. 최신순. */
