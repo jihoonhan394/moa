@@ -31,6 +31,16 @@
                 <span th:case="*" th:text="${r.label}">역할</span>
               </span>
             </label>
+            <!-- 작은 회사는 한 사람이 세 역할을 다 맡는다. 역할을 하나씩 찾아 체크하는
+                 것이 매번 반복되므로 한 번에 켜고 끌 수 있게 둔다. -->
+            <p style="margin:.4rem 0 0">
+              <button type="button" class="button" data-roles-all
+                      th:if="${#lists.size(assignableRoles) > 1}">관리 역할 전체</button>
+              <button type="button" class="button" data-roles-none
+                      th:if="${#lists.size(assignableRoles) > 1}">전체 해제 (일반 사용자)</button>
+            </p>
+            <p class="subcopy t-muted" style="margin:.3rem 0 0">
+              작은 회사는 한 사람이 세 역할을 다 맡는 경우가 많습니다 — <strong>관리 역할 전체</strong>로 한 번에 켭니다.</p>
             <p class="subcopy t-muted" style="margin:.3rem 0 0">
               부여 가능한 관리 역할만 표시됩니다(기관이 켠 기능 기준). 기능은 플랫폼 관리자가
               <span style="font-family:monospace">기관 관리(/admin/tenants)</span>에서 켭니다.</p>
@@ -41,5 +51,6 @@
       </section>
     </main>
   </div>
+<script th:src="@{/js/role-preset.js}" defer></script>
 </body>
 </html>
