@@ -152,9 +152,18 @@ public class SolutionController {
   }
 
   @GetMapping("/solutions")
-  public String list(Model model) {
+  public String list(
+      @RequestParam(required = false) String q,
+      @RequestParam(required = false) String category,
+      @RequestParam(required = false) String ownerGroupId,
+      Model model) {
     UUID tenantId = tenantContext.currentTenantId();
-    var solutions = solutionService.findAll(tenantId);
+    UUID ownerGroup = parseUuid(ownerGroupId);
+    // 거르기는 DB 가 한다. 기동 순서 탭은 전체 솔루션 이름이 필요하므로 따로 읽는다.
+    var solutions = solutionService.filter(tenantId, q, category, ownerGroup);
+    model.addAttribute("q", q);
+    model.addAttribute("filterCategory", category);
+    model.addAttribute("filterOwnerGroupId", ownerGroupId);
     // 솔루션별 배정 사용자(제어 권한 부여 대상).
     Map<UUID, ManagedUser> userById = new HashMap<>();
     for (ManagedUser u : userService.findByTenant(tenantId)) {
@@ -187,7 +196,9 @@ public class SolutionController {
     model.addAttribute("solutionCategories",
         categoryService.tree(tenantId, com.moara.moa.category.CategoryDomain.SOLUTION));
     // 기동 순서(같은 화면 탭). 스텝 뷰까지 구성해 시퀀스 탭에서 바로 렌더.
-    addSequenceModel(model, tenantId, solutions);
+    // ⚠️ 필터된 목록을 넘기면 안 된다. 기동 순서의 스텝은 **전체** 솔루션을 가리키므로,
+    // 걸러진 것은 "(삭제됨)" 으로 표시돼 버린다. 순서 탭은 전체로 그린다.
+    addSequenceModel(model, tenantId, solutionService.findAll(tenantId));
     model.addAttribute("page", "solutions");
     model.addAttribute("pageTitle", "솔루션 · 기동 순서");
     model.addAttribute("projectName", "MOA");

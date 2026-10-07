@@ -13,7 +13,29 @@
     <p th:if="${userError}" class="modal-note t-bad" th:text="${userError}">오류</p>
     <section class="panel">
       <div class="panel-head"><div><p class="eyebrow">사용자 목록</p><h2>등록된 사용자</h2></div><span class="pill" th:text="${#lists.size(users)} + '명'">0명</span></div>
-      <p th:if="${#lists.isEmpty(users)}" class="subcopy">등록된 사용자가 없습니다. 우측 상단에서 사용자를 등록하세요.</p>
+      <!-- 검색·필터. 사람이 30명을 넘으면 목록에서 눈으로 찾는 것이 가장 느리다.
+           거르기는 DB 가 한다(ManagedUserRepository.filter). -->
+      <form method="get" th:action="@{/users}" class="asset-toolbar" style="margin-bottom:.6rem">
+        <input type="search" name="q" th:value="${q}" placeholder="이름 · 아이디 · 이메일 검색"
+               aria-label="사용자 검색" style="min-width:16rem">
+        <select name="status" aria-label="상태">
+          <option value="">상태 전체</option>
+          <option th:each="st : ${statuses}" th:value="${st}" th:text="${st.label}"
+                  th:selected="${st == status}">재직</option>
+        </select>
+        <select name="role" aria-label="역할">
+          <option value="">역할 전체</option>
+          <option th:each="r : ${roles}" th:value="${r}" th:text="${r.label}"
+                  th:selected="${r == role}">역할</option>
+        </select>
+        <button class="button primary" type="submit">찾기</button>
+        <a th:if="${q != null or status != null or role != null}" class="small-link"
+           th:href="@{/users}">조건 지우기</a>
+      </form>
+      <p th:if="${#lists.isEmpty(users) and q == null and status == null and role == null}"
+         class="subcopy">등록된 사용자가 없습니다. 우측 상단에서 사용자를 등록하세요.</p>
+      <p th:if="${#lists.isEmpty(users) and (q != null or status != null or role != null)}"
+         class="subcopy">조건에 맞는 사용자가 없습니다. <strong>조건 지우기</strong>를 눌러 보세요.</p>
       <div th:unless="${#lists.isEmpty(users)}" class="data-table user-table table-scroll">
         <div class="table-row table-head"><span>이름</span><span>아이디</span><span>이메일</span><span>상태</span><span>관리</span></div>
         <div class="table-row" th:each="user : ${users}">

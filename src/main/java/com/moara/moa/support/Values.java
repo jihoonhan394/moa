@@ -25,6 +25,35 @@ public final class Values {
   }
 
   /**
+   * 검색어를 {@code LIKE} 에 넣기 전에 메타문자를 글자로 바꾼다. 비어 있으면 {@code null}.
+   *
+   * <h2>왜 필요한가</h2>
+   *
+   * {@code LIKE} 에서 {@code %} 는 "아무 글자든 몇 개든", {@code _} 는 "아무 글자 하나"다.
+   * 그래서 사용자가 친 검색어를 그대로 넘기면 <b>엉뚱한 결과가 나온다.</b>
+   *
+   * <ul>
+   *   <li>{@code %} 한 글자만 쳐도 <b>전체가 쏟아진다</b>
+   *   <li><b>시리얼에 {@code _} 는 흔하다.</b> {@code SN_1} 로 찾으면 {@code SN-1}·{@code SNX1}
+   *       까지 걸린다 — 사람은 자기가 찾은 것이 왜 나왔는지 알 수 없다
+   * </ul>
+   *
+   * <p>이스케이프 문자는 {@code !} 다. 질의에 {@code escape '!'} 를 함께 적어야 효력이 있다 —
+   * 하나만 해서는 {@code !} 가 그냥 글자로 남는다.
+   *
+   * <p>{@code \} 를 쓰지 않는 이유: JPQL 문자열 리터럴과 DB 별 기본 이스케이프 규칙이 엇갈려
+   * 엔진마다 다르게 동작한다. {@code !} 는 검색어에 거의 쓰이지 않고 규칙이 하나로 고정된다.
+   */
+  public static String likeTerm(String value) {
+    String trimmed = blankToNull(value);
+    if (trimmed == null) {
+      return null;
+    }
+    // 이스케이프 문자 자신을 먼저 바꾼다. 나중에 하면 앞서 넣은 '!' 까지 두 번 처리된다.
+    return trimmed.replace("!", "!!").replace("%", "!%").replace("_", "!_");
+  }
+
+  /**
    * 선택 항목으로 넘어온 식별자를 읽는다. 고르지 않았거나({@code ""}) 값이 망가졌으면
    * <b>고르지 않은 것으로</b> 본다.
    *

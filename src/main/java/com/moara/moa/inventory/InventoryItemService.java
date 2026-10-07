@@ -118,7 +118,7 @@ public class InventoryItemService {
   /** 아직 관리번호가 없는 자산만 찾는다(최대 30건). 번호를 붙일 대상을 고르는 화면용. */
   @Transactional(readOnly = true)
   public List<InventoryItem> searchAttachable(UUID tenantId, String keyword) {
-    String term = com.moara.moa.support.Values.blankToNull(keyword);
+    String term = com.moara.moa.support.Values.likeTerm(keyword);
     if (term == null) {
       return List.of();
     }
@@ -129,16 +129,32 @@ public class InventoryItemService {
   /** 이름·시리얼로 찾는다(최대 30건). 현장에서 자산을 고를 때 쓴다. */
   @Transactional(readOnly = true)
   public List<InventoryItem> search(UUID tenantId, String keyword) {
-    String term = com.moara.moa.support.Values.blankToNull(keyword);
+    String term = com.moara.moa.support.Values.likeTerm(keyword);
     if (term == null) {
       return List.of();
     }
-    java.util.LinkedHashMap<UUID, InventoryItem> found = new java.util.LinkedHashMap<>();
-    repository.findTop30ByTenantIdAndNameContainingIgnoreCaseOrderByNameAsc(tenantId, term)
-        .forEach(item -> found.put(item.getId(), item));
-    repository.findTop30ByTenantIdAndSerialNoContainingIgnoreCaseOrderByNameAsc(tenantId, term)
-        .forEach(item -> found.put(item.getId(), item));
-    return List.copyOf(found.values());
+    return repository.searchByNameOrSerial(
+        tenantId, term, org.springframework.data.domain.PageRequest.of(0, 30));
+  }
+
+  /**
+   * 목록 화면의 검색·필터. 빈 문자열은 "조건 없음"으로 본다.
+   *
+   * <p>자산이 가벼워진 뒤 병목은 <b>찾는 일</b>로 옮겨 갔다 — 130줄에서 노트북 한 대를
+   * 눈으로 찾는 것이 가장 느리다. 거르기는 DB 가 한다({@code InventoryItemRepository#filter}).
+   */
+  @Transactional(readOnly = true)
+  public List<InventoryItem> filter(
+      UUID tenantId, String keyword, InventoryItemStatus status, InventoryItemType type,
+      boolean includeRetired) {
+    return repository.filter(
+        tenantId, com.moara.moa.support.Values.likeTerm(keyword), status, type, includeRetired);
+  }
+
+  /** 폐기 건수. 목록에 "폐기 N건 보기" 를 띄우는 데 쓴다. */
+  @Transactional(readOnly = true)
+  public long retiredCount(UUID tenantId) {
+    return repository.countByTenantIdAndStatus(tenantId, InventoryItemStatus.RETIRED);
   }
 
   public List<InventoryItem> findAssignedTo(UUID tenantId, UUID userId) {

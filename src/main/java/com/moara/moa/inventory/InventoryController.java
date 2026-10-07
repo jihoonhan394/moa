@@ -118,11 +118,15 @@ public class InventoryController {
   @GetMapping("/inventory")
   public String list(
       @RequestParam(name = "showRetired", required = false, defaultValue = "false")
-      boolean showRetired, Model model) {
+      boolean showRetired,
+      @RequestParam(required = false) String q,
+      @RequestParam(required = false) InventoryItemStatus status,
+      @RequestParam(required = false) InventoryItemType type,
+      Model model) {
     if (!model.containsAttribute("inventoryForm")) {
       model.addAttribute("inventoryForm", new InventoryItemForm(null, null, null, null, null, null));
     }
-    populate(model, showRetired);
+    populate(model, showRetired, q, status, type);
     return "inventory/list";
   }
 
@@ -421,23 +425,33 @@ public class InventoryController {
   }
 
   private void populate(Model model) {
-    populate(model, false);
+    populate(model, false, null, null, null);
   }
 
   private void populate(Model model, boolean showRetired) {
+    populate(model, showRetired, null, null, null);
+  }
+
+  private void populate(Model model, boolean showRetired, String keyword,
+      InventoryItemStatus status, InventoryItemType type) {
     UUID tenantId = tenantContext.currentTenantId();
-    List<InventoryItem> all = inventoryService.findAll(tenantId);
-    long retired = all.stream()
-        .filter(i -> i.getStatus() == InventoryItemStatus.RETIRED).count();
-    model.addAttribute("items", showRetired ? all
-        : all.stream().filter(i -> i.getStatus() != InventoryItemStatus.RETIRED).toList());
+    // 거르기를 DB 가 한다. 전체를 읽어 stream 으로 거르면 자산이 수천 건인 기관에서
+    // 매 요청마다 테이블을 통째로 읽는다 — 감사 로그에서 고친 것과 같은 패턴이다.
+    model.addAttribute("items",
+        inventoryService.filter(tenantId, keyword, status, type, showRetired));
     model.addAttribute("showRetired", showRetired);
+    model.addAttribute("q", keyword);
+    model.addAttribute("status", status);
+    model.addAttribute("type", type);
+    model.addAttribute("statuses", InventoryItemStatus.values());
+    model.addAttribute("types", InventoryItemType.values());
     // 등록 화면에서 "어느 장비에 넣을지" 고를 수 있게(장착 안 하면 비워 둔다).
-    model.addAttribute("attachTargets", all.stream()
+    // 여기는 **필터와 무관**하다 — 검색 중에도 장착 대상은 전체에서 골라야 한다.
+    model.addAttribute("attachTargets", inventoryService.findAll(tenantId).stream()
         .filter(i -> i.getStatus() != InventoryItemStatus.RETIRED)
         .filter(i -> !i.isPart())
         .toList());
-    model.addAttribute("retiredCount", retired);
+    model.addAttribute("retiredCount", inventoryService.retiredCount(tenantId));
     // 배정했는데 받은 사람이 아직 "받았다"를 안 누른 것. 담당자가 챙길 수 있게 목록에 배지로.
     model.addAttribute("awaitingConfirmIds", custodyService.awaitingConfirmation(tenantId).stream()
         .map(InventoryCustody::getItemId).collect(java.util.stream.Collectors.toSet()));

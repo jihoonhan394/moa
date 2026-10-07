@@ -265,6 +265,16 @@ public class ManagedUserService {
         passwordEncoder.encode(rawPassword), now));
   }
 
+  /**
+   * 사용자 목록의 검색·필터. 빈 문자열은 "조건 없음"으로 본다.
+   *
+   * <p>사람이 30명을 넘으면 목록에서 눈으로 찾는 것이 가장 느리다 — 거르기는 DB 가 한다.
+   */
+  public List<ManagedUser> filter(UUID tenantId, String keyword, UserStatus status, UserRole role) {
+    return userRepository.filter(
+        tenantId, com.moara.moa.support.Values.likeTerm(keyword), status, role);
+  }
+
   /** 특정 기관의 사용자 수(대표 관리자 프로비저닝/좌석 표시용). */
   public long countByTenant(UUID tenantId) {
     return userRepository.findAllByTenantIdOrderByNameAsc(tenantId).size();

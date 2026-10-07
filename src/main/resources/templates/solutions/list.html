@@ -90,7 +90,28 @@
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">등록된 솔루션</p><h2>제어</h2></div><span class="pill" th:text="${#lists.size(solutions)} + '개'">0개</span></div>
-    <p th:if="${#lists.isEmpty(solutions)}" class="subcopy">등록된 솔루션이 없습니다.</p>
+    <!-- 검색·필터. 거르기는 DB 가 한다(ManagedSolutionRepository.filter). -->
+    <form method="get" th:action="@{/solutions}" class="asset-toolbar" style="margin-bottom:.6rem">
+      <input type="search" name="q" th:value="${q}" placeholder="이름 · 식별자 · 분류 검색"
+             aria-label="솔루션 검색" style="min-width:16rem">
+      <select name="category" aria-label="분류">
+        <option value="">분류 전체</option>
+        <option th:each="c : ${solutionCategories}" th:value="${c.path}" th:text="${c.path}"
+                th:selected="${c.path == filterCategory}">분류</option>
+      </select>
+      <select name="ownerGroupId" aria-label="소유팀">
+        <option value="">소유팀 전체</option>
+        <option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name}"
+                th:selected="${g.id.toString() == filterOwnerGroupId}">부서</option>
+      </select>
+      <button class="button primary" type="submit">찾기</button>
+      <a th:if="${q != null or filterCategory != null or filterOwnerGroupId != null}"
+         class="small-link" th:href="@{/solutions}">조건 지우기</a>
+    </form>
+    <p th:if="${#lists.isEmpty(solutions) and q == null and filterCategory == null and filterOwnerGroupId == null}"
+       class="subcopy">등록된 솔루션이 없습니다.</p>
+    <p th:if="${#lists.isEmpty(solutions) and (q != null or filterCategory != null or filterOwnerGroupId != null)}"
+       class="subcopy">조건에 맞는 솔루션이 없습니다. <strong>조건 지우기</strong>를 눌러 보세요.</p>
     <div th:unless="${#lists.isEmpty(solutions)}" class="data-table">
       <div class="table-row table-head"><span>이름</span><span>상태</span><span>유형</span><span>카테고리</span><span>소유팀</span><span>제어</span></div>
       <div class="table-row" th:each="sol : ${solutions}">

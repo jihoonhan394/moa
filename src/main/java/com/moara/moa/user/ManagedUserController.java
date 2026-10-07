@@ -37,8 +37,18 @@ public class ManagedUserController {
   }
 
   @GetMapping("/users")
-  public String list(Model model) {
-    model.addAttribute("users", userService.findByTenant(tenantContext.currentTenantId()));
+  public String list(
+      @RequestParam(required = false) String q,
+      @RequestParam(required = false) UserStatus status,
+      @RequestParam(required = false) UserRole role,
+      Model model) {
+    model.addAttribute("users",
+        userService.filter(tenantContext.currentTenantId(), q, status, role));
+    model.addAttribute("q", q);
+    model.addAttribute("status", status);
+    model.addAttribute("role", role);
+    model.addAttribute("statuses", UserStatus.values());
+    model.addAttribute("roles", UserRole.values());
     return "users/list";
   }
 

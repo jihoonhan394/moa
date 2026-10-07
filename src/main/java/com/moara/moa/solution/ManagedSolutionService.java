@@ -56,6 +56,16 @@ public class ManagedSolutionService {
     return solutionRepository.findAllByTenantIdOrderByNameAsc(tenantId);
   }
 
+  /** 목록 화면의 검색·필터. 빈 문자열은 "조건 없음"으로 본다. */
+  @Transactional(readOnly = true)
+  public List<ManagedSolution> filter(
+      UUID tenantId, String keyword, String category, UUID ownerGroupId) {
+    return solutionRepository.filter(tenantId,
+        com.moara.moa.support.Values.likeTerm(keyword),
+        com.moara.moa.support.Values.blankToNull(category),
+        ownerGroupId);
+  }
+
   public List<ManagedSolution> findByAsset(UUID tenantId, UUID assetId) {
     return solutionRepository.findAllByTenantIdAndAssetIdOrderByNameAsc(tenantId, assetId);
   }

@@ -64,17 +64,43 @@
         <span class="pill" th:text="${#lists.size(items)} + '개'">0개</span>
         <!-- 폐기품은 기본으로 가린다. 지우는 게 아니라 가리는 것이라 언제든 켤 수 있다. -->
         <a th:if="${!showRetired and retiredCount > 0}" class="small-link"
-           th:href="@{/inventory(showRetired=true)}"
+           th:href="@{/inventory(showRetired=true, q=${q}, status=${status}, type=${type})}"
            th:text="'폐기 ' + ${retiredCount} + '건 보기'">폐기 보기</a>
-        <a th:if="${showRetired}" class="small-link" th:href="@{/inventory}">폐기 숨기기</a>
+        <a th:if="${showRetired}" class="small-link" th:href="@{/inventory(q=${q})}">폐기 숨기기</a>
       </div></div>
+
+    <!-- 검색·필터. 목록이 가벼워진 뒤 병목은 "찾는 일"로 옮겨 갔다 —
+         130줄에서 노트북 한 대를 눈으로 찾는 것이 가장 느리다.
+         거르기는 DB 가 한다(InventoryItemRepository.filter). -->
+    <form method="get" th:action="@{/inventory}" class="asset-toolbar" style="margin-bottom:.6rem">
+      <input type="search" name="q" th:value="${q}" placeholder="이름 · 시리얼 · 분류 검색"
+             aria-label="자산 검색" style="min-width:16rem">
+      <select name="status" aria-label="상태">
+        <option value="">상태 전체</option>
+        <option th:each="st : ${statuses}" th:value="${st}" th:text="${st.label}"
+                th:selected="${st == status}">가용</option>
+      </select>
+      <select name="type" aria-label="유형">
+        <option value="">유형 전체</option>
+        <option th:each="ty : ${types}" th:value="${ty}" th:text="${ty.label}"
+                th:selected="${ty == type}">실물</option>
+      </select>
+      <!-- 폐기 보기 상태를 검색에도 이어 간다. 안 그러면 검색할 때마다 토글이 풀린다. -->
+      <input type="hidden" name="showRetired" th:value="${showRetired}">
+      <button class="button primary" type="submit">찾기</button>
+      <a th:if="${q != null or status != null or type != null}" class="small-link"
+         th:href="@{/inventory(showRetired=${showRetired})}">조건 지우기</a>
+    </form>
+    <p th:if="${(q != null or status != null or type != null) and #lists.isEmpty(items)}"
+       class="subcopy">조건에 맞는 자산이 없습니다. 검색어를 줄이거나 <strong>조건 지우기</strong>를 누르세요.</p>
     <!-- 퇴사 처리는 물건이 돌아왔다고 기록하지 않는다. 실물을 확인해야 창고 입고가 된다. -->
     <p th:if="${returnPendingCount > 0}" class="subcopy t-bad"
        th:text="'반납 대기 ' + ${returnPendingCount} + '건 — 퇴사자에게 배정돼 있던 자산입니다. 실물을 확인한 뒤 보관 이력에서 창고 입고를 기록하세요.'">
       반납 대기</p>
     <p th:if="${bulkMessage != null}" class="subcopy t-good" th:text="${bulkMessage}">결과</p>
     <p th:if="${bulkError != null}" class="subcopy t-bad" th:text="${bulkError}">결과</p>
-    <p th:if="${#lists.isEmpty(items)}" class="subcopy">등록된 항목이 없습니다. 위에서 등록하세요.</p>
+    <p th:if="${#lists.isEmpty(items) and q == null and status == null and type == null}"
+       class="subcopy">등록된 항목이 없습니다. 위에서 등록하세요.</p>
 
     <!-- 일괄 작업 바. 드롭다운은 **화면에 하나씩만** 둔다.
          전에는 행마다 들어 있어서 목록 HTML 이 행수 × 사용자수 로 커졌다(130건에 696KB).

@@ -5,11 +5,40 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ManagedUserRepository extends JpaRepository<ManagedUser, UUID> {
   List<ManagedUser> findAllByOrderByNameAsc();
 
   /** 다중역할: 해당 역할을 가진 사용자 전체(user_roles 조인). */
+  /**
+   * 사용자 목록의 검색·필터. 거르기를 DB 가 한다.
+   *
+   * <p>역할은 {@code @ElementCollection} 이라 조인이 필요하고, 그러면 역할이 여러 개인
+   * 사람이 중복으로 나온다 — {@code distinct} 로 접는다.
+   *
+   * @param term 이름·아이디·이메일에서 찾을 말. {@code null} 이면 전체
+   * @param status 이 상태만. {@code null} 이면 전체
+   * @param role 이 역할을 가진 사람만. {@code null} 이면 전체
+   */
+  @Query("""
+      select distinct u from ManagedUser u
+      left join u.roles r
+      where u.tenantId = :tenantId
+        and (:status is null or u.status = :status)
+        and (:role is null or r = :role)
+        and (:term is null
+             or lower(u.name) like lower(concat('%', :term, '%')) escape '!'
+             or lower(u.username) like lower(concat('%', :term, '%')) escape '!'
+             or lower(u.email) like lower(concat('%', :term, '%')) escape '!')
+      order by u.name asc
+      """)
+  List<ManagedUser> filter(
+      @Param("tenantId") UUID tenantId,
+      @Param("term") String term,
+      @Param("status") UserStatus status,
+      @Param("role") UserRole role);
+
   @Query("SELECT u FROM ManagedUser u JOIN u.roles r WHERE r = :role ORDER BY u.name ASC")
   List<ManagedUser> findAllByRole(UserRole role);
 
