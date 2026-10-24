@@ -125,12 +125,24 @@ Codex와 Claude Code는 작업 전 이 파일과 `doc/1차-진행/AGENTS.md`를 
 
 ## Git 브랜치 워크플로우
 
-- 브랜치 계층: `main`(**실제 배포용**) → `developer`(통합) → `feature/<이름>`(작업). **`main`에는 직접 커밋하지 않는다** — 배포 시점에만 `developer`를 반영한다.
-- 기능은 `developer`에서 `feature/<이름>` 브랜치를 따서 작업한다: `git checkout developer && git checkout -b feature/<이름>`.
-- 테스트 통과 후 `developer`에 **스쿼시 머지**한다: `git checkout developer && git merge --squash feature/<이름>` 후 커밋.
-- **스쿼시 머지 시 반드시 포함**한다: ① 기능 단위의 커밋 메시지, ② **README.md 갱신**(현재 범위/기능 반영), ③ **버전 올리기**(`build.gradle`의 `version`).
-- 원격은 `origin`(github.com/jihoonhan394/moa). 머지 후 `git push origin developer`. (옛 스터디 저장소 `mtcmhjh20/moa`는 아카이브 — 전체 히스토리는 로컬 번들 `moa-archive-20260922.bundle`에 보존.)
-- 커밋 위생: `.env`·비밀·`*.exe`·`*.zip`·`doc/`(로컬 문서)는 커밋 금지(`.gitignore` 확인). 스테이징에 비밀정보 유입 여부를 커밋 전 확인한다. 커밋 메시지 끝에 `Co-Authored-By` 라인을 남긴다.
+> 사내 공통 Git 전략의 브랜치 이름·커밋 규칙을 따르되, `developer` 통합은 이 저장소 방식(**AI가 로컬에서 스쿼시 머지 후 push**)으로 한다. 원본: `D:\project\mgw\common\git\git_전략_개선\`의 `Claude용_AGENTS.md`·`Codex용_AGENTS.md`(로컬). 원본과 다르면 **이 절이 우선**한다.
+
+- 브랜치 계층: `main`(**실제 배포용**) → `developer`(통합, BASE) → 작업 브랜치. **`main`에는 직접 커밋하지 않는다** — 배포 시점에만 `developer`를 반영한다. `developer`에는 작업 브랜치의 **스쿼시 머지 커밋만** 넣는다(직접 작업 커밋 금지). 이 둘 외의 장수 브랜치를 만들지 않는다.
+- **작업 브랜치**는 최신 `origin/developer`에서 딴다: `git fetch origin --prune && git switch --no-track -c <type>/<설명> origin/developer`.
+  - 이름: `<type>/<설명>` — 영어 소문자·숫자·하이픈, 2~5단어, 40자 이하. type은 `feature/`(기능·동작 변경) `fix/`(버그) `refactor/` `chore/`(빌드·설정·의존성) `docs/` `test/`. 한글·대문자·밑줄·날짜·사람 이름 금지.
+  - 한 브랜치에는 한 가지 일만 담는다. 무관한 변경은 브랜치를 나눈다. 동시에 여러 작업을 할 때는 다시 clone하지 말고 `git worktree add`를 쓴다.
+- **커밋**: 의도한 파일만 `git add <파일>`(`git add -A`·`git add .` 금지) → `git diff --staged` 확인 → Conventional Commits.
+  - 형식 `<type>(<scope>): <요약>` — type `feat` `fix` `refactor` `docs` `chore` `test` `perf` 등, scope는 영어 소문자 한 단어, **요약은 한국어**(기존 커밋을 따른다). 콜론 뒤 한 칸, 마침표 없음, 첫 줄 72자 이하. 본문에 왜 바꿨는지 적는다.
+  - 커밋 메시지 끝에 `Co-Authored-By` 라인을 남긴다(이 저장소 규칙).
+- 테스트 통과 후 `developer`에 **스쿼시 머지**한다: `git fetch origin && git switch developer && git merge --ff-only origin/developer && git merge --squash <작업 브랜치>` → 커밋.
+- **스쿼시 머지 시 반드시 포함**한다: ① 기능 단위의 커밋 메시지(위 커밋 형식), ② **README.md 갱신**(현재 범위/기능·버전 이력 반영), ③ **버전 올리기**(`build.gradle`의 `version`). 문서·설정만 바꾸는 `docs/`·`chore/` 작업은 ②③을 생략할 수 있다.
+- **최신 반영**: 작업 중 `developer`가 앞서가면 작업 브랜치에서 `git merge origin/developer`로 반영한다(rebase하지 않음). 버전 충돌은 developer보다 한 단계 높은 값으로 맞춘다.
+- **push**: push 전에 `git log --oneline origin/developer..developer`로 올라갈 커밋이 스쿼시 커밋 하나인지, `git diff --stat origin/developer..developer`로 의도한 파일만인지 확인한 뒤 `git push origin developer`. 작업 브랜치는 원격에 올리지 않아도 된다(백업이 필요하면 올려도 된다).
+- 스쿼시 머지한 작업 브랜치는 `git branch -d`로 지워지지 않는다. AI는 `-D`를 쓰지 않고 남겨 두며, 정리는 사람이 한다.
+- **배포**(사람이 지시할 때만): `developer`를 `main`에 반영한다. 배포본 긴급 수정은 지시가 있을 때만 `hotfix/<설명>`을 `origin/main`에서 따서 `main`에 반영하고, 이어서 `developer`에도 역반영한다.
+- **절대 하지 않는 것**: force push(`--force`·`--force-with-lease`), `git reset --hard`, `git clean -f`, `git branch -D`, 원격 브랜치 삭제, 태그 이동·삭제, `git config --global` 변경, 가짜 신원으로 커밋.
+- 원격은 `origin`(github.com/jihoonhan394/moa). (옛 스터디 저장소 `mtcmhjh20/moa`는 아카이브 — 전체 히스토리는 로컬 번들 `moa-archive-20260922.bundle`에 보존.)
+- 커밋 위생: `.env`·비밀·`*.exe`·`*.zip`·`doc/`(로컬 문서)는 커밋 금지(`.gitignore` 확인). 스테이징에 비밀정보 유입 여부를 커밋 전 확인한다. 저장소가 공개라 서버 주소·계정·미패치 취약점 설명도 커밋하지 않는다.
 
 ## 인프라·환경 참고
 
