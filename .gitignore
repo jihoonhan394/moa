@@ -59,3 +59,6 @@ application-local.yaml
 
 # 로컬 실행 파일 (실수 커밋 방지)
 *.exe
+
+# 브라우저 자동화 도구(Playwright MCP) 스크린샷·로그
+.playwright-mcp/
