@@ -221,9 +221,32 @@ public class ManagedUserController {
         .map(outcome -> outcome.label() + " " + outcome.count())
         .collect(java.util.stream.Collectors.joining(", "));
     audit("USER_OFFBOARD", id, detail);
-    redirect.addFlashAttribute("userMessage",
-        "퇴사 처리 완료 — 회수·정리 " + result.total() + "건 (" + detail + ").");
+    redirect.addFlashAttribute("userMessage", offboardMessage(result));
     return "redirect:/users";
+  }
+
+  /**
+   * 퇴사 결과 안내. <b>즉시 회수</b>와 <b>반납 대기</b>를 나눠 말한다 — 합쳐서 "회수 N건"이라고
+   * 하면 처리한 사람은 자산까지 돌려받은 줄 알고 끝낸다. 반납 대기는 다음 할 일까지 적는다.
+   */
+  static String offboardMessage(OffboardResult result) {
+    List<OffboardOutcome> done = result.done();
+    long doneCount = done.stream().mapToLong(OffboardOutcome::count).sum();
+    String doneDetail = done.stream()
+        .map(outcome -> outcome.label() + " " + outcome.count())
+        .collect(java.util.stream.Collectors.joining(", "));
+    StringBuilder message = new StringBuilder("퇴사 처리 완료 — 즉시 회수 ")
+        .append(doneCount).append("건 (").append(doneDetail).append(").");
+    List<OffboardOutcome> awaiting = result.awaiting();
+    if (!awaiting.isEmpty()) {
+      message.append(" 반납 대기 ")
+          .append(awaiting.stream().mapToLong(OffboardOutcome::count).sum()).append("건 (")
+          .append(awaiting.stream()
+              .map(outcome -> outcome.label() + " " + outcome.count())
+              .collect(java.util.stream.Collectors.joining(", ")))
+          .append(") — 실물을 받으면 회수 완료를 표시하고, 자산 관리자가 회수 완료 처리를 해야 끝납니다.");
+    }
+    return message.toString();
   }
 
   /** 비밀번호를 입력했을 때만 확인값과 일치해야 한다(미입력=변경 안 함이면 확인 불필요). */

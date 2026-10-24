@@ -103,15 +103,33 @@ public class InventoryItem {
     this.updatedAt = now;
   }
 
-  /** 사용자에게 배정 → 상태 ASSIGNED. */
+  /**
+   * 사용자에게 배정 → 상태 ASSIGNED.
+   *
+   * <p>반납 처리 중(반납 대기·회수 확인 대기)인 항목은 배정할 수 없다. 확인 전에 다음 사람에게
+   * 넘기면 장부가 퇴사자의 반납을 건너뛴 채 새 구간을 연다 — 받으러 간 사람은 아무것도 못 찾는다.
+   */
   public void assignTo(UUID userId, OffsetDateTime now) {
+    if (isInReturn()) {
+      throw new InventoryStateException(
+          "반납 처리 중인 자산은 배정할 수 없습니다. 관리자가 회수 완료 처리를 한 뒤 배정하세요.");
+    }
     this.assignedUserId = userId;
     this.status = InventoryItemStatus.ASSIGNED;
     this.updatedAt = now;
   }
 
-  /** 회수 → 배정 해제 + 상태 AVAILABLE. */
+  /**
+   * 회수 → 배정 해제 + 상태 AVAILABLE.
+   *
+   * <p>반납 대기 항목은 바로 회수할 수 없다. 먼저 실물을 받았다는 <b>회수 완료</b>가
+   * 표시돼야 한다({@link #markReturned}). 회수 확인 대기 항목에 대해 이 메서드를 부르는 것이
+   * 관리자의 <b>회수 완료 처리</b>다.
+   */
   public void reclaim(OffsetDateTime now) {
+    if (status == InventoryItemStatus.RETURN_PENDING) {
+      throw new InventoryStateException("먼저 실물을 받았다는 회수 완료를 표시하세요.");
+    }
     this.assignedUserId = null;
     this.status = InventoryItemStatus.AVAILABLE;
     this.updatedAt = now;
@@ -125,8 +143,28 @@ public class InventoryItem {
    * ({@link #reclaim}).
    */
   public void awaitReturn(OffsetDateTime now) {
+    if (status == InventoryItemStatus.RETURNED) {
+      return; // 이미 실물을 받았다. 반납 대기로 되돌리면 받은 기록이 지워진다.
+    }
     this.status = InventoryItemStatus.RETURN_PENDING;
     this.updatedAt = now;
+  }
+
+  /**
+   * 회수 완료 표시(실물 수령) → 상태 '회수 확인 대기'. <b>배정과 보관 구간은 아직 그대로다.</b>
+   * 자산 관리자의 회수 완료 처리({@link #reclaim})가 있어야 구간이 닫히고 창고 입고가 된다.
+   */
+  public void markReturned(OffsetDateTime now) {
+    if (status != InventoryItemStatus.RETURN_PENDING) {
+      throw new InventoryStateException("반납 대기 중인 자산만 회수 완료를 표시할 수 있습니다.");
+    }
+    this.status = InventoryItemStatus.RETURNED;
+    this.updatedAt = now;
+  }
+
+  /** 반납 처리 중인가(반납 대기 또는 회수 확인 대기). */
+  public boolean isInReturn() {
+    return status == InventoryItemStatus.RETURN_PENDING || status == InventoryItemStatus.RETURNED;
   }
 
   /** 폐기(불용) → 배정 해제 + 상태 RETIRED. 이력을 위해 레코드는 남긴다. */

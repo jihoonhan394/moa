@@ -103,6 +103,11 @@ class InventoryCustodyServiceTest {
         .as("퇴사 처리만으로 창고 입고가 기록됐다")
         .isEqualTo(InventoryHolderType.USER);
 
+    inventoryService.markReturned(tenantId, itemId);
+    assertThat(custodyService.current(tenantId, itemId).orElseThrow().getHolderType())
+        .as("회수 완료 표시만으로 창고 입고가 기록됐다")
+        .isEqualTo(InventoryHolderType.USER);
+
     inventoryService.reclaim(tenantId, itemId, null, "퇴사 회수");
 
     InventoryCustody latest = custodyService.history(tenantId, itemId).get(0);

@@ -95,6 +95,19 @@ public class InventoryItemService {
     return saved;
   }
 
+  /**
+   * 회수 완료 표시: 퇴사자의 실물을 받았다(반납 대기 → 회수 확인 대기). 부서장·자산 관리자가 한다.
+   *
+   * <p><b>보관 구간과 배정은 그대로 둔다.</b> 창고 입고는 자산 관리자의 회수 완료 처리
+   * ({@link #reclaim})가 기록한다 — 받은 사람의 표시만으로 장부를 닫지 않는다.
+   */
+  @Transactional
+  public InventoryItem markReturned(UUID tenantId, UUID id) {
+    InventoryItem item = findById(tenantId, id);
+    item.markReturned(OffsetDateTime.now());
+    return repository.save(item);
+  }
+
   @Transactional
   public InventoryItem retire(UUID tenantId, UUID id) {
     return retire(tenantId, id, null);
@@ -212,6 +225,11 @@ public class InventoryItemService {
   /** 반납 대기(퇴사했지만 실물 미확인) 목록. */
   public List<InventoryItem> returnPending(UUID tenantId) {
     return repository.findAllByTenantIdAndStatus(tenantId, InventoryItemStatus.RETURN_PENDING);
+  }
+
+  /** 회수 확인 대기(실물은 받았고 자산 관리자의 회수 완료 처리 전) 건수. */
+  public long returnedAwaitingConfirm(UUID tenantId) {
+    return repository.countByTenantIdAndStatus(tenantId, InventoryItemStatus.RETURNED);
   }
 
   /**

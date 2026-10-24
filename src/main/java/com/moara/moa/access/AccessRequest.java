@@ -101,6 +101,16 @@ public class AccessRequest {
     this.decidedAt = now;
   }
 
+  /**
+   * 퇴사 회수(승인됨 → 회수). 사람이 누른 회수가 아니므로 <b>승인자는 바꾸지 않는다</b> —
+   * {@link #revoke}처럼 회수자를 승인자 칸에 적으면 "누가 승인했나"가 지워진다. 사유가 코멘트로 남는다.
+   */
+  public void revokeOnOffboard(OffsetDateTime now) {
+    this.status = AccessRequestStatus.REVOKED;
+    this.reviewComment = "퇴사로 자동 회수";
+    this.decidedAt = now;
+  }
+
   public void expire() {
     this.status = AccessRequestStatus.EXPIRED;
   }

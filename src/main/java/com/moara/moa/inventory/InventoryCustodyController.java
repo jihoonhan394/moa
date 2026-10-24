@@ -88,7 +88,7 @@ public class InventoryCustodyController {
       @RequestParam(required = false) String note,
       RedirectAttributes redirect) {
     UUID tenantId = tenantContext.currentTenantId();
-    inventoryService.findById(tenantId, id); // 소유권 검증
+    InventoryItem item = inventoryService.findById(tenantId, id); // 소유권 검증
     if (holderType == InventoryHolderType.PARENT_ITEM) {
       redirect.addFlashAttribute("custodyError", "부품 장착은 구성품 화면에서 기록하세요.");
       return "redirect:/inventory/" + id + "/custody";
@@ -107,14 +107,26 @@ public class InventoryCustodyController {
     }
     // 사용자 배정은 인벤토리 상태(assignedUserId)와 함께 움직여야 하므로 품목 서비스를 거친다.
     // 그래야 목록·퇴사 회수·팀 경계가 보는 캐시와 장부가 어긋나지 않는다.
-    if (holderType == InventoryHolderType.USER) {
-      inventoryService.assign(tenantId, id, holderId, tenantContext.currentUserId());
-    } else if (holderType == InventoryHolderType.WAREHOUSE) {
-      inventoryService.reclaim(tenantId, id, tenantContext.currentUserId(),
-          reason == null || reason.isBlank() ? "창고 입고" : reason);
-    } else {
-      custodyService.transfer(tenantId, id, holderType, holderId, holderName, expectedReturnOn,
-          reason, note, tenantContext.currentUserId());
+    // 반납 처리 중이면 창고 입고(= 회수 완료 처리)만 받는다. 다른 곳으로 옮기면 상태는
+    // 반납 대기인데 장부는 엉뚱한 보관자를 가리켜, 퇴사자의 반납을 건너뛴 기록이 된다.
+    if (item.isInReturn() && holderType != InventoryHolderType.WAREHOUSE) {
+      redirect.addFlashAttribute("custodyError",
+          "반납 처리 중인 자산입니다. 회수 완료 처리(창고 입고)를 먼저 하세요.");
+      return "redirect:/inventory/" + id + "/custody";
+    }
+    try {
+      if (holderType == InventoryHolderType.USER) {
+        inventoryService.assign(tenantId, id, holderId, tenantContext.currentUserId());
+      } else if (holderType == InventoryHolderType.WAREHOUSE) {
+        inventoryService.reclaim(tenantId, id, tenantContext.currentUserId(),
+            reason == null || reason.isBlank() ? "창고 입고" : reason);
+      } else {
+        custodyService.transfer(tenantId, id, holderType, holderId, holderName, expectedReturnOn,
+            reason, note, tenantContext.currentUserId());
+      }
+    } catch (InventoryStateException rejected) {
+      redirect.addFlashAttribute("custodyError", rejected.getMessage());
+      return "redirect:/inventory/" + id + "/custody";
     }
     audit(id, holderType, holderId);
     redirect.addFlashAttribute("custodyMessage", "보관 이동을 기록했습니다.");

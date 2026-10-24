@@ -25,10 +25,20 @@
     <p class="subcopy t-bad" style="margin:0">
       <b th:text="'반납 대기 ' + ${returnPendingCount} + '건'">반납 대기</b> —
       퇴사 처리로 반납이 요청됐지만 <b>실물을 아직 확인하지 않았습니다.</b>
-      물건을 받은 뒤 각 항목의 <b>보관·구성품</b>에서 창고 입고를 기록하세요.
+      물건을 받으면 각 항목의 <b>회수 완료</b>를 누르세요.
       그때까지 다른 사람에게 배정되지 않습니다.
     </p>
   </section>
+  <!-- 실물은 받았지만 장부는 아직 열려 있다. 회수 완료 처리를 해야 창고 입고가 된다. -->
+  <section class="panel" th:if="${returnedCount > 0}">
+    <p class="subcopy t-warn" style="margin:0">
+      <b th:text="'회수 확인 대기 ' + ${returnedCount} + '건'">회수 확인 대기</b> —
+      실물을 받았다고 표시됐습니다. 확인한 뒤 <b>회수 완료 처리</b>를 누르면 창고 입고가 기록되고
+      다시 배정할 수 있습니다.
+    </p>
+  </section>
+  <p th:if="${bulkMessage != null}" class="subcopy t-good" th:text="${bulkMessage}">결과</p>
+  <p th:if="${bulkError != null}" class="subcopy t-bad" th:text="${bulkError}">결과</p>
 
   <section class="panel">
     <div class="panel-head">
@@ -51,21 +61,30 @@
                  style="display:block;color:var(--muted)">시리얼</small>
         </div>
         <span th:text="${item.type.label}">실물</span>
-        <b th:classappend="${item.status.name() == 'RETURN_PENDING'} ? 't-bad' : 't-muted'"
+        <b th:classappend="${item.status.name() == 'RETURN_PENDING'} ? 't-bad' : (${item.status.name() == 'RETURNED'} ? 't-warn' : 't-muted')"
            th:text="${item.status.label}">상태</b>
         <span th:text="${heldSince.containsKey(item.id)} ? ${heldSince.get(item.id)} : '—'">시작일</span>
         <!-- 받은 사람이 "받았다"를 눌렀는지. 안 눌렀으면 장부가 관리자 한쪽 주장이다. -->
         <span th:classappend="${confirmed.get(item.id)} ? 't-good' : 't-warn'"
               th:text="${confirmed.get(item.id)} ? '확인됨' : '미확인'">확인</span>
         <span class="table-actions">
+          <!-- 퇴사 반납은 두 단계: 실물을 받았다(회수 완료) → 자산 관리자가 확인(회수 완료 처리). -->
+          <form class="inline" th:if="${item.status.name() == 'RETURN_PENDING'}" method="post"
+                th:action="@{'/inventory/' + ${item.id} + '/returned'(holder=${holder.id})}">
+            <button class="button" type="submit" title="퇴사자의 실물을 받았습니다">회수 완료</button>
+          </form>
+          <form class="inline" th:if="${item.status.name() == 'RETURNED'}" method="post"
+                th:action="@{'/inventory/' + ${item.id} + '/reclaim'(holder=${holder.id})}">
+            <button class="button" type="submit" title="창고 입고를 기록하고 다시 배정할 수 있게 합니다">회수 완료 처리</button>
+          </form>
           <a class="button" th:href="@{'/inventory/' + ${item.id} + '/custody'}">보관·구성품</a>
         </span>
       </div>
     </div>
 
     <p class="subcopy t-muted" style="margin-top:.6rem">
-      반납을 받으면 각 항목의 <b>보관·구성품</b>에서 보관자를 <b>창고</b>로 옮깁니다.
-      그 기록이 "누가 언제 확인했다"의 근거가 됩니다.
+      퇴사 반납은 받은 사람이 <b>회수 완료</b>를 표시하고, 자산 관리자가 <b>회수 완료 처리</b>를 해야 끝납니다.
+      그 두 기록이 "누가 언제 받았고 누가 확인했다"의 근거가 됩니다.
     </p>
   </section>
 </main></div>

@@ -187,6 +187,32 @@ public class AccessApprovalService {
     return active.isEmpty() ? java.util.Optional.empty() : java.util.Optional.of(active.get(0));
   }
 
+  // ── 퇴사 회수 ────────────────────────────────────────────────────
+
+  /**
+   * 퇴사자의 임시 접근을 정리한다: 승인된 것은 <b>회수</b>, 대기 중인 것은 <b>취소</b>. 처리 건수 반환.
+   *
+   * <p>전에는 퇴사 회수가 직접 권한·그룹만 지우고 JIT 승인은 그대로 뒀다. 로그인이 막혀 당장
+   * 쓰이진 않지만, 장부에는 퇴사자가 "승인됨"으로 남아 접근 검토에서 살아 있는 권한처럼 보이고,
+   * 대기 요청은 승인자 목록에 남아 누군가 승인할 수 있었다. 계정이 되살아나면 그대로 열린다.
+   *
+   * <p>알림은 보내지 않는다 — 받을 사람이 이미 떠났다. 활성 세션 종료는 세션 회수 핸들러가 한다.
+   */
+  @Transactional
+  public long withdrawAllOf(UUID tenantId, UUID userId) {
+    OffsetDateTime now = OffsetDateTime.now(clock);
+    List<AccessRequest> open = repository.findAllByTenantIdAndRequesterUserIdAndStatusIn(
+        tenantId, userId, List.of(AccessRequestStatus.APPROVED, AccessRequestStatus.PENDING));
+    for (AccessRequest request : open) {
+      if (request.getStatus() == AccessRequestStatus.APPROVED) {
+        request.revokeOnOffboard(now);
+      } else {
+        request.cancel(now);
+      }
+    }
+    return open.size();
+  }
+
   // ── 만료 배치 ────────────────────────────────────────────────────
 
   /** 종료 시각이 지난 승인 건을 EXPIRED로 전이(스케줄러 전용). 반납 처리 건수 반환. */

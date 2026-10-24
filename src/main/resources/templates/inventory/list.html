@@ -95,8 +95,12 @@
        class="subcopy">조건에 맞는 자산이 없습니다. 검색어를 줄이거나 <strong>조건 지우기</strong>를 누르세요.</p>
     <!-- 퇴사 처리는 물건이 돌아왔다고 기록하지 않는다. 실물을 확인해야 창고 입고가 된다. -->
     <p th:if="${returnPendingCount > 0}" class="subcopy t-bad"
-       th:text="'반납 대기 ' + ${returnPendingCount} + '건 — 퇴사자에게 배정돼 있던 자산입니다. 실물을 확인한 뒤 보관 이력에서 창고 입고를 기록하세요.'">
+       th:text="'반납 대기 ' + ${returnPendingCount} + '건 — 퇴사자에게 배정돼 있던 자산입니다. 실물을 받으면 회수 완료를 누르세요.'">
       반납 대기</p>
+    <!-- 실물은 받았지만 장부는 아직 열려 있다. 회수 완료 처리를 해야 창고 입고가 되고 다시 배정할 수 있다. -->
+    <p th:if="${returnedCount > 0}" class="subcopy t-warn"
+       th:text="'회수 확인 대기 ' + ${returnedCount} + '건 — 실물을 받았다고 표시된 자산입니다. 확인한 뒤 회수 완료 처리를 누르세요.'">
+      회수 확인 대기</p>
     <p th:if="${bulkMessage != null}" class="subcopy t-good" th:text="${bulkMessage}">결과</p>
     <p th:if="${bulkError != null}" class="subcopy t-bad" th:text="${bulkError}">결과</p>
     <p th:if="${#lists.isEmpty(items) and q == null and status == null and type == null}"
@@ -163,6 +167,13 @@
                 title="배정했지만 받은 사람이 아직 확인하지 않았습니다">확인 대기</span>
           <form class="inline" th:if="${item.status.name() == 'ASSIGNED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/reclaim'}">
             <button class="button" type="submit">회수</button>
+          </form>
+          <!-- 퇴사 반납은 두 단계: 실물을 받았다(회수 완료) → 자산 관리자가 확인(회수 완료 처리). -->
+          <form class="inline" th:if="${item.status.name() == 'RETURN_PENDING'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/returned'}">
+            <button class="button" type="submit" title="퇴사자의 실물을 받았습니다">회수 완료</button>
+          </form>
+          <form class="inline" th:if="${item.status.name() == 'RETURNED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/reclaim'}">
+            <button class="button" type="submit" title="창고 입고를 기록하고 다시 배정할 수 있게 합니다">회수 완료 처리</button>
           </form>
           <form class="inline" th:if="${item.status.name() != 'RETIRED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/retire'}">
             <button class="button" type="submit">폐기</button>

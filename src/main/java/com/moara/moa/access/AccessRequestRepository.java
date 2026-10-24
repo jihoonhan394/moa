@@ -16,6 +16,10 @@ public interface AccessRequestRepository extends JpaRepository<AccessRequest, UU
   /** 요청자 본인 목록(최신순). */
   List<AccessRequest> findByTenantIdAndRequesterUserIdOrderByCreatedAtDesc(UUID tenantId, UUID requesterUserId);
 
+  /** 한 사람의 특정 상태 요청들 — 퇴사 회수용. */
+  List<AccessRequest> findAllByTenantIdAndRequesterUserIdAndStatusIn(
+      UUID tenantId, UUID requesterUserId, java.util.Collection<AccessRequestStatus> statuses);
+
   /** 특정 상태 목록(최신순) — 승인 대기 목록 등. */
   List<AccessRequest> findByTenantIdAndStatusOrderByCreatedAtDesc(UUID tenantId, AccessRequestStatus status);
 

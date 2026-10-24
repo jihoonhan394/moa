@@ -156,7 +156,12 @@ public class TeamInventoryController {
       redirect.addFlashAttribute("teamError", "본인 팀원에게만 배정할 수 있습니다.");
       return "redirect:/team/inventory";
     }
-    inventoryService.assign(tenantId, id, userId, tenantContext.currentUserId());
+    try {
+      inventoryService.assign(tenantId, id, userId, tenantContext.currentUserId());
+    } catch (InventoryStateException rejected) {
+      redirect.addFlashAttribute("teamError", rejected.getMessage());
+      return "redirect:/team/inventory";
+    }
     audit("TEAM_INVENTORY_ASSIGN", id, "user=" + userId);
     redirect.addFlashAttribute("teamOk", "배정했습니다.");
     return "redirect:/team/inventory";
@@ -169,9 +174,35 @@ public class TeamInventoryController {
       redirect.addFlashAttribute("teamError", "본인 부서가 소유한 자산만 회수할 수 있습니다.");
       return "redirect:/team/inventory";
     }
+    // 퇴사 반납은 부서장이 닫지 않는다. 받았다는 표시(회수 완료)까지만 하고, 창고 입고는
+    // 장부를 책임지는 자산 관리자의 회수 완료 처리로만 기록된다.
+    if (inventoryService.findById(tenantId, id).isInReturn()) {
+      redirect.addFlashAttribute("teamError",
+          "반납 처리 중인 자산은 자산 관리자가 회수 완료 처리합니다. 실물을 받았으면 '회수 완료'를 누르세요.");
+      return "redirect:/team/inventory";
+    }
     inventoryService.reclaim(tenantId, id, tenantContext.currentUserId(), "부서장 회수");
     audit("TEAM_INVENTORY_RECLAIM", id, null);
     redirect.addFlashAttribute("teamOk", "회수했습니다.");
+    return "redirect:/team/inventory";
+  }
+
+  /** 회수 완료 표시: 퇴사한 팀원의 실물을 받았다. 자산 관리자의 회수 완료 처리를 기다린다. */
+  @PostMapping("/team/inventory/{id}/returned")
+  public String markReturned(@PathVariable UUID id, RedirectAttributes redirect) {
+    UUID tenantId = tenantContext.currentTenantId();
+    if (!canManage(tenantId, id)) {
+      redirect.addFlashAttribute("teamError", "본인 부서가 소유한 자산만 회수할 수 있습니다.");
+      return "redirect:/team/inventory";
+    }
+    try {
+      inventoryService.markReturned(tenantId, id);
+    } catch (InventoryStateException rejected) {
+      redirect.addFlashAttribute("teamError", rejected.getMessage());
+      return "redirect:/team/inventory";
+    }
+    audit("TEAM_INVENTORY_RETURNED", id, "회수 완료 표시(실물 수령)");
+    redirect.addFlashAttribute("teamOk", "회수 완료를 표시했습니다. 자산 관리자가 회수 완료 처리하면 끝납니다.");
     return "redirect:/team/inventory";
   }
 

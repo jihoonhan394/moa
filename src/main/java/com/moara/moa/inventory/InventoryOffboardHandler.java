@@ -21,7 +21,8 @@ public class InventoryOffboardHandler implements OffboardHandler {
 
   @Override
   public OffboardOutcome offboard(UUID tenantId, UUID userId) {
-    return new OffboardOutcome(
+    // 요청만 한 것이다 — 실물은 아직 퇴사자에게 있다. 즉시 회수와 섞어 보이지 않게 pending으로.
+    return OffboardOutcome.pending(
         "자산 반납 요청(실물 확인 필요)", inventoryService.requestReturnFrom(tenantId, userId));
   }
 }

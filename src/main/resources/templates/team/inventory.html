@@ -61,7 +61,7 @@
           <span th:text="${item.assignedUserId != null ? userNames.get(item.assignedUserId) : '—'}">배정</span>
           <span th:text="${groupNames.getOrDefault(item.ownerGroupId, '-')}" class="t-muted">부서</span>
           <span class="table-actions">
-            <form class="inline" th:if="${item.status.name() != 'ASSIGNED'}" method="post" th:action="@{'/team/inventory/' + ${item.id} + '/assign'}">
+            <form class="inline" th:if="${item.status.name() != 'ASSIGNED' and item.status.name() != 'RETURN_PENDING' and item.status.name() != 'RETURNED'}" method="post" th:action="@{'/team/inventory/' + ${item.id} + '/assign'}">
               <select name="userId" required aria-label="배정 팀원">
                 <option value="" disabled selected>팀원 선택</option>
                 <option th:each="u : ${teamUsers}" th:value="${u.id}" th:text="${u.name}">팀원</option>
@@ -70,6 +70,10 @@
             </form>
             <form class="inline" th:if="${item.status.name() == 'ASSIGNED'}" method="post" th:action="@{'/team/inventory/' + ${item.id} + '/reclaim'}">
               <button class="button" type="submit">회수</button>
+            </form>
+            <!-- 퇴사한 팀원의 실물을 받으면 표시까지만. 창고 입고는 자산 관리자의 회수 완료 처리로 기록된다. -->
+            <form class="inline" th:if="${item.status.name() == 'RETURN_PENDING'}" method="post" th:action="@{'/team/inventory/' + ${item.id} + '/returned'}">
+              <button class="button" type="submit" title="퇴사자의 실물을 받았습니다">회수 완료</button>
             </form>
             <details style="display:inline-block">
               <summary class="button" style="list-style:none;cursor:pointer">수정</summary>

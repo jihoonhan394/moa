@@ -94,6 +94,8 @@ public class InventoryController {
     model.addAttribute("items", topLevel);
     model.addAttribute("returnPendingCount", topLevel.stream()
         .filter(i -> i.getStatus() == InventoryItemStatus.RETURN_PENDING).count());
+    model.addAttribute("returnedCount", topLevel.stream()
+        .filter(i -> i.getStatus() == InventoryItemStatus.RETURNED).count());
     // 언제부터 갖고 있나. 분쟁이 날 때 이 날짜가 답한다.
     Map<UUID, LocalDate> heldSince = new LinkedHashMap<>();
     Map<UUID, Boolean> confirmed = new LinkedHashMap<>();
@@ -305,21 +307,71 @@ public class InventoryController {
       return;
     }
     redirectAttributes.addFlashAttribute("bulkError",
-        message + " " + failed.size() + "건은 상태가 맞지 않아 건너뛰었습니다(이미 배정·폐기 등).");
+        message + " " + failed.size() + "건은 상태가 맞지 않아 건너뛰었습니다(이미 배정·폐기·반납 처리 중 등).");
   }
 
   @PostMapping("/inventory/{id}/assign")
-  public String assign(@PathVariable UUID id, @RequestParam UUID userId) {
-    inventoryService.assign(tenantContext.currentTenantId(), id, userId, tenantContext.currentUserId());
+  public String assign(
+      @PathVariable UUID id, @RequestParam UUID userId, RedirectAttributes redirectAttributes) {
+    try {
+      inventoryService.assign(
+          tenantContext.currentTenantId(), id, userId, tenantContext.currentUserId());
+    } catch (InventoryStateException rejected) {
+      redirectAttributes.addFlashAttribute("bulkError", rejected.getMessage());
+      return "redirect:/inventory";
+    }
     audit("INVENTORY_ASSIGN", id, "user=" + userId);
     return "redirect:/inventory";
   }
 
+  /**
+   * 회수. 배정 중인 자산은 바로 창고로, <b>회수 확인 대기</b> 자산은 이것이 자산 관리자의
+   * <b>회수 완료 처리</b>다. 반납 대기(실물 미확인)는 도메인이 거절한다 — 먼저 회수 완료 표시.
+   *
+   * @param holder 보유 자산 화면에서 왔으면 그 사람. 처리 뒤 그 화면으로 돌아간다.
+   */
   @PostMapping("/inventory/{id}/reclaim")
-  public String reclaim(@PathVariable UUID id) {
-    inventoryService.reclaim(tenantContext.currentTenantId(), id, tenantContext.currentUserId(), "회수");
-    audit("INVENTORY_RECLAIM", id, null);
-    return "redirect:/inventory";
+  public String reclaim(
+      @PathVariable UUID id, @RequestParam(required = false) UUID holder,
+      RedirectAttributes redirectAttributes) {
+    UUID tenantId = tenantContext.currentTenantId();
+    boolean returnConfirm =
+        inventoryService.findById(tenantId, id).getStatus() == InventoryItemStatus.RETURNED;
+    try {
+      inventoryService.reclaim(tenantId, id, tenantContext.currentUserId(),
+          returnConfirm ? "퇴사 반납 회수 완료 처리" : "회수");
+    } catch (InventoryStateException rejected) {
+      redirectAttributes.addFlashAttribute("bulkError", rejected.getMessage());
+      return backTo(holder);
+    }
+    audit("INVENTORY_RECLAIM", id, returnConfirm ? "회수 완료 처리" : null);
+    redirectAttributes.addFlashAttribute("bulkMessage",
+        returnConfirm ? "회수 완료 처리했습니다. 창고 입고가 기록됐고 다시 배정할 수 있습니다." : "회수했습니다.");
+    return backTo(holder);
+  }
+
+  /**
+   * 회수 완료 표시: 퇴사자의 실물을 받았다(반납 대기 → 회수 확인 대기). 장부는 아직 닫지 않는다 —
+   * 창고 입고는 {@link #reclaim}의 회수 완료 처리가 기록한다.
+   */
+  @PostMapping("/inventory/{id}/returned")
+  public String markReturned(
+      @PathVariable UUID id, @RequestParam(required = false) UUID holder,
+      RedirectAttributes redirectAttributes) {
+    try {
+      inventoryService.markReturned(tenantContext.currentTenantId(), id);
+    } catch (InventoryStateException rejected) {
+      redirectAttributes.addFlashAttribute("bulkError", rejected.getMessage());
+      return backTo(holder);
+    }
+    audit("INVENTORY_RETURNED", id, "회수 완료 표시(실물 수령)");
+    redirectAttributes.addFlashAttribute("bulkMessage",
+        "회수 완료를 표시했습니다. 회수 완료 처리를 하면 창고 입고가 기록됩니다.");
+    return backTo(holder);
+  }
+
+  private static String backTo(UUID holder) {
+    return holder == null ? "redirect:/inventory" : "redirect:/inventory/by-user/" + holder;
   }
 
   @PostMapping("/inventory/{id}/retire")
@@ -463,6 +515,8 @@ public class InventoryController {
         .map(InventoryCustody::getItemId).collect(java.util.stream.Collectors.toSet()));
     // 퇴사했는데 실물이 안 돌아온 것. 가장 잃어버리기 쉬운 자산이라 목록 맨 위에서 세어 준다.
     model.addAttribute("returnPendingCount", inventoryService.returnPending(tenantId).size());
+    // 실물은 받았는데 자산 관리자가 아직 닫지 않은 것. 이 사람의 다음 할 일이다.
+    model.addAttribute("returnedCount", inventoryService.returnedAwaitingConfirm(tenantId));
     model.addAttribute("assetCategories", assetCategoryNodes());
     java.util.List<ManagedUser> tenantUsers = userService.findByTenant(tenantId);
     model.addAttribute("tenantUsers", tenantUsers);

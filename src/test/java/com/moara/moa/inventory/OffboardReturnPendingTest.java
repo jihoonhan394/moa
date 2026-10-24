@@ -1,6 +1,7 @@
 package com.moara.moa.inventory;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.moara.moa.tenant.CreateTenantCommand;
 import com.moara.moa.tenant.TenantService;
@@ -84,7 +85,7 @@ class OffboardReturnPendingTest {
         .isEqualTo(leaver.getId());
   }
 
-  /** 실물을 확인한 사람이 창고 입고를 기록하면 그때 구간이 닫히고 가용이 된다. */
+  /** 회수 완료 표시 뒤 자산 관리자가 회수 완료 처리를 하면 그때 구간이 닫히고 가용이 된다. */
   @Test
   void 실물을_확인하면_비로소_창고로_들어온다() {
     UUID tenantId = tenant();
@@ -93,7 +94,8 @@ class OffboardReturnPendingTest {
     inventoryService.assign(tenantId, item.getId(), leaver.getId(), null);
     offboardHandler.offboard(tenantId, leaver.getId());
 
-    inventoryService.reclaim(tenantId, item.getId(), null, "퇴사 반납 실물 확인");
+    inventoryService.markReturned(tenantId, item.getId());
+    inventoryService.reclaim(tenantId, item.getId(), null, "퇴사 반납 회수 완료 처리");
 
     InventoryItem after = inventoryService.findById(tenantId, item.getId());
     assertThat(after.getStatus()).isEqualTo(InventoryItemStatus.AVAILABLE);
@@ -102,6 +104,49 @@ class OffboardReturnPendingTest {
         .isEqualTo(InventoryHolderType.WAREHOUSE);
     assertThat(inventoryService.returnPending(tenantId))
         .extracting(InventoryItem::getId).doesNotContain(item.getId());
+  }
+
+  /** 반납 대기를 곧바로 창고에 넣을 수 없다. 받았다는 표시(회수 완료)가 먼저다. */
+  @Test
+  void 회수_완료_표시_없이는_창고에_넣을_수_없다() {
+    UUID tenantId = tenant();
+    ManagedUser leaver = user(tenantId);
+    InventoryItem item = item(tenantId, "표시먼저노트북");
+    inventoryService.assign(tenantId, item.getId(), leaver.getId(), null);
+    offboardHandler.offboard(tenantId, leaver.getId());
+
+    assertThatThrownBy(() -> inventoryService.reclaim(tenantId, item.getId(), null, "회수"))
+        .isInstanceOf(InventoryStateException.class);
+    assertThat(inventoryService.findById(tenantId, item.getId()).getStatus())
+        .isEqualTo(InventoryItemStatus.RETURN_PENDING);
+  }
+
+  /**
+   * 회수 완료 표시는 장부를 닫지 않는다. 배정·보관 구간은 퇴사자에게 남고, 자산 관리자의
+   * 회수 완료 처리 전에는 다른 사람에게 배정할 수 없다.
+   */
+  @Test
+  void 회수_완료_표시만으로는_장부가_닫히지_않는다() {
+    UUID tenantId = tenant();
+    ManagedUser leaver = user(tenantId);
+    ManagedUser next = user(tenantId);
+    InventoryItem item = item(tenantId, "표시만노트북");
+    inventoryService.assign(tenantId, item.getId(), leaver.getId(), null);
+    offboardHandler.offboard(tenantId, leaver.getId());
+
+    inventoryService.markReturned(tenantId, item.getId());
+
+    InventoryItem after = inventoryService.findById(tenantId, item.getId());
+    assertThat(after.getStatus()).isEqualTo(InventoryItemStatus.RETURNED);
+    assertThat(after.getAssignedUserId()).isEqualTo(leaver.getId());
+    assertThat(custodyService.current(tenantId, item.getId()).orElseThrow().getHolderType())
+        .isEqualTo(InventoryHolderType.USER);
+    assertThatThrownBy(() -> inventoryService.assign(tenantId, item.getId(), next.getId(), null))
+        .isInstanceOf(InventoryStateException.class);
+    // 다시 퇴사 처리가 돌아도 받은 기록을 지우지 않는다.
+    offboardHandler.offboard(tenantId, leaver.getId());
+    assertThat(inventoryService.findById(tenantId, item.getId()).getStatus())
+        .isEqualTo(InventoryItemStatus.RETURNED);
   }
 
   /** 퇴사 결과는 "회수했다"가 아니라 "확인이 필요하다"로 보여야 한다. */
