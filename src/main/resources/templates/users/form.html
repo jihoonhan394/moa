@@ -46,7 +46,7 @@
               <span style="font-family:monospace">기관 관리(/admin/tenants)</span>에서 켭니다.</p>
           </div>
           <p th:unless="${roleEditable}" class="subcopy">역할: <span th:text="${currentRoles}">역할</span> — 이 화면에서 변경할 수 없습니다.</p>
-          <button class="button primary" type="submit" th:text="${userId == null ? 'Add User' : 'Save Changes'}">Add User</button>
+          <button class="button primary" type="submit" th:text="${userId == null ? '사용자 등록' : '저장'}">사용자 등록</button>
         </form>
       </section>
     </main>

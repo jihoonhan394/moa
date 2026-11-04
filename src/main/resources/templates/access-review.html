@@ -40,7 +40,7 @@
         <span>
           <span th:if="${#lists.isEmpty(row.users)}">—</span>
           <span th:each="u,it : ${row.users}">
-            <span th:text="${u.label}">사용자</span><span th:if="${u.expiresAt != null}" style="color:#8a530f"
+            <span th:text="${u.label}">사용자</span><span th:if="${u.expiresAt != null}" class="t-warn"
               th:text="' (~' + ${#temporals.format(u.expiresAt, 'yyyy-MM-dd HH:mm')} + ')'"> (만료)</span><span th:unless="${it.last}">, </span>
           </span>
         </span>

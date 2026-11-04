@@ -212,6 +212,18 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 .form-panel form > button, .form-panel form > .button { justify-self: start; margin-top: 18px; }
 /* 라벨이 입력칸을 감싸는 세로 폼(.stack-form): 라벨 글자 위, 입력칸 아래 */
 .stack-form { display: grid; gap: 14px; max-width: var(--form-w); }
+/* 등록·수정 폼(템플릿 11곳이 인라인 style로 반복하던 것). 위키 편집은 미리보기 분할이 있어 넓게. */
+.stacked-form { display: grid; gap: 8px; max-width: var(--form-w); }
+.stacked-form.wide { gap: 10px; max-width: 1100px; }
+/* 회색 글 상자(AI 초안·요약, 가져오기 예시) · 코드 칩(2단계 인증) · 한 번 보이는 비밀 · 접이식 상자 */
+.text-block { margin: 0; padding: 14px 16px; border: 1px solid var(--rule); background: var(--field); font-family: inherit; line-height: 1.6; white-space: pre-wrap; }
+.text-block.code { padding: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem; }
+.code-chip { padding: 2px 8px; border: 1px solid var(--rule); background: var(--field); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.code-chip.spaced { letter-spacing: .1em; }
+.code-chip.block { display: block; padding: 8px; font-size: .82em; word-break: break-all; }
+.secret-chip { padding: 2px 6px; background: var(--warn-tint); }
+.fold-box { padding: 7px 12px; border: 1px solid var(--rule); }
+.fold-box > summary { color: var(--ink-2); font-weight: 600; cursor: pointer; }
 /* 세로 폼의 열은 화면 폭을 넘지 않게(긴 선택지가 열을 밀어 폰에서 넘치던 것) */
 .stack-form, .stacked-form { grid-template-columns: minmax(0, 1fr); }
 .stack-form > label:not(.checkbox-row) { display: grid; gap: 6px; color: var(--ink-2); font-size: .86rem; font-weight: 600; }

@@ -19,7 +19,7 @@
     <!-- 등록(인라인) -->
     <section class="panel">
       <div class="panel-head"><div><p class="eyebrow">등록</p><h2>서버 등록</h2></div></div>
-      <form method="post" th:action="@{/servers}" th:object="${assetForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:var(--form-w);">
+      <form method="post" th:action="@{/servers}" th:object="${assetForm}" class="stacked-form">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
         <p th:each="err : ${#fields.globalErrors()}" class="error-message" th:text="${err}">오류</p>
         <input type="hidden" th:field="*{assetType}">

@@ -37,7 +37,7 @@
   <section class="panel">
     <form method="post"
           th:action="${mode == 'new'} ? @{'/wiki/spaces/' + ${space.id} + '/pages'} : @{'/wiki/' + ${pageId}}"
-          th:object="${wikiForm}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:1100px;">
+          th:object="${wikiForm}" class="stacked-form wide">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
       <p th:each="err : ${#fields.globalErrors()}" class="error-message" th:text="${err}">오류</p>
       <label>제목</label>
@@ -74,7 +74,7 @@
                   rows="22" maxlength="50000" placeholder="마크다운으로 작성할 수 있습니다." required
                   style="width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.5"></textarea>
         <div class="wiki-preview" id="wikiPreview"
-             style="border:1px solid rgba(128,128,128,.25);border-radius:8px;padding:.75rem 1rem;overflow:auto;max-height:520px">
+             style="border:1px solid var(--rule);padding:.75rem 1rem;overflow:auto;max-height:520px">
           <div class="wiki-content" style="word-break:break-word;line-height:1.7;font-size:0.95rem"></div>
         </div>
       </div>

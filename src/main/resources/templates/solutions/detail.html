@@ -128,7 +128,7 @@
       <p class="subcopy" th:if="${logAnalysis.note != null}" th:text="${logAnalysis.note}">비고</p>
       <div th:if="${logAnalysis.aiSummary != null}">
         <p class="eyebrow">AI 요약 · 원인 · 조치</p>
-        <pre style="white-space:pre-wrap;line-height:1.6;font-family:inherit;background:#f7f8fa;padding:1rem;border-radius:8px" th:text="${logAnalysis.aiSummary}">요약</pre>
+        <pre class="text-block" th:text="${logAnalysis.aiSummary}">요약</pre>
       </div>
       <div th:unless="${#lists.isEmpty(logAnalysis.groups)}" class="data-table" style="margin-top:.6rem">
         <div class="table-row table-head"><span>추출된 크리티컬 오류(중복 접음)</span><span>횟수</span></div>

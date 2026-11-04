@@ -32,10 +32,10 @@
     <div class="panel-head"><div><p class="eyebrow">1단계</p><h2>인증기 앱에 등록</h2></div></div>
     <p class="subcopy">Google Authenticator(또는 호환 앱)에서 <b>수동 입력</b>으로 아래 키를 등록하세요.</p>
     <p>계정: <b th:text="'MOA'">MOA</b> · 키(수동 입력):
-      <code th:text="${enrollment.secret}" style="background:#f7f8fa;padding:.2rem .5rem;border-radius:4px;letter-spacing:.1em">SECRET</code>
+      <code th:text="${enrollment.secret}" class="code-chip spaced">SECRET</code>
     </p>
     <p class="subcopy">otpauth 링크(QR 생성기에 붙여넣기 가능):</p>
-    <code th:text="${enrollment.provisioningUri}" style="display:block;word-break:break-all;background:#f7f8fa;padding:.5rem;border-radius:6px;font-size:.82em">otpauth://…</code>
+    <code th:text="${enrollment.provisioningUri}" class="code-chip block">otpauth://…</code>
 
     <div class="panel-head" style="margin-top:1rem"><div><p class="eyebrow">2단계</p><h2>코드 확인</h2></div></div>
     <p th:if="${confirmError != null}" class="subcopy t-bad" th:text="${confirmError}">오류</p>

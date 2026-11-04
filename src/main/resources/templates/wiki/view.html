@@ -51,7 +51,7 @@
   <!-- AI 요약(Tier 1): 버튼 클릭 시 비동기 생성해 표시. 문서 근거·권한 존중. -->
   <section class="panel" id="aiSummaryPanel" style="display:none">
     <div class="panel-head"><div><p class="eyebrow">AI 요약</p><h2>핵심 요약</h2></div></div>
-    <pre id="aiSummaryText" style="white-space:pre-wrap;line-height:1.6;font-family:inherit;background:#f7f8fa;padding:1rem;border-radius:8px">…</pre>
+    <pre id="aiSummaryText" class="text-block">…</pre>
   </section>
 
   <section class="panel">
@@ -75,10 +75,10 @@
     <p th:if="${#lists.isEmpty(attachments)}" class="subcopy">첨부파일이 없습니다.</p>
     <div th:unless="${#lists.isEmpty(attachments)}" style="display:grid;gap:.5rem">
       <div th:each="a : ${attachments}"
-           style="display:flex;gap:.6rem;align-items:center;border-bottom:1px solid rgba(128,128,128,.15);padding-bottom:.5rem">
+           style="display:flex;gap:.6rem;align-items:center;border-bottom:1px solid var(--line);padding-bottom:.5rem">
         <a th:if="${a.image}" th:href="@{'/wiki/attachments/' + ${a.id}}" target="_blank" rel="noopener">
           <img th:src="@{'/wiki/attachments/' + ${a.id}}" th:alt="${a.filename}"
-               style="max-height:96px;max-width:160px;border-radius:6px;border:1px solid rgba(128,128,128,.2)">
+               style="max-height:96px;max-width:160px;border:1px solid var(--rule)">
         </a>
         <div style="flex:1;min-width:0">
           <a th:href="@{'/wiki/attachments/' + ${a.id}}" th:text="${a.filename}"
@@ -102,7 +102,7 @@
     <div class="panel-head"><div><p class="eyebrow">댓글</p><h2>의견</h2></div>
       <span class="pill" th:text="${#lists.size(comments)} + '개'">0개</span></div>
     <div th:unless="${#lists.isEmpty(comments)}" style="display:grid;gap:.6rem;margin-bottom:.8rem">
-      <div th:each="c : ${comments}" style="border-bottom:1px solid rgba(128,128,128,.15);padding-bottom:.5rem">
+      <div th:each="c : ${comments}" style="border-bottom:1px solid var(--line);padding-bottom:.5rem">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <strong th:text="${c.authorUserId != null ? commentAuthors.get(c.authorUserId) : '알 수 없음'}">작성자</strong>
           <span class="subcopy no-margin">

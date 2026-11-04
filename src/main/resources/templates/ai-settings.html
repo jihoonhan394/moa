@@ -11,7 +11,7 @@
   <p th:if="${aiMessage}" class="modal-note" th:text="${aiMessage}">결과</p>
 
   <section class="panel">
-    <form method="post" th:action="@{/ai-settings}" th:object="${aiForm}" class="stacked-form" style="display:grid;gap:0.7rem;max-width:var(--form-w);">
+    <form method="post" th:action="@{/ai-settings}" th:object="${aiForm}" class="stacked-form">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
       <div th:if="${#fields.hasAnyErrors()}" class="error-message"><p th:each="e : ${#fields.allErrors()}" th:text="${e}" style="margin:.1rem 0"></p></div>
       <label>제공자</label>
@@ -45,7 +45,7 @@
     </p>
 
     <div th:if="${testResult}" class="panel"
-         style="margin-top:.8rem;padding:.9rem 1rem;border-radius:8px">
+         style="margin-top:.8rem;padding:.9rem 1rem">
       <p th:class="${testResult.ok} ? 'subcopy t-good' : 'subcopy t-bad'"
          th:text="${testResult.ok} ? '연결 성공' : '연결 실패'">결과</p>
       <p class="subcopy" th:text="${testResult.message}">설명</p>

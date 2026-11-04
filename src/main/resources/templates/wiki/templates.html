@@ -28,7 +28,7 @@
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">등록</p><h2>새 서식 만들기</h2></div></div>
-    <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/templates'}" th:object="${templateForm}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:var(--form-w);">
+    <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/templates'}" th:object="${templateForm}" class="stacked-form">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
       <label>서식 이름</label>
       <input type="text" th:field="*{name}" maxlength="200" placeholder="예: 회의록 / 결정 기록 / 주간보고" required>
