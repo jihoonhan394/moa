@@ -33,7 +33,7 @@
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">등록</p><h2>기동 순서 만들기</h2></div></div>
-    <form method="post" th:action="@{/solution-sequences}" th:object="${sequenceForm}" class="stacked-form" style="display:flex;gap:0.5rem;max-width:760px;">
+    <form method="post" th:action="@{/solution-sequences}" th:object="${sequenceForm}" class="form-row stacked-form" style="display:flex;gap:0.5rem;max-width:var(--form-w);">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
       <input class="fill" type="text" th:field="*{name}" maxlength="100" placeholder="순서 이름 (예: 모바일 그룹웨어 중단 / 페일오버)" required>
       <input type="text" th:field="*{description}" maxlength="500" placeholder="설명 (선택)" style="flex:2">
@@ -50,7 +50,8 @@
     </div>
   </section>
 
-  <p th:if="${#lists.isEmpty(sequences)}" class="subcopy">등록된 기동 순서가 없습니다.</p>
+  <!-- 빈 목록 안내도 칸 안에 둔다(칸 밖에 뜬 문구) -->
+  <section class="panel" th:if="${#lists.isEmpty(sequences)}"><p class="subcopy no-margin">등록된 기동 순서가 없습니다.</p></section>
 
   <section class="panel" th:each="seq : ${sequences}">
     <div class="panel-head">
@@ -87,14 +88,14 @@
           <form class="inline" method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps/' + ${st.stepId} + '/move'}">
             <input type="hidden" name="up" value="false"><button class="button" type="submit" title="아래로">▼</button>
           </form>
-          <form class="inline" method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps/' + ${st.stepId} + '/delete'}">
+          <form class="form-row inline" method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps/' + ${st.stepId} + '/delete'}">
             <button class="button" type="submit">제거</button>
           </form>
         </span>
       </div>
     </div>
 
-    <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps'}" style="display:flex;gap:0.4rem;margin-top:0.6rem;flex-wrap:wrap;align-items:center">
+    <form class="form-row" method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/steps'}" style="max-width:var(--form-w);display:flex;gap:0.4rem;margin-top:0.6rem;flex-wrap:wrap;align-items:center">
       <select name="solutionId" required aria-label="솔루션" style="flex:1;min-width:200px">
         <option value="" disabled selected>솔루션 선택</option>
         <option th:each="sol : ${solutions}" th:value="${sol.id}" th:text="${sol.name + ' (' + sol.type + ')'}">솔루션</option>
@@ -107,7 +108,7 @@
       <button class="button" type="submit">단계 추가</button>
     </form>
 
-    <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/schedule'}" style="display:flex;gap:0.4rem;margin-top:0.5rem;flex-wrap:wrap;align-items:center">
+    <form method="post" th:action="@{'/solution-sequences/' + ${seq.id} + '/schedule'}" style="max-width:var(--form-w);display:flex;gap:0.4rem;margin-top:0.5rem;flex-wrap:wrap;align-items:center">
       <span class="subcopy no-margin">자동 스케줄(cron 초 분 시 일 월 요일):</span>
       <input type="text" name="forwardCron" th:value="${seq.forwardCron}" placeholder="정방향 예: 0 0 19 * * *" style="width:200px">
       <input type="text" name="reverseCron" th:value="${seq.reverseCron}" placeholder="역방향 예: 0 0 8 * * *" style="width:200px">

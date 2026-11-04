@@ -269,6 +269,10 @@ public class ManagedUserService {
       UUID tenantId, String username, String name, String email, String phone, String rawPassword) {
     validatePassword(rawPassword);
     String trimmed = username.trim();
+    // 기관 사용자 화면과 같은 규칙. 어기면 만든 뒤 기관 쪽에서 이 계정을 고칠 수 없게 된다.
+    if (!trimmed.matches(UserForm.USERNAME_PATTERN)) {
+      throw new InvalidUsernameException();
+    }
     // 유일 키는 이메일. username은 표시 이름이라 중복 허용(동명이인).
     if (email != null && !email.isBlank()
         && userRepository.existsByTenantIdAndEmailIgnoreCase(tenantId, email.trim())) {

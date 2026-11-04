@@ -130,22 +130,36 @@
       <span class="pill" th:text="${#lists.size(rows)} + '구간'">0구간</span>
     </div>
     <p th:if="${#lists.isEmpty(rows)}" class="subcopy">기록된 구간이 없습니다.</p>
-    <div th:unless="${#lists.isEmpty(rows)}" class="data-table table-scroll">
+    <!-- 인수인계 대장: 한 줄 = 한 번의 넘겨줌. 누가 넘겼고 누가 받았고 받은 사람이 확인했는지. -->
+    <div th:unless="${#lists.isEmpty(rows)}" class="data-table handover-table table-scroll">
       <div class="table-row table-head">
-        <span>보관자</span><span>종류</span><span>시작</span><span>종료</span><span>반납 예정</span><span>사유</span><span>기록자</span>
+        <span>구간</span><span>넘겨준 쪽</span><span>받은 쪽</span><span>인수 확인</span>
       </div>
-      <div class="table-row" th:each="r : ${rows}">
-        <strong th:text="${r.holderLabel}">보관자</strong>
-        <span th:text="${r.holderType}">종류</span>
-        <span th:text="${r.startedOn}">시작</span>
-        <span th:if="${r.endedOn != null}" th:text="${r.endedOn}">종료</span>
-        <b th:if="${r.endedOn == null}" class="good">보관 중</b>
-        <span th:if="${r.expectedReturnOn == null}" class="t-muted">-</span>
-        <b th:if="${r.expectedReturnOn != null}"
-           th:classappend="${r.overdue} ? 'bad' : 'warn'"
-           th:text="${r.expectedReturnOn} + (${r.overdue} ? ' (초과)' : '')">예정일</b>
-        <span th:text="${r.reason} ?: '-'" class="t-muted">사유</span>
-        <span th:text="${r.actor}" class="t-muted">기록자</span>
+      <div class="table-row" th:each="r : ${rows}" th:classappend="${r.endedOn == null} ? 'is-current'">
+        <div class="span">
+          <span th:text="${r.startedOn}">시작</span>
+          <span class="to">~</span>
+          <span th:if="${r.endedOn != null}" th:text="${r.endedOn}">종료</span>
+          <b th:if="${r.endedOn == null}" class="now">현재</b>
+          <small th:if="${r.expectedReturnOn != null}" class="sub"
+                 th:classappend="${r.overdue} ? 'bad' : 'warn'"
+                 th:text="'반납 예정 ' + ${r.expectedReturnOn} + (${r.overdue} ? ' (초과)' : '')">반납 예정</small>
+        </div>
+        <span th:if="${r.giverLabel != null}" th:text="${r.giverLabel}">넘겨준 쪽</span>
+        <span th:if="${r.giverLabel == null}" class="t-muted">최초 기록</span>
+        <div>
+          <strong th:text="${r.holderLabel}">받은 쪽</strong>
+          <small class="sub" th:text="${r.holderType} + (${r.reason} != null ? ' · ' + ${r.reason} : '')">종류 · 사유</small>
+        </div>
+        <div th:if="${r.confirmedAt != null}" class="ack">
+          <b>확인</b>
+          <small class="sub" th:text="${#temporals.format(r.confirmedAt, 'yyyy-MM-dd HH:mm')}">시각</small>
+        </div>
+        <span th:if="${r.confirmedAt == null and r.awaitsConfirmation}" class="unacked">확인 대기</span>
+        <div th:if="${r.confirmedAt == null and !r.awaitsConfirmation}">
+          <span class="t-muted">—</span>
+          <small class="sub" th:text="'기록 ' + ${r.actor}">기록자</small>
+        </div>
       </div>
     </div>
   </section>

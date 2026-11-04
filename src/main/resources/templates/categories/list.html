@@ -13,12 +13,12 @@
     <div class="top-actions"><a class="button" th:href="@{${backLink}}" th:text="'← ' + ${backLabel} + '(으)로'">돌아가기</a></div>
   </header>
 
-  <p th:if="${error}" class="error-message" th:text="${error}" style="max-width:640px">오류</p>
+  <p th:if="${error}" class="error-message" th:text="${error}">오류</p>
 
   <!-- 최상위 추가: 평면(공유자산) 또는 루트 추가 허용 트리(서버) -->
   <section class="panel" th:if="${!hierarchical or hierarchicalRootAddable}">
     <div class="panel-head"><div><p class="eyebrow">추가</p><h2 th:text="${hierarchical} ? '최상위 카테고리 추가' : '카테고리 추가'">카테고리 추가</h2></div></div>
-    <form method="post" th:action="@{${basePath}}" class="asset-toolbar" style="max-width:520px;gap:.4rem">
+    <form method="post" th:action="@{${basePath}}" class="asset-toolbar category-add">
       <input type="text" name="name" maxlength="100" placeholder="카테고리 이름 (예: 내부망 서버 / 회의실)" required>
       <button class="button primary" type="submit">추가</button>
     </form>
@@ -28,23 +28,23 @@
     <div class="panel-head"><div><p class="eyebrow">목록</p><h2 th:text="${domainLabel} + ' 카테고리'">카테고리</h2></div>
       <span class="pill" th:text="${#lists.size(nodes)} + '개'">0개</span></div>
     <p th:if="${#lists.isEmpty(nodes)}" class="subcopy">카테고리가 없습니다.</p>
-    <div th:unless="${#lists.isEmpty(nodes)}" class="data-table category-table table-scroll" style="gap:.25rem">
-      <div class="table-row" th:each="n : ${nodes}" style="grid-template-columns:minmax(0,1fr) 500px;align-items:center">
+    <div th:unless="${#lists.isEmpty(nodes)}" class="data-table category-table table-scroll">
+      <div class="table-row" th:each="n : ${nodes}">
         <span th:style="'padding-left:' + ${n.depth * 22} + 'px'">
           <b th:if="${n.depth == 0 and hierarchical}" th:text="'▸ ' + ${n.name}">실물</b>
           <span th:unless="${n.depth == 0 and hierarchical}" th:text="${(n.depth > 0 ? '· ' : '') + n.name}">이름</span>
         </span>
-        <span class="table-actions" style="gap:.3rem;flex-wrap:wrap">
+        <span class="table-actions">
           <!-- 하위 추가(자산 트리): 유형 루트를 포함해 어느 노드 아래든 -->
-          <form th:if="${hierarchical}" method="post" th:action="@{${basePath}}" class="asset-toolbar" style="gap:.3rem">
+          <form th:if="${hierarchical}" method="post" th:action="@{${basePath}}" class="asset-toolbar">
             <input type="hidden" name="parentId" th:value="${n.id}">
-            <input type="text" name="name" maxlength="100" placeholder="하위 추가" style="max-width:150px" required>
+            <input type="text" name="name" maxlength="100" placeholder="하위 추가" required>
             <button class="button" type="submit">+ 하위</button>
           </form>
           <!-- 이름 변경(고정 루트=실물/SW만 변경 불가) -->
           <form th:unless="${hierarchical and n.depth == 0 and !hierarchicalRootAddable}" method="post"
-                th:action="@{${basePath} + '/' + ${n.id}}" class="asset-toolbar" style="gap:.3rem">
-            <input type="text" name="name" th:value="${n.name}" maxlength="100" required style="max-width:150px">
+                th:action="@{${basePath} + '/' + ${n.id}}" class="asset-toolbar">
+            <input type="text" name="name" th:value="${n.name}" maxlength="100" required>
             <button class="button" type="submit">이름</button>
           </form>
           <!-- 삭제(고정 루트·하위 보유 노드는 막힘) -->

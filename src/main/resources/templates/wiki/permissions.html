@@ -30,7 +30,7 @@
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">부여</p><h2>권한 추가</h2></div></div>
-    <div style="display:grid;gap:0.8rem;max-width:640px">
+    <div style="display:grid;gap:0.8rem;max-width:var(--form-w)">
       <!-- 부서 -->
       <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;flex-wrap:wrap;gap:.4rem;align-items:center">
         <input type="hidden" name="subjectType" value="GROUP">

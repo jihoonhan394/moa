@@ -27,7 +27,7 @@
   <!-- 초대 폼 -->
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">새 초대</p><h2>초대 보내기</h2></div></div>
-    <form method="post" th:action="@{/invitations}" class="stack-form" style="display:grid;gap:.6rem;max-width:680px">
+    <form method="post" th:action="@{/invitations}" class="stack-form" style="display:grid;gap:.6rem;max-width:var(--form-w)">
       <label>이메일 (여러 명은 줄바꿈 또는 쉼표로 구분)
         <textarea name="emails" rows="4" required placeholder="hong@company.com&#10;kim@company.com&#10;lee@company.com"></textarea>
       </label>

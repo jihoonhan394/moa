@@ -46,21 +46,26 @@
 
       <label>내용 <small class="t-muted">(마크다운 · 표·취소선 지원 · 오른쪽에 실시간 미리보기)</small></label>
       <!-- 마크다운 툴바: 선택 영역을 감싸거나 줄 앞에 삽입(wiki-editor.js) -->
-      <div class="wiki-toolbar" id="wikiToolbar" style="display:flex;flex-wrap:wrap;gap:.3rem">
-        <button type="button" class="button" data-md="bold" title="굵게" style="font-weight:800">B</button>
-        <button type="button" class="button" data-md="italic" title="기울임" style="font-style:italic">I</button>
-        <button type="button" class="button" data-md="h2" title="제목">H</button>
-        <button type="button" class="button" data-md="ul" title="목록">• 목록</button>
-        <button type="button" class="button" data-md="quote" title="인용">❝ 인용</button>
-        <button type="button" class="button" data-md="code" title="코드">&lt;/&gt;</button>
-        <button type="button" class="button" data-md="link" title="링크">🔗 링크</button>
-        <button type="button" class="button" data-md="table" title="표">▦ 표</button>
-        <span th:if="${aiConfigured}" style="width:1px;background:rgba(128,128,128,.3);margin:0 .25rem"></span>
-        <button th:if="${aiConfigured}" type="button" class="button" data-ai="summarize" title="선택 영역 요약">✨ 요약</button>
-        <button th:if="${aiConfigured}" type="button" class="button" data-ai="improve" title="문장 다듬기·맞춤법">✨ 개선</button>
-        <button th:if="${aiConfigured}" type="button" class="button" data-ai="translate" title="한↔영 번역">✨ 번역</button>
-        <button th:if="${aiConfigured}" type="button" class="button" data-ai="continue" title="이어서 작성">✨ 이어쓰기</button>
-        <span id="wikiAiStatus" class="subcopy" style="margin:0 0 0 .4rem;align-self:center"></span>
+      <!-- 그림 문자 대신 글자 단추. 서식 묶음과 AI 묶음을 붙은 단추 한 줄씩으로 나눈다. -->
+      <div class="wiki-toolbar" id="wikiToolbar" role="toolbar" aria-label="편집 도구">
+        <span class="tool-group" role="group" aria-label="서식">
+          <button type="button" data-md="bold" title="굵게"><b>굵게</b></button>
+          <button type="button" data-md="italic" title="기울임"><i>기울임</i></button>
+          <button type="button" data-md="h2" title="제목">제목</button>
+          <button type="button" data-md="ul" title="목록">목록</button>
+          <button type="button" data-md="quote" title="인용">인용</button>
+          <button type="button" data-md="code" title="코드">코드</button>
+          <button type="button" data-md="link" title="링크">링크</button>
+          <button type="button" data-md="table" title="표">표</button>
+        </span>
+        <span th:if="${aiConfigured}" class="tool-group" role="group" aria-label="AI">
+          <span class="tool-label">AI</span>
+          <button type="button" data-ai="summarize" title="선택 영역 요약">요약</button>
+          <button type="button" data-ai="improve" title="문장 다듬기·맞춤법">개선</button>
+          <button type="button" data-ai="translate" title="한↔영 번역">번역</button>
+          <button type="button" data-ai="continue" title="이어서 작성">이어쓰기</button>
+        </span>
+        <span id="wikiAiStatus" class="subcopy" role="status"></span>
       </div>
       <!-- 입력 | 미리보기 분할(좁은 화면에선 한 열로) -->
       <div class="wiki-split" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:.6rem;align-items:stretch">

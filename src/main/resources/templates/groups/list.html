@@ -16,8 +16,8 @@
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">새 그룹/부서</p><h2>그룹(부서) 추가</h2></div></div>
-    <form method="post" th:action="@{/groups}" th:object="${groupForm}"
-          style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end">
+    <form class="form-row" method="post" th:action="@{/groups}" th:object="${groupForm}"
+          style="max-width:var(--form-w);display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
       <label style="display:flex;flex-direction:column;gap:.25rem">
         <span class="subcopy no-margin"><b>① 상위 부서</b> (어디 밑에?)</span>

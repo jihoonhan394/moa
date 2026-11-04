@@ -17,7 +17,7 @@
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">예약하기</p><h2>새 예약</h2></div></div>
     <p th:if="${#lists.isEmpty(resources)}" class="subcopy">예약 가능한 공유자산이 없습니다. 관리자에게 문의하세요.</p>
-    <form th:unless="${#lists.isEmpty(resources)}" method="post" th:action="@{/reservations}" th:object="${reservationForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:760px;">
+    <form th:unless="${#lists.isEmpty(resources)}" method="post" th:action="@{/reservations}" th:object="${reservationForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:var(--form-w);">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
       <div class="asset-toolbar">
         <select th:field="*{resourceId}" required aria-label="자산">

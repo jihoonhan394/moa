@@ -14,7 +14,7 @@
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">등록</p><h2>자산 등록</h2></div></div>
-    <form method="post" th:action="@{/shared-resources}" th:object="${resourceForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:760px;">
+    <form method="post" th:action="@{/shared-resources}" th:object="${resourceForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:var(--form-w);">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
       <p th:each="err : ${#fields.globalErrors()}" class="error-message" th:text="${err}">오류</p>
       <div class="asset-toolbar">

@@ -19,7 +19,7 @@
 
   <section class="panel" th:if="${canCreateTop}">
     <div class="panel-head"><div><p class="eyebrow">최상위 폴더</p><h2>새 공간 만들기</h2></div></div>
-    <form method="post" th:action="@{/wiki/spaces}" th:object="${spaceForm}" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;max-width:900px">
+    <form class="form-row" method="post" th:action="@{/wiki/spaces}" th:object="${spaceForm}" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;max-width:var(--form-w)">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
       <input type="text" th:field="*{name}" maxlength="100" placeholder="공간 이름 (예: 영업위키)" required style="flex:1;min-width:180px">
       <input type="text" th:field="*{description}" maxlength="500" placeholder="설명 (선택)" style="flex:2;min-width:200px">

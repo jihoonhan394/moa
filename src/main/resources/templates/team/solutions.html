@@ -26,7 +26,7 @@
   <div th:if="${!#lists.isEmpty(ledGroups) and !#lists.isEmpty(teamServers)}">
     <section class="panel">
       <div class="panel-head"><div><p class="eyebrow">등록</p><h2>팀 솔루션 등록</h2></div></div>
-      <form method="post" th:action="@{/team/solutions}" style="display:grid;gap:.5rem;max-width:760px">
+      <form method="post" th:action="@{/team/solutions}" style="display:grid;gap:.5rem;max-width:var(--form-w)">
         <div class="asset-toolbar">
           <select name="assetId" required aria-label="팀 소유 서버">
             <option value="" disabled selected>팀 소유 서버 선택</option>

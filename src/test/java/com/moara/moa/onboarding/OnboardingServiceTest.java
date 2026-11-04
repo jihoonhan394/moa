@@ -1,6 +1,7 @@
 package com.moara.moa.onboarding;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.moara.moa.tenant.CreateTenantCommand;
 import com.moara.moa.tenant.Tenant;
@@ -60,6 +61,25 @@ class OnboardingServiceTest {
     // 퇴사 회수 → 체크리스트 정리.
     assertThat(onboardingService.removeTasksOf(tenant.getId(), hire.getId())).isEqualTo(2);
     assertThat(onboardingService.myTasks(tenant.getId(), hire.getId())).isEmpty();
+  }
+
+  @Test
+  void sameWikiSpaceCannotBeAddedTwice() {
+    Tenant tenant = tenantService.createTenant(new CreateTenantCommand("중복사", "ONB" + System.nanoTime()));
+    WikiSpace space = wikiSpaceService.create(tenant.getId(), null, new WikiSpaceForm("개발팀", null));
+    OnboardingTemplate template = onboardingService.createTemplate(tenant.getId(), "개발팀");
+    onboardingService.addItem(tenant.getId(), template.getId(),
+        OnboardingItemType.GRANT_WIKI_SPACE, space.getId(), null);
+
+    assertThatThrownBy(() -> onboardingService.addItem(tenant.getId(), template.getId(),
+        OnboardingItemType.GRANT_WIKI_SPACE, space.getId(), null))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThat(onboardingService.items(template.getId())).hasSize(1);
+
+    // 라벨만 있는 할 일은 같은 문구라도 막지 않는다.
+    onboardingService.addItem(tenant.getId(), template.getId(), OnboardingItemType.TASK, null, "VPN 설치");
+    onboardingService.addItem(tenant.getId(), template.getId(), OnboardingItemType.TASK, null, "VPN 설치");
+    assertThat(onboardingService.items(template.getId())).hasSize(3);
   }
 
   private ManagedUser newUser(UUID tenantId) {

@@ -18,7 +18,7 @@
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">등록</p><h2>자산 등록</h2></div></div>
-    <form method="post" th:action="@{/inventory}" th:object="${inventoryForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:760px;">
+    <form method="post" th:action="@{/inventory}" th:object="${inventoryForm}" class="stacked-form" style="display:grid;gap:0.5rem;max-width:var(--form-w);">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
       <p th:each="err : ${#fields.globalErrors()}" class="error-message" th:text="${err}">오류</p>
       <div class="asset-toolbar">
@@ -175,13 +175,17 @@
           <form class="inline" th:if="${item.status.name() == 'RETURNED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/reclaim'}">
             <button class="button" type="submit" title="창고 입고를 기록하고 다시 배정할 수 있게 합니다">회수 완료 처리</button>
           </form>
-          <form class="inline" th:if="${item.status.name() != 'RETIRED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/retire'}">
-            <button class="button danger-action" type="submit">폐기</button>
-          </form>
-          <form class="inline" method="post" th:action="@{'/inventory/' + ${item.id} + '/delete'}"
-                onsubmit="return confirm('이 항목을 삭제할까요?')">
-            <button class="button danger-action" type="submit">삭제</button>
-          </form>
+          <!-- 되돌릴 수 없는 폐기·삭제는 한 번 더 펼쳐야 보인다. 관리 칸 버튼이 최대 일곱 개까지 늘던 것. -->
+          <details class="row-more">
+            <summary class="button" title="폐기 · 삭제">더보기</summary>
+            <form class="inline" th:if="${item.status.name() != 'RETIRED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/retire'}">
+              <button class="button danger-action" type="submit">폐기</button>
+            </form>
+            <form class="inline" method="post" th:action="@{'/inventory/' + ${item.id} + '/delete'}"
+                  onsubmit="return confirm('이 항목을 삭제할까요?')">
+              <button class="button danger-action" type="submit">삭제</button>
+            </form>
+          </details>
         </span>
       </div>
     </div>

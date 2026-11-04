@@ -23,7 +23,7 @@
   <div th:unless="${#lists.isEmpty(ledGroups)}">
     <section class="panel">
       <div class="panel-head"><div><p class="eyebrow">등록</p><h2>팀 서버 등록</h2></div></div>
-      <form method="post" th:action="@{/team/servers}" style="display:grid;gap:.5rem;max-width:760px">
+      <form method="post" th:action="@{/team/servers}" style="display:grid;gap:.5rem;max-width:var(--form-w)">
         <div class="asset-toolbar">
           <input type="text" name="name" maxlength="100" placeholder="서버 이름 (예: 개발-빌드-01)" required>
           <select name="protocol" required aria-label="프로토콜">

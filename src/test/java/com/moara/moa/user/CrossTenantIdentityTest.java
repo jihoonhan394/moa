@@ -61,6 +61,15 @@ class CrossTenantIdentityTest {
   }
 
   @Test
+  @DisplayName("대표 관리자 아이디에도 @는 안 된다 — 기관 사용자 화면과 같은 규칙(어기면 기관 쪽에서 못 고친다)")
+  void 대표_관리자_아이디에_이메일은_거부한다() {
+    String email = "at" + System.nanoTime() + "@example.com";
+    assertThatThrownBy(() -> userService.createTenantAdmin(
+        newTenant(), email, "관리자", email, "010-1111-1111", "safe-password-123"))
+        .isInstanceOf(InvalidUsernameException.class);
+  }
+
+  @Test
   @DisplayName("대소문자가 달라도 같은 기관 안에서는 같은 이메일로 본다")
   void 대소문자는_같은_이메일이다() {
     String email = "Case" + System.nanoTime() + "@Example.com";

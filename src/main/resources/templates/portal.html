@@ -70,7 +70,7 @@
       <li th:each="entry : ${webHistory}">
         <span class="state" th:classappend="${entry.result.name() == 'SUCCESS'} ? 'online' : 'offline'"></span>
         <span th:text="${entry.message != null ? entry.message : entry.targetId}">자산</span>
-        · <span th:text="${entry.createdAt}">시각</span>
+        · <span th:text="${#temporals.format(entry.createdAt, 'yyyy-MM-dd HH:mm')}">시각</span>
       </li>
     </ul>
   </section>

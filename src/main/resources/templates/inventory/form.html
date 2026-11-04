@@ -7,7 +7,7 @@
     <div><p class="eyebrow">자산 관리</p><h1>자산 수정</h1><p class="subcopy">메타 정보를 수정합니다(배정·상태는 목록에서 관리).</p></div>
   </header>
   <section class="panel">
-    <form method="post" th:action="@{'/inventory/' + ${itemId}}" th:object="${inventoryForm}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:560px;">
+    <form method="post" th:action="@{'/inventory/' + ${itemId}}" th:object="${inventoryForm}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:var(--form-w);">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
       <div th:if="${#fields.hasGlobalErrors()}" class="error-message"><p th:each="e : ${#fields.globalErrors()}" th:text="${e}" style="margin:.1rem 0"></p></div>
       <label>이름</label><input type="text" th:field="*{name}" maxlength="100" required>

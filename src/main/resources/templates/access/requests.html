@@ -20,7 +20,7 @@
     <div class="panel-head"><div><p class="eyebrow">새 요청</p><h2>서버 접근 요청</h2></div></div>
     <p class="subcopy" th:if="${#lists.isEmpty(requestable)}" style="margin:.4rem 0">요청 가능한 서버가 없습니다(이미 접근 가능하거나 대기 중인 요청이 있습니다).</p>
     <form th:unless="${#lists.isEmpty(requestable)}" method="post" th:action="@{/access-requests}"
-          style="display:grid;gap:.6rem;max-width:620px">
+          style="display:grid;gap:.6rem;max-width:var(--form-w)">
       <label for="assetId">서버</label>
       <select id="assetId" name="assetId" required>
         <option value="" disabled selected>서버를 선택하세요</option>

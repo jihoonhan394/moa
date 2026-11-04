@@ -22,7 +22,7 @@
         <span th:text="${tenant.status}">ACTIVE</span>
         <span th:if="${tenant.isExpired(today)}" class="t-bad"> · 구독 만료</span></dd></div>
       <div><dt>사용자 수</dt><dd th:text="${userTotal}">0</dd></div>
-      <div><dt>생성일</dt><dd th:text="${tenant.createdAt}">-</dd></div>
+      <div><dt>생성일</dt><dd th:text="${#temporals.format(tenant.createdAt, 'yyyy-MM-dd HH:mm')}">-</dd></div>
     </dl>
   </section>
 

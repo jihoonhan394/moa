@@ -13,7 +13,7 @@
   </header>
 
   <section class="panel">
-    <form method="post" th:action="@{'/solutions/' + ${solution.id} + '/update'}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:720px;">
+    <form method="post" th:action="@{'/solutions/' + ${solution.id} + '/update'}" class="stacked-form" style="display:grid;gap:0.6rem;max-width:var(--form-w);">
       <div class="asset-toolbar">
         <select name="assetId" required aria-label="서버 자산">
           <option th:each="a : ${assets}" th:value="${a.id}"

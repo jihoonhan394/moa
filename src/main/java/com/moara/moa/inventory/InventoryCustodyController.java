@@ -201,7 +201,13 @@ public class InventoryCustodyController {
       row.put("quantity", custody.getQuantity());
       row.put("actor", custody.getCreatedBy() == null
           ? "시스템" : actorNames.getOrDefault(custody.getCreatedBy(), "알 수 없음"));
+      row.put("confirmedAt", custody.getConfirmedAt());
+      row.put("awaitsConfirmation", custody.awaitsConfirmation());
       rows.add(row);
+    }
+    // 인수인계 대장: 이 구간을 넘겨준 쪽은 바로 이전 구간의 보관자다(history 는 최신이 먼저).
+    for (int i = 0; i < rows.size(); i++) {
+      rows.get(i).put("giverLabel", i + 1 < rows.size() ? rows.get(i + 1).get("holderLabel") : null);
     }
     return rows;
   }

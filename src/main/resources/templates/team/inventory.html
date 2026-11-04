@@ -25,7 +25,7 @@
     <section class="panel">
       <div class="panel-head"><div><p class="eyebrow">등록</p><h2>팀 자산 등록</h2></div></div>
       <form method="post" th:action="@{/team/inventory}" th:object="${inventoryForm}"
-            style="display:grid;gap:.5rem;max-width:760px">
+            style="display:grid;gap:.5rem;max-width:var(--form-w)">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
         <div class="asset-toolbar">
           <input type="text" th:field="*{name}" maxlength="100" placeholder="항목 이름 (예: 개발팀 모니터 #3)" required>

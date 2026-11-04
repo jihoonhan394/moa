@@ -4,6 +4,7 @@ import com.moara.moa.audit.AuditLogService;
 import com.moara.moa.audit.AuditResult;
 import com.moara.moa.security.TenantContext;
 import com.moara.moa.user.DuplicateManagedUserException;
+import com.moara.moa.user.InvalidUsernameException;
 import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserNotFoundException;
 import com.moara.moa.user.ManagedUserService;
@@ -127,6 +128,10 @@ public class TenantController {
     } catch (DuplicateManagedUserException exception) {
       populateDetail(model, tenant);
       model.addAttribute("adminError", "이미 사용 중인 아이디 또는 이메일입니다.");
+      return "admin/tenants/detail";
+    } catch (InvalidUsernameException exception) {
+      populateDetail(model, tenant);
+      model.addAttribute("adminError", exception.getMessage());
       return "admin/tenants/detail";
     } catch (IllegalArgumentException exception) {
       populateDetail(model, tenant);

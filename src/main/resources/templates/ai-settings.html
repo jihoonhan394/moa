@@ -11,7 +11,7 @@
   <p th:if="${aiMessage}" class="modal-note" th:text="${aiMessage}">결과</p>
 
   <section class="panel">
-    <form method="post" th:action="@{/ai-settings}" th:object="${aiForm}" class="stacked-form" style="display:grid;gap:0.7rem;max-width:620px;">
+    <form method="post" th:action="@{/ai-settings}" th:object="${aiForm}" class="stacked-form" style="display:grid;gap:0.7rem;max-width:var(--form-w);">
     <div th:replace="~{fragments/form-errors :: errors}"></div>
       <div th:if="${#fields.hasAnyErrors()}" class="error-message"><p th:each="e : ${#fields.allErrors()}" th:text="${e}" style="margin:.1rem 0"></p></div>
       <label>제공자</label>
@@ -32,12 +32,14 @@
 
       <label class="checkbox-row"><input type="checkbox" th:field="*{enabled}"> AI 기능 사용(활성화)</label>
 
-      <div><button class="button primary" type="submit">저장</button></div>
+      <!-- '연결 확인'은 다른 폼(/ai-settings/test)으로 보내지만 저장과 한 줄에 둔다(form 속성) -->
+      <div class="form-actions">
+        <button class="button primary" type="submit">저장</button>
+        <button class="button" type="submit" form="ai-test-form">연결 확인</button>
+      </div>
     </form>
 
-    <form method="post" th:action="@{/ai-settings/test}" class="inline">
-      <button class="button" type="submit">연결 확인</button>
-    </form>
+    <form id="ai-test-form" method="post" th:action="@{/ai-settings/test}" class="inline"></form>
     <p class="subcopy t-muted" style="margin-top:.4rem">
       저장한 설정으로 실제 한 번 호출해 봅니다. 키·모델명·주소·네트워크를 한꺼번에 확인할 수 있습니다.
     </p>

@@ -23,7 +23,7 @@
   <div th:unless="${#lists.isEmpty(teamUsers)}">
     <section class="panel">
       <div class="panel-head"><div><p class="eyebrow">지정</p><h2>대직 지정</h2></div></div>
-      <form method="post" th:action="@{/team/deputies}" style="display:flex;gap:.5rem;align-items:end;flex-wrap:wrap">
+      <form class="form-row" method="post" th:action="@{/team/deputies}" style="max-width:var(--form-w);display:flex;gap:.5rem;align-items:end;flex-wrap:wrap">
         <div style="display:grid;gap:.2rem"><label>부재자</label>
           <select name="absentUserId" required style="min-width:200px">
             <option value="" disabled selected>부재 팀원</option>

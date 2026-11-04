@@ -64,7 +64,13 @@ public class OnboardingService {
   @Transactional
   public void addItem(UUID tenantId, UUID templateId, OnboardingItemType type, UUID refId, String label) {
     template(tenantId, templateId); // 소유 검증
-    int nextSort = items(templateId).size();
+    List<OnboardingTemplateItem> existing = items(templateId);
+    // 같은 위키 공간·솔루션을 두 번 넣으면 같은 줄이 두 번 보이고 적용도 두 번 돈다.
+    if (refId != null && existing.stream()
+        .anyMatch(item -> item.getItemType() == type && refId.equals(item.getRefId()))) {
+      throw new IllegalArgumentException("이미 이 템플릿에 들어 있는 항목입니다.");
+    }
+    int nextSort = existing.size();
     itemRepository.save(new OnboardingTemplateItem(
         UUID.randomUUID(), templateId, type, refId, label, nextSort));
   }

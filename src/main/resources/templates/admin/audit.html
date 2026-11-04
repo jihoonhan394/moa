@@ -16,7 +16,7 @@
     <div th:unless="${#lists.isEmpty(logs)}" class="data-table table-scroll">
       <div class="table-row table-head"><span>시각</span><span>행위</span><span>대상</span><span>결과</span><span>상세</span></div>
       <div class="table-row" th:each="log : ${logs}">
-        <span th:text="${log.createdAt}">시각</span>
+        <span th:text="${#temporals.format(log.createdAt, 'yyyy-MM-dd HH:mm')}">시각</span>
         <strong th:text="${log.action}">ACTION</strong>
         <span th:text="${log.targetType != null ? log.targetType : '-'}">대상</span>
         <b th:classappend="${log.result.name() == 'SUCCESS'} ? 'good' : 'warn'" th:text="${log.result}">SUCCESS</b>

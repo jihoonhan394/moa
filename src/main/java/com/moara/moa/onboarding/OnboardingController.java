@@ -2,8 +2,13 @@ package com.moara.moa.onboarding;
 
 import com.moara.moa.audit.TenantAuditRecorder;
 import com.moara.moa.security.TenantContext;
+import com.moara.moa.solution.ManagedSolution;
 import com.moara.moa.solution.ManagedSolutionService;
+import com.moara.moa.wiki.WikiSpace;
 import com.moara.moa.wiki.WikiSpaceService;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * 입사 온보딩 <b>템플릿 구성</b>(자원을 아는 인프라/자산 관리자 전용). 실제 <b>적용</b>은 부서장이
@@ -41,8 +47,15 @@ public class OnboardingController {
     UUID tenantId = tenantContext.currentTenantId();
     model.addAttribute("templates", onboardingService.templates(tenantId));
     model.addAttribute("itemTypes", OnboardingItemType.values());
-    model.addAttribute("solutions", solutionService.findAll(tenantId));
-    model.addAttribute("spaces", wikiSpaceService.findAll(tenantId));
+    List<ManagedSolution> solutions = solutionService.findAll(tenantId);
+    List<WikiSpace> spaces = wikiSpaceService.findAll(tenantId);
+    model.addAttribute("solutions", solutions);
+    model.addAttribute("spaces", spaces);
+    // 솔루션·위키 항목은 ID만 저장한다 — 화면에 UUID가 그대로 나오지 않게 이름을 찾아 둔다.
+    Map<UUID, String> refNames = new HashMap<>();
+    solutions.forEach(s -> refNames.put(s.getId(), s.getName()));
+    spaces.forEach(w -> refNames.put(w.getId(), w.getName()));
+    model.addAttribute("refNames", refNames);
     if (template != null) {
       OnboardingTemplate selected = onboardingService.template(tenantId, template);
       model.addAttribute("selected", selected);
@@ -64,8 +77,14 @@ public class OnboardingController {
       @PathVariable UUID id,
       @RequestParam OnboardingItemType type,
       @RequestParam(required = false) UUID refId,
-      @RequestParam(required = false) String label) {
-    onboardingService.addItem(tenantContext.currentTenantId(), id, type, refId, label);
+      @RequestParam(required = false) String label,
+      RedirectAttributes redirect) {
+    try {
+      onboardingService.addItem(tenantContext.currentTenantId(), id, type, refId, label);
+    } catch (IllegalArgumentException exception) {
+      redirect.addFlashAttribute("error", exception.getMessage());
+      return "redirect:/onboarding?template=" + id;
+    }
     audit("ONBOARDING_ITEM_ADD", id, "유형=" + type + (label == null || label.isBlank() ? "" : ", 라벨=" + label));
     return "redirect:/onboarding?template=" + id;
   }

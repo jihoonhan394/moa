@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 
 public record UserForm(
     // 표시 이름(핸들). 로그인 키는 이메일이며 username은 이메일이 아니다 → @ 불가, 한글 허용.
-    @NotBlank @Pattern(regexp = "[\\p{L}\\p{N} ._-]+",
+    @NotBlank @Pattern(regexp = UserForm.USERNAME_PATTERN,
         message = "이름에는 @를 쓸 수 없습니다(이메일은 아래 이메일 칸에).")
     @Size(max = 100) String username,
     @NotBlank @Size(max = 100) String name,
@@ -17,6 +17,9 @@ public record UserForm(
         message = "전화번호는 숫자와 -, +, (), 공백만 사용할 수 있습니다.") String phone,
     @Size(max = 100) String password,
     @NotNull UserStatus status) {
+
+  /** 아이디(표시 이름) 규칙. 이메일이 아니므로 @를 쓸 수 없다. 플랫폼의 대표 관리자 생성도 같은 규칙. */
+  public static final String USERNAME_PATTERN = "[\\p{L}\\p{N} ._-]+";
 
   /** 전화번호 도입 이전 호출부(프로그램/테스트) 호환용. phone은 미지정(null)으로 둔다. */
   public UserForm(String username, String name, String email, String password, UserStatus status) {

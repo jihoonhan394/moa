@@ -42,7 +42,7 @@
         <span>상태</span><span>클라이언트 IP</span><span>실패코드</span>
       </div>
       <div class="table-row" th:each="s : ${sessions}">
-        <span th:text="${s.createdAt}">시각</span>
+        <span th:text="${#temporals.format(s.createdAt, 'yyyy-MM-dd HH:mm')}">시각</span>
         <span th:text="${userNames.getOrDefault(s.userId, '(알 수 없음)')}">사용자</span>
         <span th:text="${assetNames.getOrDefault(s.assetId, '(삭제된 자산)')}">자산</span>
         <span th:text="${s.protocol}">SSH</span>
