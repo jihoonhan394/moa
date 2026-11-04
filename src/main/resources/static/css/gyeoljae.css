@@ -1,0 +1,369 @@
+/* MOA 결재 테마 — style.css 다음에 읽힌다(fragments/head.html).
+   기존 화면 마크업은 그대로 두고, 공통 클래스(.panel·.data-table·.button·.nav …)에
+   결재판 문법을 입힌다: 먹색 괘선으로 두른 문서면, 명조 제목, 결재 청흑 하나로 행동, 인주 주홍은 위험에만.
+   토큰은 design-tokens.css, 규칙은 루트 DESIGN.md. 시안: doc/디자인-리뉴얼-시안/b-gyeoljae */
+
+/* 제목 명조. KS X 1001 한글 2,350자 + 기본 라틴 서브셋(OFL, Noto Serif KR Bold).
+   swap: 제목은 늦게 와도 폴백 명조로 먼저 보이고 바뀌기만 한다. */
+@font-face {
+	font-family: "MOA Myeongjo";
+	src: url("/fonts/NotoSerifKR-700-ksx.woff2") format("woff2");
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
+/* ---------- 바탕 ---------- */
+:root { font-family: var(--sans); letter-spacing: 0; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { background: var(--page-background); color: var(--ink); line-height: 1.55; caret-color: var(--accent); -webkit-tap-highlight-color: transparent; scrollbar-color: #9A9A95 transparent; }
+::selection { background: var(--accent); color: #fff; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #B4B4AF; border: 2px solid var(--page-background); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #8A8A85; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+time, .tnum, .metric strong, .table-row { font-variant-numeric: tabular-nums; }
+
+/* ---------- 제목 ---------- */
+h1 { font-family: var(--serif); font-weight: 700; font-size: 1.9rem; line-height: 1.25; letter-spacing: -.01em; text-wrap: balance; }
+h2 { font-family: var(--serif); font-weight: 700; font-size: 1.15rem; line-height: 1.35; }
+h3 { font-family: var(--serif); font-weight: 700; }
+.eyebrow { margin: 0 0 6px; color: var(--ink-2); font-size: .82rem; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.subcopy { color: var(--ink-2); font-size: .93rem; }
+.topbar { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--ink); align-items: flex-end; }
+
+/* ---------- 사이드바 ---------- */
+.sidebar { background: var(--surface); border-right: 1px solid var(--rule); backdrop-filter: none; padding: 18px 12px 20px; }
+.sidebar-top { padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
+.brand { padding: 2px 8px 0; border-radius: 0; }
+/* 접힌 사이드바에서만 머리글자 표지를 쓴다. 펼쳤을 때는 명조 "MOA" 하나로 충분하다. */
+.brand-mark { display: none; width: 36px; height: 36px; border: 1px solid var(--rule); border-radius: 0; background: var(--surface); box-shadow: none; color: var(--ink); font-family: var(--serif); font-size: 1.2rem; }
+.app-shell.sidebar-collapsed .brand-mark { display: grid; }
+.brand strong { font-family: var(--serif); font-weight: 700; font-size: 1.45rem; line-height: 1.1; letter-spacing: .06em; }
+.brand small { margin-top: 2px; font-size: .75rem; }
+.nav { gap: 1px; align-content: start; }
+.nav-label { margin: 16px 8px 4px; color: var(--muted); font-size: .78rem; font-weight: 600; letter-spacing: .02em; text-transform: none; opacity: 1; }
+.nav a { padding: 8px 8px; border-radius: var(--radius); color: var(--ink); font-size: .9rem; font-weight: 500; }
+.nav a .nav-icon { color: var(--ink-2); }
+.nav a:hover { background: var(--field); color: var(--ink); }
+.nav a.active { background: var(--accent-soft); color: var(--accent); font-weight: 650; }
+.nav a.active .nav-icon { color: var(--accent); }
+.nav a.active::before { display: none; }
+.nav .pill { background: var(--ink); color: #fff; border: 0; }
+.operator { border: 1px solid var(--rule); border-radius: 0; background: var(--field); }
+.sidebar-toggle { border-radius: var(--radius); color: var(--ink-2); }
+
+/* ---------- 문서면(패널) ---------- */
+.panel, .metric { border: 1px solid var(--rule); border-radius: 0; background: var(--surface); box-shadow: var(--shadow); }
+.panel { padding: 20px; }
+.panel > .panel-head:first-child { margin: -20px -20px 16px; padding: 16px 20px 14px; border-bottom: 1px solid var(--rule); align-items: baseline; }
+.panel-head h2 { font-size: 1.15rem; }
+
+/* 지표는 한 장의 현황표처럼 칸을 맞붙인다(칸 테두리를 1px씩 겹쳐 괘선 하나로). 마지막 줄이 덜 차도 빈칸이 생기지 않는다. */
+.metric-grid { gap: 0; padding: 0 1px 1px 0; }
+.metric-grid > .metric { margin: 0 -1px -1px 0; box-shadow: none; min-height: 0; padding: 16px 18px; }
+.metric span { color: var(--ink-2); font-size: .85rem; font-weight: 600; }
+.metric strong { margin: 8px 0 6px; font-family: var(--serif); font-weight: 700; font-size: 1.9rem; }
+.metric small { color: var(--muted); }
+.metric.warning strong { color: var(--red-ink); }
+
+/* ---------- 괘선 표 ---------- */
+.data-table { border: 1px solid var(--rule); border-radius: 0; background: var(--surface); }
+.table-row { padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--surface); font-size: .92rem; }
+.table-row:not(.table-head):hover { background: #F3F4F7; }
+.table-head { background: var(--field); border-bottom: 1px solid var(--rule); color: var(--ink-2); font-size: .82rem; font-weight: 600; text-transform: none; }
+.table-row b { padding: 1px 7px; border: 1px solid currentColor; border-radius: 2px; font-size: .78rem; font-weight: 600; line-height: 1.6; }
+.table-actions a { color: var(--accent); font-weight: 600; }
+.table-actions button { color: var(--ink); }
+/* 주홍은 위험 행동(삭제·폐기·회수·퇴사)에만 */
+.table-actions .danger-action, .button.danger, .button.t-bad { border-color: var(--red); color: var(--red-ink); }
+/* 표 안의 폼(입력칸+버튼)은 한 덩어리로 한 줄에. 쪼개져 세로로 쌓이던 것(카테고리·자산 표). */
+.table-actions form { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 6px; margin: 0; }
+/* 표 안의 버튼은 한 줄에 나란히 들어가도록 낮게(터치 기기는 아래 44px 규칙이 이긴다) */
+.table-actions .button, .table-actions button, .table-actions .small-link { min-height: var(--control-h-sm); padding: 0 10px; font-size: .84rem; }
+.table-actions { gap: 6px; }
+.table-actions input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+.table-actions select:not([multiple]):not([size]) { min-height: var(--control-h-sm); font-size: .84rem; }
+/* 관리 칸 폭: 버튼 세 개(수정·비활성·퇴사)가 한 줄에 들어가게 */
+.user-table .table-row { grid-template-columns: minmax(130px, .9fr) minmax(110px, .7fr) minmax(190px, 1.2fr) 80px 256px; }
+/* 최소 폭은 행에 건다. 스크롤 상자(.table-scroll) 자체에 걸면 표가 아니라 페이지가 가로로 넘친다(/users 393px). */
+.user-table, .group-table { min-width: 0; }
+.user-table .table-row { min-width: 880px; }
+.data-table.group-table .table-row { grid-template-columns: minmax(200px, 1fr) 64px 96px 410px; min-width: 820px; }
+.group-table .table-actions { justify-content: flex-end; }
+.data-table.member-table .table-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 64px 176px; }
+.member-table .table-actions { justify-content: flex-end; }
+.data-table.inventory-table .table-row { grid-template-columns: minmax(180px, 1.4fr) 56px 72px minmax(88px, .8fr) 96px minmax(330px, 2.4fr); min-width: 960px; }
+.inventory-table, .category-table { min-width: 0; }
+.onboarding-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; align-items: start; }
+.category-table .table-row { min-width: 720px; }
+.detail-list div { border-bottom-color: var(--line); }
+.detail-list dt { color: var(--ink-2); font-size: .8rem; font-weight: 600; text-transform: none; }
+.audit-list li { border-bottom-color: var(--line); color: var(--ink); }
+
+/* 상태 표지 — 둥근 알약 대신 각진 표지 */
+.pill { padding: 1px 7px; border: 1px solid currentColor; border-radius: 2px; background: var(--surface); color: var(--ink-2); font-size: .76rem; font-weight: 600; line-height: 1.6; }
+.good { background: var(--good-tint); color: var(--green); }
+.warn { background: var(--warn-tint); color: var(--amber); }
+.bad { background: var(--red-tint); color: var(--red-ink); }
+.t-bad { color: var(--red-ink); }
+.live-badge { border-radius: 2px; }
+
+/* ---------- 컨트롤 크기: 버튼·입력·선택이 한 줄에 서면 높이와 글자가 같아야 한다 ----------
+   기존 style.css는 .form-panel 안쪽 입력에만 크기를 줬고, 버튼은 글꼴을 물려받지 않아(13.3px)
+   폼 밖의 입력(그룹·위키·초대 등)은 브라우저 기본값(높이 19px)으로 나왔다. 여기서 한 번에 맞춘다. */
+:root { --control-h: 38px; --control-h-sm: 32px; --control-fs: .9rem; }
+button, input, select, textarea { font-family: inherit; }
+
+/* ---------- 버튼 ---------- */
+button, .button, .small-link {
+	min-height: var(--control-h); padding: 0 14px;
+	border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); color: var(--ink);
+	font-size: var(--control-fs); font-weight: 600; line-height: 1.2;
+	box-shadow: none; transition: background-color .12s, border-color .12s, color .12s;
+}
+/* 글자 버튼은 줄바꿈하지 않는다("추가"가 "추/가"로 꺾이던 것). 트리 노드처럼 클래스로 따로 그린 버튼은 제외. */
+.button, .small-link, button:not([class]) { white-space: nowrap; flex-shrink: 0; }
+.small-link { min-height: var(--control-h-sm); padding: 0 10px; font-size: .84rem; }
+button.primary, .button.primary { border-color: var(--accent); background: var(--accent); color: #fff; box-shadow: none; }
+button:disabled, .button[aria-disabled="true"] { border-color: var(--line); background: var(--field); color: var(--muted); cursor: not-allowed; }
+.table-action-button, .instance-actions button { border-radius: var(--radius); border-color: var(--accent); background: var(--surface); color: var(--accent); font-weight: 600; }
+.danger-action { border-color: var(--red); background: var(--surface); color: var(--red-ink); }
+@media (hover: hover) {
+	button:hover, .button:hover, .small-link:hover { background: var(--field); }
+	button.primary:hover, .button.primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+	.table-action-button:hover, .instance-actions button:hover { background: var(--accent-soft); }
+	.danger-action:hover { background: var(--red-tint); }
+	button:disabled:hover { background: var(--field); }
+}
+
+/* ---------- 입력 ---------- */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]), select, textarea {
+	border: 1px solid #8C8C88; border-radius: var(--radius); background-color: var(--surface); color: var(--ink); box-shadow: none;
+}
+/* 한 줄 입력·선택. :not(...)로 특이도를 올려 .form-panel·.modal-form-grid 등 화면별 규칙(42px·둥근 10px)보다 이기게 한다. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+select:not([multiple]):not([size]) {
+	min-height: var(--control-h); padding: 0 10px; border-radius: var(--radius);
+	font-size: var(--control-fs); line-height: 1.3;
+}
+select:not([multiple]):not([size]) { padding-right: 6px; }
+/* 긴 선택지(사용자명 등)가 선택상자를 밀어 화면을 넘지 않게 */
+select { max-width: 100%; }
+.fill { min-width: 0; }
+select[multiple], select[size] { padding: 4px; border-radius: var(--radius); font-size: var(--control-fs); }
+textarea:not([data-reset]) { padding: 8px 10px; border-radius: var(--radius); font-size: var(--control-fs); line-height: 1.55; }
+input[type="file"] { font-size: .86rem; }
+/* 체크박스·라디오는 글자 옆의 작은 칸. .form-panel input{width:100%;min-height:42px}을 물려받지 않게 되돌린다. */
+input[type="checkbox"], input[type="radio"] {
+	flex: none; width: 16px; height: 16px; min-height: 0; margin: 0; padding: 0;
+	border-radius: 0; vertical-align: -3px; accent-color: var(--accent); cursor: pointer;
+}
+input::placeholder, textarea::placeholder { color: #6E6E6A; }
+input:not([type="checkbox"]):not([type="radio"]):focus-visible, select:focus-visible, textarea:focus-visible {
+	outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), 0 0 0 3px var(--accent);
+}
+input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
+input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--red); background-color: #FFFBFA; }
+.form-panel label, .modal-form-grid label, .monitor-controls label { color: var(--ink-2); font-weight: 600; }
+/* 세로 폼: 라벨은 제 입력칸에 붙고(6px), 다음 항목과는 띄운다(18px). 전에는 두 간격이 8px·16px로 비슷해 짝이 안 보였다. */
+.form-panel form { gap: 6px; }
+.form-panel label { margin-top: 12px; font-size: .86rem; }
+.form-panel form > label:first-child, .form-panel form > input[type="hidden"] + label { margin-top: 0; }
+/* 체크박스·라디오 줄: 칸과 글자를 한 줄로, 연달아 오면 촘촘히 */
+.checkbox-row { display: flex; align-items: center; gap: 8px; width: fit-content; color: var(--ink); font-weight: 500; cursor: pointer; }
+.form-panel .checkbox-row { margin-top: 14px; font-size: .92rem; }
+.form-panel .checkbox-row + .checkbox-row { margin-top: 2px; }
+.form-panel form > button, .form-panel form > .button { justify-self: start; margin-top: 18px; }
+/* 라벨이 입력칸을 감싸는 세로 폼(.stack-form): 라벨 글자 위, 입력칸 아래 */
+.stack-form { display: grid; gap: 14px; max-width: 680px; }
+/* 세로 폼의 열은 화면 폭을 넘지 않게(긴 선택지가 열을 밀어 폰에서 넘치던 것) */
+.stack-form, .stacked-form { grid-template-columns: minmax(0, 1fr); }
+.stack-form > label:not(.checkbox-row) { display: grid; gap: 6px; color: var(--ink-2); font-size: .86rem; font-weight: 600; }
+.stack-form > label > input:not([type="checkbox"]):not([type="radio"]), .stack-form > label > select, .stack-form > label > textarea { width: 100%; color: var(--ink); font-weight: 400; }
+fieldset { min-width: 0; margin: 0; padding: 10px 14px 12px; border: 1px solid var(--line); border-radius: 0; }
+legend { padding: 0 6px; color: var(--ink-2); font-size: .86rem; font-weight: 600; }
+fieldset .checkbox-row + .checkbox-row { margin-top: 6px; }
+/* 표 칸 안의 단독 버튼은 칸 폭으로 늘이지 않는다(위키 '열기') */
+.table-row > .button, .table-row > button, .table-row > form { justify-self: start; }
+.form-panel input, .form-panel select, .form-panel textarea { border-color: #8C8C88; box-shadow: none; }
+.error-message { color: var(--red-ink); font-weight: 500; }
+
+/* ---------- 탭 ---------- */
+.subnav { gap: 0; margin: -8px 0 20px; border-bottom: 1px solid var(--rule); overflow-x: auto; scrollbar-width: none; }
+.subnav::-webkit-scrollbar { display: none; }
+.subnav a { padding: 10px 16px; border: 1px solid transparent; border-bottom: 0; margin-bottom: -1px; color: var(--ink-2); font-weight: 600; white-space: nowrap; }
+.subnav a:hover { color: var(--ink); }
+.subnav a.active { background: var(--surface); color: var(--ink); border-color: var(--rule); border-bottom: 1px solid var(--surface); }
+.console-tabs button.active { background: var(--accent-soft); color: var(--accent); }
+
+/* ---------- 목록 항목 ---------- */
+.server-row, .inventory-item, .solution-group, .solution-card, .org-tree, .monitor-process-row { border-radius: 0; }
+.server-row { background: var(--surface); border: 1px solid var(--line); }
+.inventory-item, .solution-card, .solution-group { border-color: var(--line); }
+.inventory-item.active, .solution-group.active, .preview-list-button.active { border-color: var(--accent); background: var(--accent-soft); }
+.org-root, .org-node, .org-toggle { border-radius: var(--radius); }
+
+/* ---------- 대화상자·알림 ---------- */
+.app-modal { border: 1px solid var(--rule); border-radius: 0; box-shadow: 0 24px 48px -16px rgba(20, 20, 20, .35); }
+.app-modal::backdrop { background: rgba(20, 20, 20, .42); backdrop-filter: none; }
+.modal-header h2 { font-family: var(--serif); }
+.modal-note { border-radius: 0; background: var(--warn-tint); color: var(--amber); }
+.demo-toast { border-radius: var(--radius); background: var(--ink); }
+
+/* ---------- 로그인·기관 진입: 공문 한 장 ---------- */
+.login-workspace { min-height: 100vh; min-height: 100dvh; padding: 32px 16px max(32px, env(safe-area-inset-bottom)); }
+.login-panel { width: min(100%, 520px); padding: 40px 44px 30px; }
+.login-panel h1 { padding-bottom: 14px; border-bottom: 3px double var(--ink); font-size: 2.1rem; text-align: center; }
+.login-panel > .eyebrow { text-align: center; }
+.login-panel > .subcopy { text-align: center; }
+.login-panel label { margin-top: 6px; color: var(--ink-2); font-size: .88rem; font-weight: 600; }
+.login-panel input { min-height: 44px; padding: 8px 12px; font: inherit; }
+.login-panel .button { min-height: 48px; font-size: 1rem; }
+.login-help { margin-top: 22px; padding-top: 12px; border-top: 1px solid var(--rule); }
+
+/* ---------- 결재 문서(접근 승인): 요청 한 건 = 문서 한 장, 오른쪽 위 결재란 ---------- */
+.sign-section { display: grid; gap: 14px; margin-bottom: var(--space-section); }
+.section-title { margin: 0; }
+.sign-doc-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 14px 24px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.sign-doc-title { min-width: 0; }
+.sign-doc-title h3 { margin: 4px 0 2px; font-size: 1.12rem; line-height: 1.35; overflow-wrap: anywhere; }
+.sign-doc-title .subcopy { margin: 0; }
+.sign-doc-meta { margin: 0; }
+.sign-box { flex: none; border-collapse: collapse; table-layout: fixed; font-size: .8rem; }
+.sign-box caption { caption-side: top; padding-bottom: 4px; color: var(--muted); font-size: .76rem; font-weight: 600; text-align: left; }
+.sign-box th, .sign-box td { width: 84px; border: 1px solid var(--rule); text-align: center; }
+.sign-box th { padding: 3px 4px; background: var(--field); color: var(--ink-2); font-weight: 600; letter-spacing: .3em; text-indent: .3em; }
+.sign-box td { height: 64px; padding: 6px 4px 5px; vertical-align: bottom; }
+.sign-name { display: block; font-family: var(--serif); font-weight: 700; font-size: .86rem; line-height: 1.2; overflow-wrap: anywhere; }
+.sign-date { display: block; color: var(--muted); font-size: .74rem; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.sign-box td.is-pending { background: var(--accent-soft); outline: 1px dashed var(--accent); outline-offset: -5px; }
+.sign-box td.is-pending .sign-date { color: var(--accent); font-weight: 600; }
+.sign-facts { width: 100%; margin: 12px 0 16px; border-collapse: collapse; font-size: .92rem; }
+.sign-facts th, .sign-facts td { padding: 7px 0; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.sign-facts th { width: 7.5em; padding-right: 12px; color: var(--ink-2); font-weight: 600; white-space: nowrap; }
+.sign-facts td { overflow-wrap: anywhere; }
+.sign-actions { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.sign-approve { display: flex; flex: 1 1 520px; flex-wrap: wrap; align-items: flex-end; gap: 10px; min-width: 0; }
+.sign-field { display: grid; gap: 4px; min-width: 0; color: var(--ink-2); font-size: .82rem; font-weight: 600; }
+.sign-field.grow { flex: 1 1 220px; }
+.sign-field select, .sign-field input { width: 100%; font-weight: 400; }
+
+/* ---------- 폰 셸: 위쪽 바 + 아래쪽 탭 바 + 서랍(fragments/sidebar.html) — 860px 이하에서만 ---------- */
+.mobile-bar, .tabbar, .drawer-scrim, .drawer-close { display: none; }
+
+/* ---------- 반응형 ---------- */
+@media (pointer: coarse) {
+	button, .button, .small-link, .table-action-button,
+	.table-actions .button, .table-actions button, .table-actions .small-link { min-height: 44px; }
+	.nav a { min-height: 44px; }
+	input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+	select:not([multiple]):not([size]) { min-height: 44px; }
+	input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; }
+}
+@media (max-width: 860px) {
+	:root { --mobile-top: 52px; --mobile-tab: 58px; --drawer-w: min(300px, 86vw); }
+	/* 사이드바 = 왼쪽 서랍. transform 대신 left로 옮긴다: transform은 안쪽 fixed 요소(위쪽 바·탭 바)의 기준을 서랍으로 바꿔 버린다.
+	   닫힌 서랍은 visibility:hidden, 그 안의 위쪽 바·탭 바만 visible로 되살린다. */
+	.sidebar {
+		position: fixed; top: 0; bottom: 0; left: calc(-1 * var(--drawer-w) - 24px); z-index: 60;
+		width: var(--drawer-w); height: 100vh; height: 100dvh; gap: 14px;
+		padding: max(14px, env(safe-area-inset-top)) 12px max(20px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+		border-right: 1px solid var(--rule); border-bottom: 0;
+		visibility: hidden; transition: left .24s var(--ease-out), visibility 0s linear .24s;
+	}
+	.drawer-open .sidebar { left: 0; visibility: visible; box-shadow: 16px 0 40px -20px rgba(20, 20, 20, .4); transition: left .24s var(--ease-out), visibility 0s; }
+	.drawer-open { overflow: hidden; }
+	.drawer-close { display: inline-grid; place-items: center; width: 44px; height: 44px; margin-right: -8px; border: 0; background: none; color: var(--ink); cursor: pointer; }
+	.drawer-close svg, .mobile-icon svg, .tabbar svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+	.drawer-close svg { width: 22px; height: 22px; }
+	.sidebar-toggle { display: none; }
+	/* style.css의 가로 스크롤 칩 메뉴를 서랍 안 세로 목록으로 되돌린다 */
+	.nav { display: grid; overflow-x: visible; overflow-y: auto; padding-bottom: 0; }
+	.nav a { min-height: 44px; white-space: normal; }
+	.operator { display: grid; }
+	/* 서랍 오른쪽 가림막. 서랍과 같은 쌓임 맥락 안에 있으므로 서랍 옆부터 깐다. */
+	.drawer-scrim { display: block; position: fixed; top: 0; bottom: 0; left: var(--drawer-w); right: 0; background: rgba(20, 20, 20, .38); opacity: 0; visibility: hidden; transition: opacity .2s, visibility 0s linear .2s; }
+	.drawer-open .drawer-scrim { opacity: 1; visibility: visible; transition: opacity .2s; }
+
+	.mobile-bar {
+		display: flex; align-items: center; gap: 10px; position: fixed; top: 0; left: 0; right: 0; z-index: 1;
+		min-height: calc(var(--mobile-top) + env(safe-area-inset-top));
+		padding: env(safe-area-inset-top) max(6px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+		background: var(--surface); border-bottom: 1px solid var(--rule); visibility: visible;
+	}
+	.mobile-brand { color: var(--ink); font-family: var(--serif); font-size: 1.3rem; font-weight: 700; letter-spacing: .06em; text-decoration: none; }
+	.mobile-org { min-width: 0; padding-left: 10px; border-left: 1px solid var(--line); overflow: hidden; color: var(--ink-2); font-size: .82rem; text-overflow: ellipsis; white-space: nowrap; }
+	.mobile-icon { position: relative; display: inline-grid; place-items: center; width: 44px; height: 44px; margin-left: auto; color: var(--ink); }
+	.mobile-icon svg { width: 22px; height: 22px; }
+	.mobile-badge { position: absolute; top: 5px; left: 24px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--ink); color: #fff; font-size: 11px; font-weight: 600; line-height: 17px; text-align: center; font-variant-numeric: tabular-nums; }
+
+	.tabbar {
+		display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1;
+		padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+		background: var(--surface); border-top: 1px solid var(--rule); visibility: visible;
+	}
+	.tabbar a, .tabbar button {
+		position: relative; display: grid; justify-items: center; align-content: center; gap: 2px;
+		min-height: var(--mobile-tab); padding: 0; border: 0; border-radius: 0; background: none; color: var(--ink-2);
+		font: inherit; font-size: 12px; font-weight: 600; text-decoration: none; cursor: pointer;
+	}
+	.tabbar svg { width: 22px; height: 22px; }
+	.tabbar [aria-current="page"] { color: var(--accent); }
+	.tabbar [aria-current="page"]::before { content: ""; position: absolute; top: -1px; left: 28%; right: 28%; height: 2px; background: var(--accent); }
+	/* 서랍이 열리면 위쪽 바·탭 바는 가린다(서랍이 화면 높이를 다 쓴다) */
+	.drawer-open .mobile-bar, .drawer-open .tabbar { visibility: hidden; }
+
+	.workspace {
+		padding-top: calc(var(--mobile-top) + env(safe-area-inset-top) + 20px);
+		padding-left: max(18px, env(safe-area-inset-left)); padding-right: max(18px, env(safe-area-inset-right));
+		padding-bottom: calc(var(--mobile-tab) + env(safe-area-inset-bottom) + 28px);
+	}
+	.sign-box { width: 100%; }
+	.sign-box th, .sign-box td { width: auto; }
+	h1 { font-size: 1.6rem; }
+	/* iOS: 16px 미만 입력은 포커스 때 확대된다 */
+	input, select, textarea { font-size: 16px; }
+}
+@media (max-width: 860px) {
+	/* 태블릿: 표는 제 상자 안에서 가로로 넘긴다(style.css가 행을 780px로 고정하는데 상자가 overflow:hidden이라 잘렸다) */
+	.data-table { overflow-x: auto; overscroll-behavior-x: contain; }
+	.onboarding-layout { grid-template-columns: minmax(0, 1fr); }
+	/* 템플릿 곳곳의 인라인 버튼 줄(style="display:flex;gap…")은 줄바꿈이 없어 좁으면 화면 밖으로 밀렸다 */
+	main [style*="display:flex"], main [style*="display: flex"] { flex-wrap: wrap; }
+}
+@media (max-width: 600px) {
+	/* 폰: 표 한 행 = 카드 한 장. 첫 칸이 제목, 나머지 칸은 머리 이름표(data-label, table-labels.js)를 달고 세로로, 관리 버튼은 맨 아래.
+	   flex로 바꾸므로 화면별 grid-template-columns(인라인 포함)는 저절로 무시된다. */
+	.data-table { overflow: visible; border: 0; background: transparent; display: grid; gap: 10px; }
+	.data-table .table-row.table-head { display: none; }
+	.data-table .table-row {
+		display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+		min-width: 0 !important; width: auto !important; padding: 12px 14px;
+		border: 1px solid var(--rule); background: var(--surface);
+	}
+	.data-table .table-row:last-child { border-bottom: 1px solid var(--rule); }
+	.data-table .table-row > * { min-width: 0; }
+	.data-table .table-row > [data-label]:not(:first-child):not(.table-actions):not(b):not(.pill)::before {
+		content: attr(data-label); display: inline-block; min-width: 5.5em; margin-right: 10px;
+		color: var(--muted); font-size: .78rem; font-weight: 600; vertical-align: top;
+	}
+	.data-table .table-row > :first-child { font-weight: 600; }
+	.data-table .table-row > .table-actions { justify-content: flex-start; flex-wrap: wrap; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+	/* 목록 한 줄(.inventory-item, 서버 목록 등): 관리 버튼은 아랫줄로 내려 이름 칸을 지킨다 */
+	.inventory-item:has(.table-actions) { grid-template-columns: 10px minmax(0, 1fr) auto; }
+	.inventory-item .table-actions { grid-column: 2 / -1; justify-self: start; flex-wrap: wrap; }
+	/* 한 줄 입력 폼(.inline-form): 이름표·입력이 뒤섞여 흐르지 않게 칸마다 한 줄씩 쌓는다 */
+	.inline-form { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+	.inline-form > label:has(input:not([type=checkbox]):not([type=radio]), select, textarea) { display: flex; flex-direction: column; gap: 4px; }
+	.inline-form > button, .inline-form > .button { align-self: flex-start; }
+	.panel { padding: 16px; }
+	.panel > .panel-head:first-child { margin: -16px -16px 14px; padding: 14px 16px 12px; }
+	.login-panel { padding: 30px 20px 22px; }
+	.login-panel h1 { font-size: 1.8rem; }
+	.topbar { padding-bottom: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}

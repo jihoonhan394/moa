@@ -37,7 +37,7 @@
           <option th:each="g : ${groups}" th:value="${g.id}" th:selected="${g.id == selectedGroup}" th:text="${g.name}">부서</option>
         </select>
       </label>
-      <fieldset style="border:1px solid #e3e6ea;border-radius:8px;padding:.5rem .75rem">
+      <fieldset>
         <legend class="subcopy">역할(기본 일반 사용자)</legend>
         <label class="checkbox-row" th:each="r : ${roleOptions}">
           <input type="checkbox" name="roles" th:value="${r}" th:checked="${r.name() == 'USER'}"> <span th:text="${r.label}">역할</span>

@@ -60,14 +60,18 @@ class HeadFragmentTest {
         .andExpect(content().string(Matchers.containsString("카테고리</title>")));
   }
 
-  /** 고정 제목 모양. 메타 태그까지 프래그먼트에서 오는지 함께 본다. */
+  /**
+   * 고정 제목 모양. 메타 태그와 결재 테마 스타일시트까지 프래그먼트에서 오는지 함께 본다.
+   * viewport-fit=cover가 빠지면 iPhone 노치·홈 바 쪽 safe-area 여백이 0으로 계산된다.
+   */
   @Test
   void rendersLiteralTitleWithMeta() throws Exception {
     mockMvc.perform(get("/servers/new").with(authentication(auth(user(), "ROLE_INFRA_MANAGER"))))
         .andExpect(status().isOk())
         .andExpect(content().string(Matchers.containsString("<meta charset=\"UTF-8\">")))
         .andExpect(content().string(Matchers.containsString(
-            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">")));
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, viewport-fit=cover\">")))
+        .andExpect(content().string(Matchers.containsString("href=\"/css/gyeoljae.css\"")));
   }
 
   /**

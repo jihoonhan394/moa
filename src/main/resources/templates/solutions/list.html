@@ -130,7 +130,7 @@
           <!-- 소유팀·사용자 배정은 운영 콘솔(상세)에 있다 — 행마다 드롭다운을 두면
                목록 HTML 이 행수 × (사용자수+그룹수) 로 커진다. 위 "콘솔" 버튼. -->
           <form class="inline" method="post" th:action="@{'/solutions/' + ${sol.id} + '/delete'}">
-            <button class="button" type="submit">삭제</button>
+            <button class="button danger-action" type="submit">삭제</button>
           </form>
         </span>
       </div>

@@ -6,6 +6,8 @@ import com.moara.moa.security.TenantContext;
 import com.moara.moa.support.Values;
 import com.moara.moa.user.ManagedUser;
 import com.moara.moa.user.ManagedUserService;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,8 +43,13 @@ public class AccessApprovalController {
     this.tenantContext = tenantContext;
   }
 
+  /** 결재란에 쓰는 짧은 시각(11/04 09:38)과 기간 표기(2026-11-04 09:00). 'T'가 박힌 ISO 문자열을 화면에 내보내지 않는다. */
+  private static final DateTimeFormatter SIGN_TIME = DateTimeFormatter.ofPattern("MM/dd HH:mm");
+  private static final DateTimeFormatter PERIOD_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+  /** requestedAt: 결재란 '요청' 칸의 시각. */
   public record PendingView(
-      UUID id, String requesterName, String assetName, String reason, String period) {}
+      UUID id, String requesterName, String assetName, String reason, String period, String requestedAt) {}
 
   public record GrantView(UUID id, String requesterName, String assetName, String until) {}
 
@@ -59,13 +66,14 @@ public class AccessApprovalController {
         .map(r -> new PendingView(
             r.getId(), userName(r.getRequesterUserId(), userNames), assetName(tenantId, r.getAssetId(), assetNames),
             r.getReason(),
-            r.getRequestedStartAt().toLocalDateTime() + " ~ " + r.getRequestedEndAt().toLocalDateTime()))
+            format(r.getRequestedStartAt(), PERIOD_TIME) + " ~ " + format(r.getRequestedEndAt(), PERIOD_TIME),
+            format(r.getCreatedAt(), SIGN_TIME)))
         .toList();
 
     List<GrantView> grants = approvalService.activeGrantsForApprover(tenantId, approverId).stream()
         .map(r -> new GrantView(
             r.getId(), userName(r.getRequesterUserId(), userNames), assetName(tenantId, r.getAssetId(), assetNames),
-            r.getRequestedEndAt().toLocalDateTime().toString()))
+            format(r.getRequestedEndAt(), PERIOD_TIME)))
         .toList();
 
     List<CredentialOption> credentials = credentialService.findAll(tenantId).stream()
@@ -74,6 +82,8 @@ public class AccessApprovalController {
     model.addAttribute("pending", pending);
     model.addAttribute("grants", grants);
     model.addAttribute("credentials", credentials);
+    // 결재란 '승인' 칸에 들어갈 이름 — 이 화면의 대기 요청은 모두 지금 보는 사람이 승인할 차례다.
+    model.addAttribute("approverName", userName(approverId, userNames));
     model.addAttribute("page", "access-approvals");
     model.addAttribute("pageTitle", "접근 승인");
     model.addAttribute("projectName", "MOA");
@@ -118,6 +128,10 @@ public class AccessApprovalController {
       redirect.addFlashAttribute("error", exception.getMessage());
     }
     return "redirect:/access-approvals";
+  }
+
+  private static String format(OffsetDateTime time, DateTimeFormatter pattern) {
+    return time == null ? "-" : time.toLocalDateTime().format(pattern);
   }
 
   /** 선택 항목으로 넘어온 식별자. 안 고르거나 망가진 값은 안 고른 것으로 본다. */

@@ -52,13 +52,13 @@
       </form>
 
       <p th:if="${#lists.isEmpty(members)}" class="subcopy">아직 멤버가 없습니다.</p>
-      <div th:unless="${#lists.isEmpty(members)}" class="data-table compact">
+      <div th:unless="${#lists.isEmpty(members)}" class="data-table compact member-table">
         <div class="table-row table-head"><span>이름</span><span>아이디</span><span>부서장</span><span>관리</span></div>
         <div class="table-row" th:each="member : ${members}">
           <strong th:text="${member.name}">이름</strong>
           <span th:text="${member.username}">아이디</span>
           <span>
-            <span th:if="${member.leader}" class="pill" style="background:#e7f0ff;color:#1c4fb3">부서장</span>
+            <span th:if="${member.leader}" class="pill">부서장</span>
             <span th:unless="${member.leader}" class="subcopy">—</span>
           </span>
           <span class="table-actions">

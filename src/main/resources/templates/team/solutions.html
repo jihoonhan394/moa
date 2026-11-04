@@ -86,7 +86,7 @@
             </form>
             <form class="inline" method="post" th:action="@{'/team/solutions/' + ${sol.id} + '/delete'}"
                   onsubmit="return confirm('이 솔루션을 삭제할까요?')">
-              <button class="button" type="submit">삭제</button>
+              <button class="button danger-action" type="submit">삭제</button>
             </form>
           </span>
         </div>

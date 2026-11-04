@@ -32,7 +32,7 @@
     <div class="panel-head"><div><p class="eyebrow">부여</p><h2>권한 추가</h2></div></div>
     <div style="display:grid;gap:0.8rem;max-width:640px">
       <!-- 부서 -->
-      <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;gap:.4rem;align-items:center">
+      <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;flex-wrap:wrap;gap:.4rem;align-items:center">
         <input type="hidden" name="subjectType" value="GROUP">
         <span style="width:70px">부서</span>
         <select class="fill" name="subjectId" required>
@@ -43,7 +43,7 @@
         <button class="button primary" type="submit">추가</button>
       </form>
       <!-- 사용자 -->
-      <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;gap:.4rem;align-items:center">
+      <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;flex-wrap:wrap;gap:.4rem;align-items:center">
         <input type="hidden" name="subjectType" value="USER">
         <span style="width:70px">사용자</span>
         <select class="fill" name="subjectId" required>
@@ -54,7 +54,7 @@
         <button class="button primary" type="submit">추가</button>
       </form>
       <!-- 전체 공개 -->
-      <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;gap:.4rem;align-items:center">
+      <form method="post" th:action="@{'/wiki/spaces/' + ${space.id} + '/permissions'}" style="display:flex;flex-wrap:wrap;gap:.4rem;align-items:center">
         <input type="hidden" name="subjectType" value="ALL">
         <span style="width:70px">전 직원</span>
         <select class="fill" name="level"><option th:each="l : ${levels}" th:value="${l}" th:text="${l.label}">열람</option></select>

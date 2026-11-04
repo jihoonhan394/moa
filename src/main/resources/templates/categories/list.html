@@ -28,13 +28,13 @@
     <div class="panel-head"><div><p class="eyebrow">목록</p><h2 th:text="${domainLabel} + ' 카테고리'">카테고리</h2></div>
       <span class="pill" th:text="${#lists.size(nodes)} + '개'">0개</span></div>
     <p th:if="${#lists.isEmpty(nodes)}" class="subcopy">카테고리가 없습니다.</p>
-    <div th:unless="${#lists.isEmpty(nodes)}" class="data-table" style="gap:.25rem">
-      <div class="table-row" th:each="n : ${nodes}" style="grid-template-columns:minmax(0,1fr) 160px;align-items:center">
+    <div th:unless="${#lists.isEmpty(nodes)}" class="data-table category-table table-scroll" style="gap:.25rem">
+      <div class="table-row" th:each="n : ${nodes}" style="grid-template-columns:minmax(0,1fr) 500px;align-items:center">
         <span th:style="'padding-left:' + ${n.depth * 22} + 'px'">
           <b th:if="${n.depth == 0 and hierarchical}" th:text="'▸ ' + ${n.name}">실물</b>
           <span th:unless="${n.depth == 0 and hierarchical}" th:text="${(n.depth > 0 ? '· ' : '') + n.name}">이름</span>
         </span>
-        <span class="table-actions" style="gap:.3rem;flex-wrap:wrap;justify-content:flex-end">
+        <span class="table-actions" style="gap:.3rem;flex-wrap:wrap">
           <!-- 하위 추가(자산 트리): 유형 루트를 포함해 어느 노드 아래든 -->
           <form th:if="${hierarchical}" method="post" th:action="@{${basePath}}" class="asset-toolbar" style="gap:.3rem">
             <input type="hidden" name="parentId" th:value="${n.id}">
@@ -51,7 +51,7 @@
           <form class="inline" th:unless="${n.hasChildren or (hierarchical and n.depth == 0 and !hierarchicalRootAddable)}" method="post"
                 th:action="@{${basePath} + '/' + ${n.id} + '/delete'}"
                 onsubmit="return confirm('이 카테고리를 삭제할까요? 이미 이 카테고리로 등록된 항목의 값은 그대로 남습니다.')">
-            <button class="button" type="submit">삭제</button>
+            <button class="button danger-action" type="submit">삭제</button>
           </form>
         </span>
       </div>

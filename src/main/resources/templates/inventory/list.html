@@ -133,7 +133,7 @@
       </form>
     </div>
 
-    <div th:unless="${#lists.isEmpty(items)}" class="data-table table-scroll" data-bulk-scope>
+    <div th:unless="${#lists.isEmpty(items)}" class="data-table inventory-table table-scroll" data-bulk-scope>
       <div class="table-row table-head"><span>이름</span><span>유형</span><span>상태</span><span>배정</span><span>만료</span><span>관리</span></div>
       <div class="table-row" th:each="item : ${items}">
         <div>
@@ -166,7 +166,7 @@
           <span th:if="${awaitingConfirmIds.contains(item.id)}" class="pill warn"
                 title="배정했지만 받은 사람이 아직 확인하지 않았습니다">확인 대기</span>
           <form class="inline" th:if="${item.status.name() == 'ASSIGNED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/reclaim'}">
-            <button class="button" type="submit">회수</button>
+            <button class="button danger-action" type="submit">회수</button>
           </form>
           <!-- 퇴사 반납은 두 단계: 실물을 받았다(회수 완료) → 자산 관리자가 확인(회수 완료 처리). -->
           <form class="inline" th:if="${item.status.name() == 'RETURN_PENDING'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/returned'}">
@@ -176,11 +176,11 @@
             <button class="button" type="submit" title="창고 입고를 기록하고 다시 배정할 수 있게 합니다">회수 완료 처리</button>
           </form>
           <form class="inline" th:if="${item.status.name() != 'RETIRED'}" method="post" th:action="@{'/inventory/' + ${item.id} + '/retire'}">
-            <button class="button" type="submit">폐기</button>
+            <button class="button danger-action" type="submit">폐기</button>
           </form>
           <form class="inline" method="post" th:action="@{'/inventory/' + ${item.id} + '/delete'}"
                 onsubmit="return confirm('이 항목을 삭제할까요?')">
-            <button class="button" type="submit">삭제</button>
+            <button class="button danger-action" type="submit">삭제</button>
           </form>
         </span>
       </div>

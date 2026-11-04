@@ -63,7 +63,7 @@
         <span id="wikiAiStatus" class="subcopy" style="margin:0 0 0 .4rem;align-self:center"></span>
       </div>
       <!-- 입력 | 미리보기 분할(좁은 화면에선 한 열로) -->
-      <div class="wiki-split" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:.6rem;align-items:stretch">
+      <div class="wiki-split" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:.6rem;align-items:stretch">
         <textarea th:field="*{content}" id="wikiContent"
                   th:attr="data-preview-url=@{/wiki/preview},data-ai-url=@{/wiki/ai-assist}"
                   rows="22" maxlength="50000" placeholder="마크다운으로 작성할 수 있습니다." required

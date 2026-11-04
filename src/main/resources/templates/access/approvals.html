@@ -15,35 +15,51 @@
   <p th:if="${message}" class="subcopy t-good" th:text="${message}"></p>
   <p th:if="${error}" class="subcopy t-bad" th:text="${error}"></p>
 
-  <!-- 승인 대기 -->
-  <section class="panel">
-    <div class="panel-head"><div><p class="eyebrow">대기</p><h2>승인 대기 요청</h2></div></div>
-    <p class="subcopy" th:if="${#lists.isEmpty(pending)}" style="margin:.4rem 0">승인 대기 중인 요청이 없습니다.</p>
-    <div th:unless="${#lists.isEmpty(pending)}" class="data-table table-scroll">
-      <div class="table-row table-head" style="grid-template-columns:1fr 1.1fr 1.6fr 1.6fr 2fr">
-        <span>요청자</span><span>서버</span><span>사유</span><span>기간</span><span>처리</span>
-      </div>
-      <div class="table-row" th:each="p : ${pending}" style="grid-template-columns:1fr 1.1fr 1.6fr 1.6fr 2fr">
-        <strong th:text="${p.requesterName}">요청자</strong>
-        <span th:text="${p.assetName}">서버</span>
-        <span th:text="${p.reason}">사유</span>
-        <span th:text="${p.period}" class="t-muted">기간</span>
-        <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center">
-          <form method="post" th:action="@{'/access-approvals/' + ${p.id} + '/approve'}"
-                style="display:flex;gap:.3rem;align-items:center;flex-wrap:wrap">
-            <select name="credentialId" title="함께 내줄 볼트 계정(선택)">
+  <!-- 승인 대기: 요청 한 건이 결재 문서 한 장. 결재란은 요청 → 승인 두 칸(현재 승인 단계는 하나뿐이다). -->
+  <section class="sign-section" aria-labelledby="pending-h">
+    <h2 class="section-title" id="pending-h">승인 대기 <span class="tnum" th:text="'(' + ${#lists.size(pending)} + ')'">(0)</span></h2>
+    <p class="panel subcopy" th:if="${#lists.isEmpty(pending)}">승인 대기 중인 요청이 없습니다.</p>
+    <article class="panel sign-doc" th:each="p : ${pending}">
+      <header class="sign-doc-head">
+        <div class="sign-doc-title">
+          <p class="sign-doc-meta"><span class="pill warn">승인 대기</span></p>
+          <h3 th:text="${p.assetName} + ' 접근 요청'">서버 접근 요청</h3>
+          <p class="subcopy" th:text="${p.requesterName} + ' · 요청 ' + ${p.requestedAt}">요청자 · 요청 11/04 09:38</p>
+        </div>
+        <table class="sign-box">
+          <caption>결재</caption>
+          <thead><tr><th scope="col">요청</th><th scope="col">승인</th></tr></thead>
+          <tbody><tr>
+            <td><span class="sign-name" th:text="${p.requesterName}">요청자</span><span class="sign-date" th:text="${p.requestedAt}">11/04 09:38</span></td>
+            <td class="is-pending"><span class="sign-name" th:text="${approverName}">승인자</span><span class="sign-date">승인 대기</span></td>
+          </tr></tbody>
+        </table>
+      </header>
+      <table class="sign-facts">
+        <tbody>
+          <tr><th scope="row">대상 서버</th><td th:text="${p.assetName}">서버</td></tr>
+          <tr><th scope="row">기간</th><td class="tnum" th:text="${p.period}">기간</td></tr>
+          <tr><th scope="row">사유</th><td th:text="${p.reason}">사유</td></tr>
+        </tbody>
+      </table>
+      <div class="sign-actions">
+        <form class="sign-approve" method="post" th:action="@{'/access-approvals/' + ${p.id} + '/approve'}">
+          <label class="sign-field"><span>함께 내줄 볼트 계정</span>
+            <select name="credentialId">
               <option value="">자격증명 없이(요청자가 직접 입력)</option>
               <option th:each="c : ${credentials}" th:value="${c.id}" th:text="${c.label}">계정</option>
             </select>
-            <input name="comment" type="text" maxlength="1000" placeholder="코멘트(선택)" style="width:140px">
-            <button class="button primary" type="submit">승인</button>
-          </form>
-          <form class="inline" method="post" th:action="@{'/access-approvals/' + ${p.id} + '/reject'}">
-            <button class="button" type="submit">반려</button>
-          </form>
-        </div>
+          </label>
+          <label class="sign-field grow"><span>코멘트(선택)</span>
+            <input name="comment" type="text" maxlength="1000" placeholder="요청자에게 함께 전달됩니다">
+          </label>
+          <button class="button primary" type="submit">승인</button>
+        </form>
+        <form class="inline" method="post" th:action="@{'/access-approvals/' + ${p.id} + '/reject'}">
+          <button class="button" type="submit">반려</button>
+        </form>
       </div>
-    </div>
+    </article>
   </section>
 
   <!-- 유효 승인(회수) -->
@@ -58,10 +74,10 @@
         <strong th:text="${g.requesterName}">요청자</strong>
         <span th:text="${g.assetName}">서버</span>
         <span th:text="${g.until}" class="t-muted">만료</span>
-        <form method="post" th:action="@{'/access-approvals/' + ${g.id} + '/revoke'}" style="display:flex;gap:.3rem"
+        <form method="post" th:action="@{'/access-approvals/' + ${g.id} + '/revoke'}" style="display:flex;gap:.3rem;flex-wrap:wrap"
               onsubmit="return confirm('임시 접근 권한을 회수할까요? 진행 중 세션도 종료 처리됩니다.');">
-          <input name="comment" type="text" maxlength="1000" placeholder="회수 사유(선택)" style="width:150px">
-          <button class="button" type="submit">회수</button>
+          <input name="comment" type="text" maxlength="1000" placeholder="회수 사유(선택)" aria-label="회수 사유(선택)" style="width:150px">
+          <button class="button danger-action" type="submit">회수</button>
         </form>
       </div>
     </div>

@@ -37,13 +37,13 @@
       <button class="button primary" type="submit" style="height:fit-content">추가</button>
       <p class="subcopy t-bad" th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="flex-basis:100%">이름 오류</p>
     </form>
-    <p class="subcopy" style="margin-top:.6rem">💡 <b>상위 부서</b>를 '최상위'로 두면 독립 부서, 특정 부서를 고르면 <b>그 아래 하위 조직</b>으로 생깁니다. (또는 부서 상세에서 '하위 그룹 추가')</p>
+    <p class="subcopy" style="margin-top:.6rem"><b>상위 부서</b>를 '최상위'로 두면 독립 부서, 특정 부서를 고르면 <b>그 아래 하위 조직</b>으로 생깁니다. (또는 부서 상세에서 '하위 그룹 추가')</p>
   </section>
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">조직도</p><h2>그룹 트리</h2></div><span class="pill" th:text="${#lists.size(tree)} + '개'">0개</span></div>
     <p th:if="${#lists.isEmpty(tree)}" class="subcopy">등록된 그룹이 없습니다. 위에서 새 그룹을 생성하세요.</p>
-    <div th:unless="${#lists.isEmpty(tree)}" class="data-table compact">
+    <div th:unless="${#lists.isEmpty(tree)}" class="data-table compact group-table table-scroll">
       <div class="table-row table-head"><span>조직 (트리)</span><span>인원</span><span>상태</span><span>관리</span></div>
       <div class="table-row" th:each="node : ${tree}">
         <div th:style="'padding-left:' + ${node.depth * 22} + 'px'">
