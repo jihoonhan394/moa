@@ -71,6 +71,24 @@ class ManagedUserControllerTest {
   }
 
   @Test
+  void createsUserWithoutPhone() throws Exception {
+    // 일반 사용자 전화번호는 선택이다(받을지는 기관이 정한다).
+    ManagedUser admin = createMoaUser();
+    String username = "nophone" + System.nanoTime();
+
+    mockMvc.perform(post("/users").with(authentication(auth(admin))).with(csrf())
+            .param("username", username)
+            .param("name", "번호없음")
+            .param("email", username + "@example.com")
+            .param("phone", "")
+            .param("password", "safe-password-123")
+            .param("passwordConfirm", "safe-password-123")
+            .param("status", "ACTIVE"))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/users"));
+  }
+
+  @Test
   void rejectsMismatchedPasswordConfirm() throws Exception {
     ManagedUser admin = createMoaUser();
     String username = "mm" + System.nanoTime();
@@ -85,16 +103,17 @@ class ManagedUserControllerTest {
   }
 
   @Test
-  void rejectsMissingPhone() throws Exception {
+  void rejectsMalformedPhone() throws Exception {
     ManagedUser admin = createMoaUser();
     String username = "np" + System.nanoTime();
-    // 전화번호 누락 → 검증 실패로 폼 재표시(리다이렉트 아님).
+    // 전화번호는 선택이지만, 적었다면 형식은 맞아야 한다 → 검증 실패로 폼 재표시(리다이렉트 아님).
     mockMvc.perform(post("/users").with(authentication(auth(admin))).with(csrf())
-            .param("username", username).param("name", "무전화")
-            .param("email", username + "@example.com")
+            .param("username", username).param("name", "잘못된번호")
+            .param("email", username + "@example.com").param("phone", "전화없음")
             .param("password", "safe-password-123").param("passwordConfirm", "safe-password-123")
             .param("status", "ACTIVE"))
-        .andExpect(status().isOk());
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("전화번호는 숫자와")));
   }
 
   @Test

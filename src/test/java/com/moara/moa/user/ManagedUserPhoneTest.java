@@ -28,6 +28,17 @@ class ManagedUserPhoneTest {
     assertThat(plain.getPhoneDisplay()).isEqualTo("010-3094-7612");
   }
 
+  @Test
+  void blankPhoneOnEditClearsItButNullKeepsIt() {
+    ManagedUser kept = user("010-3094-7612");
+    kept.update(new UserForm("한지훈", "한지훈", "a@b.com", null, "", UserStatus.ACTIVE), OffsetDateTime.now());
+    assertThat(kept.getPhone()).isEqualTo("01030947612"); // 전화번호 칸이 없는 경로는 그대로 둔다
+
+    ManagedUser cleared = user("010-3094-7612");
+    cleared.update(new UserForm("한지훈", "한지훈", "a@b.com", "", "", UserStatus.ACTIVE), OffsetDateTime.now());
+    assertThat(cleared.getPhone()).isNull(); // 폼에서 비우면 지운다(선택 항목)
+  }
+
   private ManagedUser user(String phone) {
     UserForm form = new UserForm("한지훈", "한지훈", "a@b.com", phone, "password12", UserStatus.ACTIVE);
     return new ManagedUser(UUID.randomUUID(), UUID.randomUUID(), UserRole.USER, form, "hash", OffsetDateTime.now());

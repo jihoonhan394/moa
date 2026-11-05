@@ -184,6 +184,23 @@ class PlatformConsoleTest {
         "프로비저닝된 비밀번호가 입력값과 일치해야 한다");
   }
 
+  @Test
+  void provisionAdminStillRequiresPhone() throws Exception {
+    // 일반 사용자와 달리 대표 관리자 전화번호는 필수다 — 플랫폼이 장애·보안 사고 때 연락할 번호.
+    var auth = auth(systemAdmin());
+    Tenant tenant = tenantService.createTenant(new CreateTenantCommand("번호필수사", "PH" + System.nanoTime()));
+    String uname = "ta" + System.nanoTime();
+    mockMvc.perform(post("/admin/tenants/" + tenant.getId() + "/admins")
+            .with(authentication(auth)).with(csrf())
+            .param("username", uname).param("name", "관리자")
+            .param("email", uname + "@example.com").param("phone", "")
+            .param("password", "Str0ng-Pass!23").param("passwordConfirm", "Str0ng-Pass!23"))
+        .andExpect(status().isOk());
+
+    assertTrue(userService.findTenantAdmins(tenant.getId()).stream()
+        .noneMatch(u -> u.getUsername().equals(uname)), "전화번호 없는 대표 관리자는 만들어지면 안 된다");
+  }
+
   private ManagedUser systemAdmin() {
     return userService.ensureSystemAdmin("sysadm" + System.nanoTime(), "safe-password-123");
   }

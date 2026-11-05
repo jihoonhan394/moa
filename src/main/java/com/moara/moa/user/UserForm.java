@@ -13,7 +13,8 @@ public record UserForm(
     @Size(max = 100) String username,
     @NotBlank @Size(max = 100) String name,
     @NotBlank @Email @Size(max = 255) String email,
-    @NotBlank @Size(max = 30) @Pattern(regexp = "[0-9+\\-() ]{7,30}",
+    // 일반 사용자 전화번호는 선택이다(받을지는 기관이 정한다). 대표 관리자·플랫폼 운영자는 각 경로에서 필수.
+    @Size(max = 30) @Pattern(regexp = "([0-9+\\-() ]{7,30})?",
         message = "전화번호는 숫자와 -, +, (), 공백만 사용할 수 있습니다.") String phone,
     @Size(max = 100) String password,
     @NotNull UserStatus status) {

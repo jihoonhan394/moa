@@ -125,8 +125,8 @@ public class ManagedUser {
     this.username = form.username().trim();
     this.name = form.name().trim();
     this.email = normalizeEmail(form.email());
-    // phone은 값이 있을 때만 반영(프로그램 생성/승인 등 미입력 경로에서 기존 값을 지우지 않음).
-    if (form.phone() != null && !form.phone().isBlank()) {
+    // phone이 null이면(전화번호 칸이 없는 프로그램 경로) 기존 값을 둔다. 폼에서 빈칸으로 보내면 지운다.
+    if (form.phone() != null) {
       this.phone = normalizePhone(form.phone());
     }
     this.status = form.status();

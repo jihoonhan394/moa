@@ -40,7 +40,7 @@ public class InviteAcceptController {
   public String accept(
       @PathVariable String token,
       @RequestParam(required = false) String name,
-      @RequestParam String phone,
+      @RequestParam(required = false) String phone,
       @RequestParam String password,
       @RequestParam String passwordConfirm,
       Model model) {
