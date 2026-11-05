@@ -58,7 +58,7 @@
                th:if="${inTenantContext or isInfraManager or isAssetManager}"
                th:classappend="${expirationsOverdue > 0} ? 'warning'">
         <span>만료</span><strong th:text="${expirationsOverdue} + ' / ' + ${expirationsSoon}">0</strong>
-        <small>만료됨 / 14일 내</small>
+        <small>만료됨 / 14일 내 · 폐기 제외</small>
       </article>
     </div>
 

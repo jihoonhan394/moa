@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('MOA - 대장 점검')}"></head>
+<body>
+<!--
+  대장에서 빠진 것과 앞뒤가 안 맞는 것을 모아 본다. 막지 않고 보여 주기만 한다.
+  근거: doc/실무자료-기능제안-20260925/05-코드대조-검토.md §9-C, doc/논의-2026-10-02.md §2-2.
+-->
+<div class="app-shell"><aside th:replace="~{fragments/sidebar :: sidebar(${page})}"></aside><main class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">자산 / 대장 점검</p>
+      <h1>대장 점검</h1>
+      <p class="subcopy">자산 대장에서 <b>비어 있는 칸</b>과 <b>앞뒤가 안 맞는 날짜</b>를 모았습니다.
+        폐기 자산은 보지 않고, 장착 구성품은 상위 장비를 따르므로 날짜만 봅니다.</p>
+    </div>
+    <a class="button" th:href="@{/inventory}">← 자산 목록</a>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="eyebrow">요약</p><h2>점검 항목</h2></div></div>
+    <div class="data-table">
+      <div class="table-row" th:each="gap : ${gaps}">
+        <a th:href="'#' + ${gap.key}" th:text="${gap.title}">항목</a>
+        <b th:classappend="${#lists.isEmpty(gap.rows)} ? 't-good' : 't-warn'"
+           th:text="${#lists.size(gap.rows)} + '건'">0건</b>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" th:each="gap : ${gaps}" th:id="${gap.key}">
+    <div class="panel-head">
+      <div><p class="eyebrow">점검</p><h2 th:text="${gap.title}">항목</h2></div>
+      <span class="pill" th:text="${#lists.size(gap.rows)} + '건'">0건</span>
+    </div>
+    <p class="subcopy" th:text="${gap.hint}">설명</p>
+    <p th:if="${#lists.isEmpty(gap.rows)}" class="subcopy t-good">해당하는 자산이 없습니다.</p>
+    <div th:unless="${#lists.isEmpty(gap.rows)}" class="data-table table-scroll">
+      <div class="table-row table-head">
+        <span>자산</span><span>분류</span><span>상태</span><span>참고</span><span>작업</span>
+      </div>
+      <div class="table-row" th:each="row : ${gap.rows}">
+        <div>
+          <strong th:text="${row.item.name}">자산명</strong>
+          <small class="t-muted" th:if="${row.item.serialNo != null}" th:text="'S/N ' + ${row.item.serialNo}"
+                 style="display:block">시리얼</small>
+        </div>
+        <span th:text="${row.item.category != null} ? ${row.item.category} : '—'">분류</span>
+        <span th:text="${row.item.status.label}">상태</span>
+        <span th:text="${#strings.isEmpty(row.detail)} ? '—' : ${row.detail}">참고</span>
+        <span class="table-actions">
+          <a class="button" th:href="@{'/inventory/' + ${row.item.id} + '/edit'}">수정</a>
+          <a class="button" th:href="@{'/inventory/' + ${row.item.id} + '/custody'}">보관 기록</a>
+        </span>
+      </div>
+    </div>
+  </section>
+</main></div>
+</body>
+</html>

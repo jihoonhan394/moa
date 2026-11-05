@@ -7,7 +7,7 @@
     <div>
       <p class="eyebrow">현황 / 만료 관리</p>
       <h1>만료/갱신 통합</h1>
-      <p class="subcopy">라이선스·기간제 접근 권한·기관 구독의 만료를 한곳에서 임박순으로 봅니다. (놓치면 사고)</p>
+      <p class="subcopy">자산의 라이선스·보증·리스 만료, 점검 일정, 사외 반출의 반납 예정, 기간제 접근 권한, 기관 구독을 한곳에서 임박순으로 봅니다. (놓치면 사고)</p>
     </div>
   </header>
 
@@ -22,6 +22,8 @@
       <p class="eyebrow">전체 추적</p><strong style="font-size:1.6rem" th:text="${#lists.size(rows)}">0</strong>
     </div>
   </section>
+  <!-- 숫자가 무엇을 셌는지 적는다. 모르면 숫자를 믿지 못하고 엑셀로 다시 센다(05-코드대조-검토 §9-D). -->
+  <p class="subcopy">폐기 자산은 세지 않습니다 · 만료됨은 오늘 이전, 임박은 오늘부터 14일 이내 · 반출 반납은 사외 반출만 셉니다.</p>
 
   <section class="panel">
     <div class="panel-head"><div><p class="eyebrow">임박순</p><h2>만료 항목</h2></div></div>
